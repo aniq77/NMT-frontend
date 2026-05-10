@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* ─── Design tokens — light mode ─────────────────────────────── */
+:root {
+  /* Primary */
+  --color-primary:       #5C3FE8;
+  --color-primary-light: #EDE8FF;
+  --color-primary-mid:   #C4B8FF;
+  --color-primary-dark:  #3B2599;
+
+  /* Feedback */
+  --color-correct:       #23A86A;
+  --color-correct-light: #EAFAF3;
+  --color-correct-dark:  #165C3A;
+
+  --color-wrong:         #FF5B4C;
+  --color-wrong-light:   #FFEAEA;
+  --color-wrong-dark:    #7A1C1C;
+
+  /* Gamification */
+  --color-reward:        #FFB800;
+  --color-reward-light:  #FFF4CC;
+  --color-reward-dark:   #7A5200;
+
+  /* Surfaces */
+  --color-canvas:        #F7F5FF;
+  --color-surface:       #FFFFFF;
+  --color-surface-alt:   #F0EEFF;
+
+  /* Borders */
+  --color-border:        #E0DCF8;
+  --color-border-strong: #C4B8FF;
+
+  /* Text */
+  --color-text-primary:   #1A1033;
+  --color-text-secondary: #6B5FA6;
+
+  /* Typography */
+  --font-display: "Nunito";
+  --font-body:    "Inter";
+  --font-mono:    "JetBrains Mono";
+}
+
+/* ─── Dark mode overrides ─────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-canvas:        #1A1033;
+  --color-surface:       #241848;
+  --color-surface-alt:   #2E2060;
+  --color-border:        #3B2599;
+  --color-border-strong: #5C3FE8;
+  --color-text-primary:  #F0EEFF;
+  --color-text-secondary:#C4B8FF;
+}
+
+/* ─── Base ────────────────────────────────────────────────────── */
+html,
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular nums for all score/number displays */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

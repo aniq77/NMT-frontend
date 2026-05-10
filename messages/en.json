@@ -1,0 +1,19 @@
+{
+  "common": {
+    "appName": "NMT Prep",
+    "continue": "Continue",
+    "start": "Start",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "correct": "Correct!",
+    "wrong": "Wrong",
+    "loading": "Loading..."
+  },
+  "nav": {
+    "home": "Home",
+    "practice": "Practice",
+    "progress": "Progress",
+    "profile": "Profile"
+  }
+}
