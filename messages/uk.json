@@ -15,5 +15,51 @@
     "practice": "Практика",
     "progress": "Прогрес",
     "profile": "Профіль"
+  },
+  "auth": {
+    "or": "або",
+    "fields": {
+      "email": "Email",
+      "password": "Пароль",
+      "passwordConfirm": "Підтвердіть пароль",
+      "username": "Юзернейм"
+    },
+    "login": {
+      "title": "Вхід",
+      "submit": "Увійти",
+      "tabEmail": "Email",
+      "tabPhone": "Телефон",
+      "noAccount": "Немає акаунту?",
+      "registerLink": "Зареєструватися"
+    },
+    "register": {
+      "title": "Реєстрація",
+      "subtitle": "Починаємо підготовку до НМТ",
+      "submit": "Створити акаунт",
+      "passwordHint": "Мінімум 8 символів",
+      "hasAccount": "Вже є акаунт?",
+      "loginLink": "Увійти",
+      "checkEmail": "Перевірте пошту",
+      "verifyHint": "Ми надіслали лист для підтвердження. Перейдіть за посиланням у листі.",
+      "backToLogin": "Повернутися до входу"
+    },
+    "otp": {
+      "phoneLabel": "Номер телефону",
+      "phoneHint": "Формат: +380XXXXXXXXX",
+      "sendCode": "Надіслати код",
+      "codeSentTo": "Код надіслано на",
+      "codeLabel": "Код з SMS",
+      "verify": "Підтвердити",
+      "changePhone": "Змінити номер"
+    },
+    "verifyEmail": {
+      "errorTitle": "Посилання недійсне",
+      "errorHint": "Посилання застаріло або вже використане. Спробуйте зареєструватися знову."
+    },
+    "errors": {
+      "invalidCredentials": "Невірний email або пароль",
+      "googleFailed": "Не вдалося увійти через Google",
+      "generic": "Щось пішло не так. Спробуйте ще раз."
+    }
   }
 }

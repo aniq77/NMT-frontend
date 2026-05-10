@@ -1,11 +1,7 @@
-import { useTranslations } from "next-intl";
+import { redirect } from "next/navigation";
 
-export default function HomePage() {
-  const t = useTranslations("common");
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4">
-      <h1 className="font-display text-xl font-bold text-primary">{t("appName")}</h1>
-    </main>
-  );
+// Temporary root — redirects to home once the home screen is built.
+// Authenticated users will land here after login.
+export default function RootPage() {
+  redirect("/login");
 }
