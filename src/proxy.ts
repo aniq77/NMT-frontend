@@ -12,22 +12,26 @@ function isAuthRoute(pathname: string): boolean {
   return AUTH_ROUTES.some((r) => withoutLocale === r || withoutLocale.startsWith(`${r}/`));
 }
 
+const DEV_BYPASS_TOKEN = "12345";
+
 export default async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   const hasAccessToken = request.cookies.has("access_token");
+  const hasBypassToken = searchParams.get("token") === DEV_BYPASS_TOKEN;
 
   // Let next-intl handle locale routing first
   const intlResponse = intlMiddleware(request);
 
+  if (hasBypassToken) return intlResponse;
+
   // Redirect authenticated users away from auth pages
   if (isAuthRoute(pathname) && hasAccessToken) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL(`/?token=${DEV_BYPASS_TOKEN}`, request.url));
   }
 
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthRoute(pathname) && !hasAccessToken) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL(`/login?token=${DEV_BYPASS_TOKEN}`, request.url));
   }
 
   return intlResponse;

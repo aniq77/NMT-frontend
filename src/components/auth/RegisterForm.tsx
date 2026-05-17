@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,6 +12,7 @@ import { GoogleButton } from "./GoogleButton";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useRouter, Link } from "@/lib/navigation";
+import { withToken } from "@/lib/dev";
 
 const registerSchema = z
   .object({
@@ -63,15 +65,15 @@ export function RegisterForm() {
   if (success) {
     return (
       <div className="flex flex-col items-center gap-4 py-4 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-correct-light text-3xl">
-          ✉️
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-correct-light">
+          <Mail className="h-8 w-8 text-correct-dark" />
         </div>
         <h2 className="font-display text-md font-700 text-text-primary">
           {t("register.checkEmail")}
         </h2>
         <p className="font-body text-sm text-text-secondary">{t("register.verifyHint")}</p>
         <button
-          onClick={() => router.push("/login")}
+          onClick={() => router.push(withToken("/login"))}
           className="font-display text-sm font-600 text-primary hover:underline"
         >
           {t("register.backToLogin")}
@@ -133,7 +135,7 @@ export function RegisterForm() {
 
       <p className="text-center font-body text-sm text-text-secondary">
         {t("register.hasAccount")}{" "}
-        <Link href="/login" className="font-600 text-primary hover:underline">
+        <Link href={withToken("/login")} className="font-600 text-primary hover:underline">
           {t("register.loginLink")}
         </Link>
       </p>

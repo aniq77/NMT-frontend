@@ -1,11 +1,12 @@
+import { GraduationCap } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 function AuthHeader() {
   const t = useTranslations("common");
   return (
     <div className="mb-8 flex flex-col items-center gap-2">
-      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-2xl text-white shadow-button">
-        🎓
+      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-white shadow-button">
+        <GraduationCap className="h-8 w-8" />
       </div>
       <h1 className="font-display text-lg font-800 text-text-primary">{t("appName")}</h1>
     </div>

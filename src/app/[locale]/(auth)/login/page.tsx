@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { OtpForm } from "@/components/auth/OtpForm";
 import { Link } from "@/lib/navigation";
+import { withToken } from "@/lib/dev";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth");
@@ -19,10 +20,10 @@ function Tabs({ isPhone }: { isPhone: boolean }) {
     <div className="mb-6">
       <h2 className="mb-1 font-display text-md font-700 text-text-primary">{t("login.title")}</h2>
       <div className="mt-4 flex rounded-md border border-border bg-primary-light p-1">
-        <Link href="/login" className={isPhone ? inactiveTab : activeTab}>
+        <Link href={withToken("/login")} className={isPhone ? inactiveTab : activeTab}>
           {t("login.tabEmail")}
         </Link>
-        <Link href="/login?method=phone" className={isPhone ? activeTab : inactiveTab}>
+        <Link href={withToken("/login?method=phone")} className={isPhone ? activeTab : inactiveTab}>
           {t("login.tabPhone")}
         </Link>
       </div>

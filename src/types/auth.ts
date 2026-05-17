@@ -2,6 +2,8 @@ export type User = {
   id: number;
   email: string;
   username: string;
+  phone?: string | null;
+  custom_avatar_url?: string | null;
   auth_provider: "email" | "google" | "phone";
   xp: number;
   xp_to_next_level: number;
@@ -9,7 +11,9 @@ export type User = {
   gems: number;
   lives: number;
   streak_days: number;
+  max_streak?: number;
   last_activity_date: string;
+  hearts_refill_at?: string | null;
   is_email_verified: boolean;
   is_phone_verified: boolean;
   date_joined: string;
