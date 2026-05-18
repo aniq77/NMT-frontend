@@ -8,7 +8,11 @@ import { withToken } from "@/lib/dev";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth");
-  return { title: t("login.title") };
+  return {
+    title: t("login.title"),
+    description: "Увійди до свого акаунту НМТ Підготовка та продовжуй навчання.",
+    openGraph: { title: t("login.title") },
+  };
 }
 
 const activeTab = "flex-1 rounded py-1.5 text-center font-display text-sm font-600 bg-surface text-primary shadow-card";

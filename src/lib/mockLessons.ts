@@ -24,6 +24,7 @@ export type GraphChallengeConfig = {
 
 export type LessonConfig = {
   id: string;
+  backendId?: string;
   title: string;
   theoryTitle: string;
   viewer3d?: "sphere" | "cone";

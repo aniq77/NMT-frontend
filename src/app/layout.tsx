@@ -8,8 +8,21 @@ export const metadata: Metadata = {
     default: "НМТ Підготовка",
     template: "%s | НМТ Підготовка",
   },
-  description: "Готуйся до НМТ ефективно та з азартом",
+  description:
+    "Готуйся до НМТ ефективно та з азартом. Інтерактивні уроки, гейміфікація та покрокові алгоритми для успішного складання іспиту.",
+  keywords: ["НМТ", "підготовка до НМТ", "математика", "геометрія", "іспит", "онлайн навчання", "тести НМТ"],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  openGraph: {
+    type: "website",
+    siteName: "НМТ Підготовка",
+    title: "НМТ Підготовка",
+    description: "Готуйся до НМТ ефективно та з азартом",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "НМТ Підготовка",
+    description: "Готуйся до НМТ ефективно та з азартом",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

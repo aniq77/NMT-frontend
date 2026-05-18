@@ -41,7 +41,7 @@ export function LessonNode({ status, type = "standard", lessonNumber, title, xp,
         aria-label={title ?? `Урок ${lessonNumber}`}
         className={cn(
           "flex h-16 w-16 select-none items-center justify-center rounded-full border-4 font-display text-xl font-700 transition-all duration-200",
-          status === "completed" && "border-correct-dark bg-correct text-white shadow-[0_4px_0_#165C3A]",
+          status === "completed" && "cursor-pointer hover:scale-105 border-correct-dark bg-correct text-white shadow-[0_4px_0_#165C3A]",
           status === "current"   && "animate-pulse cursor-pointer border-primary-dark bg-primary text-white shadow-button hover:scale-105",
           status === "available" && "cursor-pointer border-border bg-surface text-text-primary shadow-card hover:scale-105 hover:border-primary",
           status === "locked"    && "cursor-not-allowed border-border bg-surface-alt text-text-secondary opacity-60",

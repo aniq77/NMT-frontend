@@ -5,7 +5,11 @@ import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth");
-  return { title: t("register.title") };
+  return {
+    title: t("register.title"),
+    description: "Зареєструйся безкоштовно та починай підготовку до НМТ вже сьогодні.",
+    openGraph: { title: t("register.title") },
+  };
 }
 
 function Header() {

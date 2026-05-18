@@ -1,9 +1,12 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/navigation";
 import {
   Calendar,
   CalendarDays,
   Check,
+  ChevronRight,
+  Crown,
   Flame,
   Gem,
   Globe,
@@ -17,33 +20,11 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { StatChip } from "@/components/ui/StatChip";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
 import { withToken } from "@/lib/dev";
-import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth.store";
 import type { User } from "@/types/auth";
-
-const MOCK_USER: User = {
-  id: 1,
-  username: "yurii.arutiunov",
-  email: "yurii.arutiunov@skelar.tech",
-  phone: "+380991234567",
-  custom_avatar_url: null,
-  auth_provider: "email",
-  xp: 1250,
-  xp_to_next_level: 2000,
-  level: 7,
-  gems: 83,
-  lives: 5,
-  streak_days: 14,
-  max_streak: 21,
-  last_activity_date: "2026-05-16",
-  hearts_refill_at: null,
-  is_email_verified: true,
-  is_phone_verified: false,
-  date_joined: "2026-03-01",
-};
 
 const AUTH_PROVIDER_LABELS: Record<User["auth_provider"], { label: string; icon: React.ReactNode }> = {
   email:  { label: "Пошта",   icon: <Mail       className="h-5 w-5 text-text-secondary" /> },
@@ -94,10 +75,7 @@ function InfoRow({
         <Tag
           size="xs"
           variant={verified ? "correct" : "wrong"}
-          icon={verified
-            ? <Check className="h-3 w-3" />
-            : <X    className="h-3 w-3" />
-          }
+          icon={verified ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
         >
           {verified ? "Підтверджено" : "Не підтверджено"}
         </Tag>
@@ -118,13 +96,36 @@ function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const user = MOCK_USER;
-  const xpPercent = Math.round((user.xp / user.xp_to_next_level) * 100);
-  const provider = AUTH_PROVIDER_LABELS[user.auth_provider];
+  const { user, fetchMe, restoreStreak, logout } = useAuthStore();
+  const [isRestoringStreak, setIsRestoringStreak] = useState(false);
+  const [streakError, setStreakError] = useState("");
 
-  function handleLogout() {
+  useEffect(() => {
+    fetchMe().catch(() => {});
+  }, [fetchMe]);
+
+  async function handleLogout() {
+    await logout();
     router.push(withToken("/login"));
   }
+
+  async function handleRestoreStreak() {
+    setIsRestoringStreak(true);
+    setStreakError("");
+    try {
+      await restoreStreak();
+    } catch {
+      setStreakError("Не вдалося відновити серію. Спробуйте ще раз.");
+    } finally {
+      setIsRestoringStreak(false);
+    }
+  }
+
+  if (!user) return null;
+
+  const expPercent = Math.round((user.exp / user.exp_to_next_level) * 100);
+  const provider = AUTH_PROVIDER_LABELS[user.auth_provider];
+  const canRestoreStreak = user.lost_streak_days > 0 && user.gems >= 50;
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -139,13 +140,13 @@ export default function ProfilePage() {
         {/* Hero */}
         <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface py-6 shadow-card">
           <Avatar
-            src={user.custom_avatar_url ?? undefined}
-            name={user.username}
+            src={undefined}
+            name={user.nickname}
             level={user.level}
             size="lg"
           />
           <div className="text-center">
-            <h2 className="font-display text-lg font-700 text-text-primary">@{user.username}</h2>
+            <h2 className="font-display text-lg font-700 text-text-primary">@{user.nickname}</h2>
             <p className="mt-0.5 font-body text-sm text-text-secondary">{user.email}</p>
           </div>
           <Tag variant="primary" icon={<Star className="h-3.5 w-3.5" />}>Рівень {user.level}</Tag>
@@ -154,25 +155,55 @@ export default function ProfilePage() {
             <div className="mb-1.5 flex items-center justify-between">
               <span className="font-display text-xs font-600 text-text-secondary">XP до рівня {user.level + 1}</span>
               <span className="font-display text-xs font-700 text-primary tabular-nums">
-                {user.xp.toLocaleString("uk")} / {user.xp_to_next_level.toLocaleString("uk")}
+                {user.exp.toLocaleString("uk")} / {user.exp_to_next_level.toLocaleString("uk")}
               </span>
             </div>
-            <ProgressBar value={xpPercent} size="md" color="reward" />
+            <ProgressBar value={expPercent} size="md" color="reward" />
           </div>
         </div>
 
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-3">
-          <StatBox icon={<Flame className="h-7 w-7 text-reward"        />} label="Серія"     value={`${user.streak_days}д`} />
-          <StatBox icon={<Gem   className="h-7 w-7 text-primary-dark"  />} label="Кристали"  value={user.gems} />
-          <StatBox icon={<Heart className="h-7 w-7 text-wrong"         />} label="Серця"     value={`${user.lives}/5`} />
+          <StatBox icon={<Flame className="h-7 w-7 text-reward"       />} label="Серія"    value={`${user.streak_days}д`} />
+          <StatBox icon={<Gem   className="h-7 w-7 text-primary-dark" />} label="Кристали" value={user.gems} />
+          <StatBox icon={<Heart className="h-7 w-7 text-wrong"        />} label="Серця"    value={`${user.lives}/5`} />
         </div>
+
+        {/* Restore streak */}
+        {canRestoreStreak && (
+          <div className="rounded-xl border border-reward/30 bg-reward-light p-4">
+            <div className="flex items-start gap-3">
+              <Flame className="mt-0.5 h-5 w-5 shrink-0 text-reward-dark" />
+              <div className="flex-1">
+                <p className="font-display text-sm font-700 text-reward-dark">
+                  Відновити серію {user.lost_streak_days} днів?
+                </p>
+                <p className="mt-0.5 font-body text-xs text-reward-dark/80">
+                  Коштує 50 кристалів. У вас є {user.gems}.
+                </p>
+                {streakError && (
+                  <p className="mt-1 font-body text-xs text-wrong-dark">{streakError}</p>
+                )}
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="mt-3 w-full"
+              loading={isRestoringStreak}
+              onClick={handleRestoreStreak}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <Gem className="h-3.5 w-3.5" /> Відновити за 50 кристалів
+              </span>
+            </Button>
+          </div>
+        )}
 
         {/* Achievements */}
         <SectionCard title="Досягнення">
-          <InfoRow icon={<Trophy      className="h-5 w-5 text-reward-dark"  />} label="Максимальна серія"    value={`${user.max_streak ?? 0} днів`} />
-          <InfoRow icon={<Zap         className="h-5 w-5 text-reward"       />} label="Всього XP"            value={`${user.xp.toLocaleString("uk")} XP`} />
-          <InfoRow icon={<Calendar    className="h-5 w-5 text-text-secondary" />} label="Приєднався"          value={formatDate(user.date_joined)} />
+          <InfoRow icon={<Trophy       className="h-5 w-5 text-reward-dark"   />} label="Максимальна серія"    value={`${user.best_streak_days} днів`} />
+          <InfoRow icon={<Zap          className="h-5 w-5 text-reward"        />} label="Всього XP"            value={`${user.exp.toLocaleString("uk")} XP`} />
+          <InfoRow icon={<Calendar     className="h-5 w-5 text-text-secondary" />} label="Приєднався"          value={formatDate(user.date_joined)} />
           <InfoRow icon={<CalendarDays className="h-5 w-5 text-text-secondary" />} label="Остання активність" value={formatDate(user.last_activity_date)} />
         </SectionCard>
 
@@ -184,14 +215,6 @@ export default function ProfilePage() {
             value={user.email}
             verified={user.is_email_verified}
           />
-          {user.phone && (
-            <InfoRow
-              icon={<Smartphone className="h-5 w-5 text-text-secondary" />}
-              label="Телефон"
-              value={user.phone}
-              verified={user.is_phone_verified}
-            />
-          )}
           <InfoRow
             icon={provider.icon}
             label="Метод входу"
@@ -199,18 +222,21 @@ export default function ProfilePage() {
           />
         </SectionCard>
 
-        {/* Hearts refill */}
-        {user.lives < 5 && user.hearts_refill_at && (
-          <div className="flex items-center gap-3 rounded-xl border border-wrong-light bg-wrong-light px-4 py-3">
-            <Heart className="h-6 w-6 shrink-0 text-wrong" />
-            <div>
-              <p className="font-display text-sm font-700 text-wrong-dark">Серця поповнюються</p>
-              <p className="font-body text-xs text-wrong-dark/80">
-                Наступне серце о {new Date(user.hearts_refill_at).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}
-              </p>
-            </div>
+        {/* Subscription */}
+        <button
+          type="button"
+          onClick={() => router.push(withToken("/subscription"))}
+          className="flex w-full items-center gap-3 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-4 text-left transition-colors hover:from-primary/10 hover:to-primary/15"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-button">
+            <Crown className="h-5 w-5 text-white" />
           </div>
-        )}
+          <div className="flex-1">
+            <p className="font-display text-sm font-700 text-text-primary">Premium підписка</p>
+            <p className="font-body text-xs text-text-secondary">Розблокуй усі функції — 99 ₴ / місяць</p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-text-secondary" />
+        </button>
 
         {/* Logout */}
         <div className="pb-4 pt-2">

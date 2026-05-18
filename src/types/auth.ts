@@ -1,21 +1,23 @@
 export type User = {
-  id: number;
+  id: string;
   email: string;
-  username: string;
-  phone?: string | null;
-  custom_avatar_url?: string | null;
+  nickname: string;
   auth_provider: "email" | "google" | "phone";
-  xp: number;
-  xp_to_next_level: number;
+  active_avatar_type: string;
+  energy: number;
+  exp: number;
+  exp_to_next_level: number;
   level: number;
   gems: number;
   lives: number;
   streak_days: number;
-  max_streak?: number;
+  best_streak_days: number;
+  lost_streak_days: number;
   last_activity_date: string;
-  hearts_refill_at?: string | null;
   is_email_verified: boolean;
   is_phone_verified: boolean;
+  created_at: string;
+  updated_at: string;
   date_joined: string;
 };
 

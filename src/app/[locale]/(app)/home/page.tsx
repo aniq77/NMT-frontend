@@ -5,17 +5,7 @@ import { useRouter } from "@/lib/navigation";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CourseCard } from "@/components/ui/CourseCard";
 import { withToken } from "@/lib/dev";
-
-const MOCK_USER = {
-  username: "Юрій",
-  level: 7,
-  xp: 1250,
-  gems: 83,
-  lives: 3,
-  streak_days: 14,
-  last_activity_date: "2026-05-15",
-  hearts_refill_at: new Date(Date.now() + 18 * 60 * 1000).toISOString(),
-};
+import { useAuthStore } from "@/store/auth.store";
 
 const MOCK_COURSES = [
   {
@@ -50,26 +40,34 @@ type StreakStatus = "broken" | "at-risk" | null;
 
 export default function HomePage() {
   const router = useRouter();
+  const { user, fetchMe } = useAuthStore();
   const activeCourse = MOCK_COURSES.find((c) => c.isEnrolled && c.progress > 0 && c.progress < 100);
 
   const [streakStatus, setStreakStatus] = useState<StreakStatus>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
-    const lastActivity = new Date(MOCK_USER.last_activity_date);
+    fetchMe().catch(() => {});
+  }, [fetchMe]);
+
+  useEffect(() => {
+    if (!user) return;
+    const lastActivity = new Date(user.last_activity_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     lastActivity.setHours(0, 0, 0, 0);
     const diffDays = Math.round((today.getTime() - lastActivity.getTime()) / 86_400_000);
     if (diffDays > 1) setStreakStatus("broken");
     else if (diffDays === 1) setStreakStatus("at-risk");
-  }, []);
+  }, [user]);
 
   const showBanner = !bannerDismissed && streakStatus !== null;
 
+  if (!user) return null;
+
   return (
     <div className="min-h-screen bg-canvas">
-      <AppHeader user={MOCK_USER} />
+      <AppHeader user={user} />
 
       {showBanner && (
         <div
@@ -93,9 +91,7 @@ export default function HomePage() {
                   (streakStatus === "broken" ? "text-wrong-dark" : "text-reward-dark")
                 }
               >
-                {streakStatus === "broken"
-                  ? "Серія перервана"
-                  : "Не пропустіть серію!"}
+                {streakStatus === "broken" ? "Серія перервана" : "Не пропустіть серію!"}
               </p>
               <p
                 className={
@@ -104,7 +100,7 @@ export default function HomePage() {
                 }
               >
                 {streakStatus === "broken"
-                  ? `Ваша серія з ${MOCK_USER.streak_days} днів скинута. Починайте нову!`
+                  ? `Ваша серія з ${user.streak_days} днів скинута. Починайте нову!`
                   : "Пройдіть урок сьогодні, щоб зберегти серію"}
               </p>
             </div>
@@ -128,10 +124,10 @@ export default function HomePage() {
       <main className="mx-auto max-w-app space-y-6 px-4 py-6">
         <div>
           <h1 className="font-display text-xl font-800 text-text-primary">
-            Привіт, {MOCK_USER.username}!
+            Привіт, {user.nickname}!
           </h1>
           <p className="mt-1 inline-flex items-center gap-1.5 font-body text-base text-text-secondary">
-            {MOCK_USER.streak_days} днів поспіль — так тримати!
+            {user.streak_days} днів поспіль — так тримати!
             <Flame className="h-4 w-4 text-reward" />
           </p>
         </div>
