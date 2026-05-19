@@ -1,54 +1,39 @@
 "use client";
 import { useState, useEffect } from "react";
-import { AlertTriangle, Flame, Hash, HeartCrack, Triangle, X } from "lucide-react";
+import { AlertTriangle, BookOpen, Hash, HeartCrack, Triangle, X } from "lucide-react";
+import { Flame } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CourseCard } from "@/components/ui/CourseCard";
 import { withToken } from "@/lib/dev";
 import { useAuthStore } from "@/store/auth.store";
+import { coursesApi } from "@/lib/api/courses";
+import type { CourseListItem } from "@/lib/api/courses";
 
-const MOCK_COURSES = [
-  {
-    id: "math-nmt",
-    icon: <Hash className="h-8 w-8 text-primary" />,
-    title: "Математика НМТ",
-    subject: "Алгебра та геометрія",
-    description:
-      "Повна підготовка до НМТ з математики. Від базових рівнянь до складних задач.",
-    difficulty: "intermediate" as const,
-    isEnrolled: true,
-    progress: 40,
-    completedLessons: 6,
-    totalLessons: 15,
-  },
-  {
-    id: "geometry",
-    icon: <Triangle className="h-8 w-8 text-primary" />,
-    title: "Геометрія",
-    subject: "Планіметрія і стереометрія",
-    description:
-      "Трикутники, кола, об'єми тіл обертання та багато іншого для поглибленого вивчення.",
-    difficulty: "beginner" as const,
-    isEnrolled: false,
-    progress: 0,
-    completedLessons: 0,
-    totalLessons: 20,
-  },
-];
+function getSubjectIcon(subject: string): React.ReactNode {
+  const s = subject.toLowerCase();
+  if (s.includes("алгебр") || s.includes("математ")) return <Hash className="h-8 w-8 text-primary" />;
+  if (s.includes("геометр")) return <Triangle className="h-8 w-8 text-primary" />;
+  return <BookOpen className="h-8 w-8 text-primary" />;
+}
 
 type StreakStatus = "broken" | "at-risk" | null;
 
 export default function HomePage() {
   const router = useRouter();
   const { user, fetchMe } = useAuthStore();
-  const activeCourse = MOCK_COURSES.find((c) => c.isEnrolled && c.progress > 0 && c.progress < 100);
 
+  const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [streakStatus, setStreakStatus] = useState<StreakStatus>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     fetchMe().catch(() => {});
   }, [fetchMe]);
+
+  useEffect(() => {
+    coursesApi.list().then(setCourses).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!user || !user.last_activity_date) return;
@@ -60,6 +45,13 @@ export default function HomePage() {
     if (diffDays > 1) setStreakStatus("broken");
     else if (diffDays === 1) setStreakStatus("at-risk");
   }, [user]);
+
+  const activeCourse = courses.find(
+    (c) =>
+      c.user_progress &&
+      c.user_progress.progress_percent > 0 &&
+      c.user_progress.progress_percent < 100,
+  );
 
   const showBanner = !bannerDismissed && streakStatus !== null;
 
@@ -79,10 +71,11 @@ export default function HomePage() {
         >
           <div className="mx-auto flex max-w-app items-center gap-3">
             <span className="shrink-0">
-              {streakStatus === "broken"
-                ? <HeartCrack className="h-6 w-6 text-wrong-dark" />
-                : <AlertTriangle className="h-6 w-6 text-reward-dark" />
-              }
+              {streakStatus === "broken" ? (
+                <HeartCrack className="h-6 w-6 text-wrong-dark" />
+              ) : (
+                <AlertTriangle className="h-6 w-6 text-reward-dark" />
+              )}
             </span>
             <div className="min-w-0 flex-1">
               <p
@@ -135,12 +128,12 @@ export default function HomePage() {
         {activeCourse && (
           <button
             type="button"
-            onClick={() => router.push(withToken(`/courses/${activeCourse.id}`))}
+            onClick={() => router.push(withToken(`/courses/${activeCourse.slug}`))}
             className="w-full overflow-hidden rounded-xl bg-primary p-4 text-left text-white shadow-button transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                {activeCourse.icon}
+                {getSubjectIcon(activeCourse.subject)}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-display text-xs font-600 opacity-80">Продовжити навчання</p>
@@ -151,14 +144,16 @@ export default function HomePage() {
             <div className="mt-3">
               <div className="mb-1.5 flex justify-between">
                 <span className="font-display text-xs font-600 opacity-80">
-                  {activeCourse.completedLessons} / {activeCourse.totalLessons} уроків
+                  {activeCourse.user_progress!.progress_percent}% пройдено
                 </span>
-                <span className="font-display text-xs font-700">{activeCourse.progress}%</span>
+                <span className="font-display text-xs font-700">
+                  {activeCourse.categories_count} тем
+                </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-white/30">
                 <div
                   className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
-                  style={{ width: `${activeCourse.progress}%` }}
+                  style={{ width: `${activeCourse.user_progress!.progress_percent}%` }}
                 />
               </div>
             </div>
@@ -167,15 +162,34 @@ export default function HomePage() {
 
         <div>
           <h2 className="mb-4 font-display text-lg font-700 text-text-primary">Курси</h2>
-          <div className="space-y-4">
-            {MOCK_COURSES.map((course) => (
-              <CourseCard
-                key={course.id}
-                {...course}
-                onClick={() => router.push(withToken(`/courses/${course.id}`))}
-              />
-            ))}
-          </div>
+          {courses.length === 0 ? (
+            <div className="rounded-xl border border-border bg-surface px-4 py-8 text-center">
+              <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {courses.map((course) => {
+                const progress = course.user_progress?.progress_percent ?? 0;
+                const completed = Math.round((progress * course.categories_count) / 100);
+                return (
+                  <CourseCard
+                    key={course.id}
+                    id={course.slug}
+                    icon={getSubjectIcon(course.subject)}
+                    title={course.title}
+                    subject={course.subject}
+                    description={course.description}
+                    difficulty="intermediate"
+                    isEnrolled={course.user_progress !== null}
+                    progress={progress}
+                    totalLessons={course.categories_count}
+                    completedLessons={completed}
+                    onClick={() => router.push(withToken(`/courses/${course.slug}`))}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </div>
