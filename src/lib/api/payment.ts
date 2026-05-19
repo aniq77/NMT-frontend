@@ -7,9 +7,12 @@ export type Pricing = {
 };
 
 export type Subscription = {
+  id: string;
   status: string;
   is_active: boolean;
+  started_at: string | null;
   expires_at: string | null;
+  cancelled_at: string | null;
 };
 
 export type CreateInvoiceResult = {

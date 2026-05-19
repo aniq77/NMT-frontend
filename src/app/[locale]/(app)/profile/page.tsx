@@ -146,7 +146,7 @@ export default function ProfilePage() {
             size="lg"
           />
           <div className="text-center">
-            <h2 className="font-display text-lg font-700 text-text-primary">@{user.nickname}</h2>
+            <h2 className="font-display text-lg font-700 text-text-primary">@{user.nickname ?? user.email}</h2>
             <p className="mt-0.5 font-body text-sm text-text-secondary">{user.email}</p>
           </div>
           <Tag variant="primary" icon={<Star className="h-3.5 w-3.5" />}>Рівень {user.level}</Tag>
@@ -204,7 +204,9 @@ export default function ProfilePage() {
           <InfoRow icon={<Trophy       className="h-5 w-5 text-reward-dark"   />} label="Максимальна серія"    value={`${user.best_streak_days} днів`} />
           <InfoRow icon={<Zap          className="h-5 w-5 text-reward"        />} label="Всього XP"            value={`${user.exp.toLocaleString("uk")} XP`} />
           <InfoRow icon={<Calendar     className="h-5 w-5 text-text-secondary" />} label="Приєднався"          value={formatDate(user.date_joined)} />
-          <InfoRow icon={<CalendarDays className="h-5 w-5 text-text-secondary" />} label="Остання активність" value={formatDate(user.last_activity_date)} />
+          {user.last_activity_date && (
+            <InfoRow icon={<CalendarDays className="h-5 w-5 text-text-secondary" />} label="Остання активність" value={formatDate(user.last_activity_date)} />
+          )}
         </SectionCard>
 
         {/* Account */}

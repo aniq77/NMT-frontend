@@ -17,7 +17,7 @@ export type CompleteLessonPayload = {
 export type CompleteLessonResult = {
   already_completed: boolean;
   status: string;
-  score: number;
+  score: number | null;
   exp: number;
   level: number;
   lives: number;
