@@ -1,9 +1,9 @@
 export type User = {
   id: string;
   email: string;
-  nickname: string;
+  nickname: string | null;
   auth_provider: "email" | "google" | "phone";
-  active_avatar_type: string;
+  active_avatar_type: "custom" | "character";
   energy: number;
   exp: number;
   exp_to_next_level: number;
@@ -13,7 +13,7 @@ export type User = {
   streak_days: number;
   best_streak_days: number;
   lost_streak_days: number;
-  last_activity_date: string;
+  last_activity_date: string | null;
   is_email_verified: boolean;
   is_phone_verified: boolean;
   created_at: string;
