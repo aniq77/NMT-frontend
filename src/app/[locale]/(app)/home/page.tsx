@@ -51,7 +51,7 @@ export default function HomePage() {
   }, [fetchMe]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.last_activity_date) return;
     const lastActivity = new Date(user.last_activity_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -124,7 +124,7 @@ export default function HomePage() {
       <main className="mx-auto max-w-app space-y-6 px-4 py-6">
         <div>
           <h1 className="font-display text-xl font-800 text-text-primary">
-            Привіт, {user.nickname}!
+            Привіт, {user.nickname ?? user.email}!
           </h1>
           <p className="mt-1 inline-flex items-center gap-1.5 font-body text-base text-text-secondary">
             {user.streak_days} днів поспіль — так тримати!

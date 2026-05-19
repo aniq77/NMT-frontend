@@ -6,116 +6,71 @@ import { useRouter, Link } from "@/lib/navigation";
 import { LessonNode } from "@/components/ui/LessonNode";
 import { Button } from "@/components/ui/Button";
 import { withToken } from "@/lib/dev";
-import { COURSE_LESSON_IDS, COURSE_ALWAYS_COMPLETED } from "@/lib/mockLessons";
+import { coursesApi } from "@/lib/api/courses";
+import type { CategoryDetail, CourseDetail, Topic } from "@/lib/api/courses";
 
 type NodeStatus = "completed" | "current" | "available" | "locked";
-type NodeType = "standard" | "challenge" | "checkpoint";
 
-type Lesson = {
-  id: string;
-  title: string;
-  type?: NodeType;
-  xp: number;
-};
-
-type Section = {
-  id: string;
-  title: string;
-  lessons: Lesson[];
-};
-
-const SECTIONS_BY_COURSE: Record<string, Section[]> = {
-  "math-nmt": [
-    {
-      id: "sec1",
-      title: "Тема 1: Рівняння",
-      lessons: [
-        { id: "lesson-1", title: "Лінійні рівняння",   xp: 10 },
-        { id: "lesson-2", title: "Системи рівнянь",    xp: 10 },
-        { id: "lesson-3", title: "Квадратні рівняння", xp: 15 },
-        { id: "lesson-4", title: "Дискримінант",        xp: 15 },
-        { id: "lesson-5", title: "Корені рівнянь",      xp: 15 },
-      ],
-    },
-    {
-      id: "sec2",
-      title: "Тема 2: Функції",
-      lessons: [
-        { id: "lesson-6", title: "Формула коренів",  xp: 20 },
-        { id: "lesson-7", title: "Теорема Вієта",    xp: 20 },
-        { id: "lesson-8", title: "Задачі на корені", xp: 25 },
-        { id: "lesson-9", title: "Підсумковий тест", xp: 50, type: "checkpoint" },
-      ],
-    },
-  ],
-
-  geometry: [
-    {
-      id: "geo-sec1",
-      title: "Тема 1: Тіла обертання",
-      lessons: [
-        { id: "geo-1",         title: "Циліндр",               xp: 15 },
-        { id: "lesson-sphere", title: "Куля",                  xp: 20 },
-        { id: "lesson-cone",   title: "Конус",                 xp: 20 },
-        { id: "geo-4",         title: "Переріз тіл обертання", xp: 20, type: "challenge" as const },
-      ],
-    },
-    {
-      id: "geo-sec2",
-      title: "Тема 2: Многогранники",
-      lessons: [
-        { id: "geo-5", title: "Куб і прямокутний паралелепіпед", xp: 15 },
-        { id: "geo-6", title: "Піраміди",                        xp: 20 },
-        { id: "geo-7", title: "Призми",                          xp: 20 },
-        { id: "geo-8", title: "Підсумковий тест",                xp: 50, type: "checkpoint" },
-      ],
-    },
-  ],
-};
-
-const COURSE_NAMES: Record<string, string> = {
-  "math-nmt": "Математика НМТ",
-  geometry:   "Геометрія",
-};
-
-function buildCompleted(courseId: string): Set<string> {
-  const base = new Set<string>(COURSE_ALWAYS_COMPLETED[courseId] ?? []);
-  if (typeof window === "undefined") return base;
-  try {
-    const stored = localStorage.getItem("completedLessons");
-    if (stored) JSON.parse(stored).forEach((id: string) => base.add(id));
-  } catch {}
-  return base;
+function getTopicStatus(topic: Topic, topics: Topic[]): NodeStatus {
+  if (topic.completion_count >= 1) return "completed";
+  if (!topic.is_unlocked) return "locked";
+  const firstActive = topics.find((t) => t.is_unlocked && t.completion_count === 0);
+  return firstActive?.id === topic.id ? "current" : "available";
 }
 
-function getLessonStatus(lessonId: string, courseId: string, completed: Set<string>): NodeStatus {
-  if (completed.has(lessonId)) return "completed";
-  const ids = COURSE_LESSON_IDS[courseId] ?? [];
-  const idx = ids.indexOf(lessonId);
-  if (idx === -1) return "locked";
-  const firstUncompleted = ids.findIndex((id) => !completed.has(id));
-  if (idx === firstUncompleted)     return "current";
-  if (idx === firstUncompleted + 1) return "available";
-  return "locked";
-}
+type PageState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; course: CourseDetail; categories: CategoryDetail[] };
 
 export default function CoursePageClient() {
-  const params     = useParams<{ courseId: string; locale: string }>();
-  const courseId   = params.courseId;
-  const router     = useRouter();
-  const courseName = COURSE_NAMES[courseId] ?? "Курс";
-  const sections   = SECTIONS_BY_COURSE[courseId] ?? SECTIONS_BY_COURSE["math-nmt"];
+  const params = useParams<{ courseId: string; locale: string }>();
+  const slug = params.courseId;
+  const router = useRouter();
 
-  const [completed, setCompleted] = useState<Set<string>>(
-    new Set(COURSE_ALWAYS_COMPLETED[courseId] ?? []),
-  );
+  const [state, setState] = useState<PageState>({ status: "loading" });
 
   useEffect(() => {
-    const read = () => setCompleted(buildCompleted(courseId));
-    read();
-    window.addEventListener("focus", read);
-    return () => window.removeEventListener("focus", read);
-  }, [courseId]);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const course = await coursesApi.detail(slug);
+        const categories = await Promise.all(
+          course.categories.map((cat) => coursesApi.categoryDetail(slug, cat.slug)),
+        );
+        if (!cancelled) setState({ status: "ready", course, categories });
+      } catch {
+        if (!cancelled) setState({ status: "error" });
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  if (state.status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
+      </div>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas gap-4 px-4">
+        <p className="font-body text-text-secondary">Не вдалося завантажити курс</p>
+        <Button size="sm" onClick={() => setState({ status: "loading" })}>
+          Спробувати ще раз
+        </Button>
+      </div>
+    );
+  }
+
+  const { course, categories } = state;
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -127,44 +82,50 @@ export default function CoursePageClient() {
           >
             <span className="text-lg leading-none">←</span>
           </Link>
-          <h1 className="font-display text-base font-700 text-text-primary">{courseName}</h1>
+          <h1 className="font-display text-base font-700 text-text-primary">{course.title}</h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-app px-4 py-6">
-        {sections.map((section, sectionIdx) => (
-          <div key={section.id} className={sectionIdx > 0 ? "mt-8" : undefined}>
+        {categories.map((category, categoryIdx) => (
+          <div key={category.id} className={categoryIdx > 0 ? "mt-8" : undefined}>
             <div className="mb-6 rounded-xl border border-border bg-surface-alt px-4 py-3 text-center">
-              <h2 className="font-display text-base font-700 text-text-primary">{section.title}</h2>
+              <h2 className="font-display text-base font-700 text-text-primary">
+                {category.title}
+              </h2>
             </div>
 
             <div className="relative flex flex-col items-center">
-              {section.lessons.map((lesson, idx) => {
-                const status      = getLessonStatus(lesson.id, courseId, completed);
-                const isCurrent   = status === "current";
+              {category.topics.map((topic, idx) => {
+                const status = getTopicStatus(topic, category.topics);
+                const isCurrent = status === "current";
                 const isClickable = status !== "locked";
 
                 return (
-                  <div key={lesson.id} className="flex flex-col items-center">
+                  <div key={topic.id} className="flex flex-col items-center">
                     {idx > 0 && <div className="h-6 w-0.5 bg-border" />}
 
                     {isCurrent ? (
                       <div className="flex flex-col items-center">
                         <LessonNode
                           status={status}
-                          type={lesson.type ?? "standard"}
                           lessonNumber={idx + 1}
-                          title={lesson.title}
-                          xp={lesson.xp}
+                          title={topic.title}
                         />
                         <div className="mt-3 w-52 rounded-xl border border-border bg-surface p-3 text-center shadow-modal">
-                          <p className="font-display text-sm font-700 text-text-primary">{lesson.title}</p>
-                          <p className="mt-0.5 font-display text-xs font-600 text-reward">+{lesson.xp} XP</p>
+                          <p className="font-display text-sm font-700 text-text-primary">
+                            {topic.title}
+                          </p>
+                          {topic.required_completions > 1 && (
+                            <p className="mt-0.5 font-display text-xs font-600 text-text-secondary">
+                              {topic.completion_count}/{topic.required_completions} повторень
+                            </p>
+                          )}
                           <Button
                             size="sm"
                             className="mt-2 w-full"
                             onClick={() =>
-                              router.push(withToken(`/courses/${courseId}/lessons/${lesson.id}`))
+                              router.push(withToken(`/courses/${slug}/lessons/${topic.id}`))
                             }
                           >
                             <span className="flex items-center justify-center gap-1.5">
@@ -174,18 +135,21 @@ export default function CoursePageClient() {
                         </div>
                       </div>
                     ) : (
-                      <LessonNode
-                        status={status}
-                        type={lesson.type ?? "standard"}
-                        lessonNumber={idx + 1}
-                        title={lesson.title}
-                        xp={lesson.xp}
-                        onClick={
-                          isClickable
-                            ? () => router.push(withToken(`/courses/${courseId}/lessons/${lesson.id}`))
-                            : undefined
-                        }
-                      />
+                      <div className="flex flex-col items-center gap-1">
+                        <LessonNode
+                          status={status}
+                          lessonNumber={idx + 1}
+                          title={topic.title}
+                          onClick={
+                            isClickable
+                              ? () => router.push(withToken(`/courses/${slug}/lessons/${topic.id}`))
+                              : undefined
+                          }
+                        />
+                        {status === "completed" && topic.is_gold && (
+                          <span className="font-display text-xs font-700 text-reward">★ Золото</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
