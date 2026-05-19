@@ -28,7 +28,7 @@ export type LoginPayload = {
 
 export type RegisterPayload = {
   email: string;
-  username: string;
+  nickname: string;
   password: string;
   password_confirm: string;
 };

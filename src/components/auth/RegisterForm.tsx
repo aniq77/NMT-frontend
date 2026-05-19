@@ -17,7 +17,7 @@ import { withToken } from "@/lib/dev";
 const registerSchema = z
   .object({
     email: z.string().email(),
-    username: z.string().min(2).max(50),
+    nickname: z.string().min(2).max(50),
     password: z.string().min(8),
     password_confirm: z.string(),
   })
@@ -49,7 +49,7 @@ export function RegisterForm() {
     } catch (err) {
       if (err instanceof ApiError) {
         const { data: apiErrors } = err;
-        (["email", "username", "password", "password_confirm"] as const).forEach((field) => {
+        (["email", "nickname", "password", "password_confirm"] as const).forEach((field) => {
           if (apiErrors[field]) {
             setError(field, { message: [apiErrors[field]].flat().join(" ") });
           }
@@ -99,11 +99,11 @@ export function RegisterForm() {
         error={errors.email?.message}
       />
       <Input
-        {...register("username")}
-        label={t("fields.username")}
+        {...register("nickname")}
+        label={t("fields.nickname")}
         type="text"
-        autoComplete="username"
-        error={errors.username?.message}
+        autoComplete="nickname"
+        error={errors.nickname?.message}
       />
       <Input
         {...register("password")}

@@ -22,7 +22,7 @@
       "email": "Email",
       "password": "Пароль",
       "passwordConfirm": "Підтвердіть пароль",
-      "username": "Юзернейм"
+      "nickname": "Нікнейм"
     },
     "login": {
       "title": "Вхід",
