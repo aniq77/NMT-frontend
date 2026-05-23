@@ -67,19 +67,24 @@ const STATUS_CONFIG: Record<
 
 export default function PaymentResultPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<PaymentStatus>("loading");
+  const [status, setStatus] = useState<PaymentStatus>(() =>
+    typeof window !== "undefined" && !sessionStorage.getItem("payment_invoice_id")
+      ? "error"
+      : "loading",
+  );
   const [pollCount, setPollCount] = useState(0);
 
   useEffect(() => {
     const invoiceId = sessionStorage.getItem("payment_invoice_id");
-    if (!invoiceId) {
-      setStatus("error");
-      return;
-    }
+    if (!invoiceId) return;
 
     let cancelled = false;
 
     async function checkStatus() {
+      if (pollCount >= 20) {
+        setStatus("error");
+        return;
+      }
       try {
         const sub = await paymentApi.getSubscription();
 
@@ -116,10 +121,9 @@ export default function PaymentResultPage() {
     return () => { cancelled = true; };
   }, [pollCount]);
 
-  // Re-poll every 3s up to 20 attempts
+  // Re-poll every 3s
   useEffect(() => {
     if (status !== "loading" && status !== "processing") return;
-    if (pollCount >= 20) { setStatus("error"); return; }
 
     const id = setTimeout(() => setPollCount((p) => p + 1), 3000);
     return () => clearTimeout(id);

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AlertTriangle, BookOpen, Hash, HeartCrack, Triangle, X } from "lucide-react";
 import { Flame } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
@@ -24,7 +24,6 @@ export default function HomePage() {
   const { user, fetchMe } = useAuthStore();
 
   const [courses, setCourses] = useState<CourseListItem[]>([]);
-  const [streakStatus, setStreakStatus] = useState<StreakStatus>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
@@ -35,15 +34,16 @@ export default function HomePage() {
     coursesApi.list().then(setCourses).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!user || !user.last_activity_date) return;
+  const streakStatus = useMemo<StreakStatus>(() => {
+    if (!user || !user.last_activity_date) return null;
     const lastActivity = new Date(user.last_activity_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     lastActivity.setHours(0, 0, 0, 0);
     const diffDays = Math.round((today.getTime() - lastActivity.getTime()) / 86_400_000);
-    if (diffDays > 1) setStreakStatus("broken");
-    else if (diffDays === 1) setStreakStatus("at-risk");
+    if (diffDays > 1) return "broken";
+    if (diffDays === 1) return "at-risk";
+    return null;
   }, [user]);
 
   const activeCourse = courses.find(

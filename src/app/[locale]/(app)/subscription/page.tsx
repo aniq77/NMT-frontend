@@ -47,7 +47,7 @@ export default function SubscriptionPage() {
       .then(setSubscription)
       .catch((err) => {
         if (err instanceof ApiError && err.status === 404) {
-          setSubscription({ status: "inactive", is_active: false, expires_at: null });
+          setSubscription({ id: "", status: "inactive", is_active: false, started_at: null, expires_at: null, cancelled_at: null });
         }
       });
   }, []);

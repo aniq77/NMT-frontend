@@ -103,13 +103,13 @@ export default function LessonPageClient() {
   const [graphC,         setGraphC]         = useState(gc?.initialC ?? 0);
   const [graphChecked,   setGraphChecked]   = useState(false);
   const [graphCorrect,   setGraphCorrect]   = useState(false);
-  const [comboStreak,    setComboStreak]    = useState(0);
+  const [, setComboStreak]                  = useState(0);
   const [maxCombo,       setMaxCombo]       = useState(0);
   const [completeResult, setCompleteResult] = useState<CompleteLessonResult | null>(null);
 
-  const gateTarget      = useRef(Date.now() + GATE_REFILL_MINS * 60_000);
+  const [gateTarget]    = useState(() => Date.now() + GATE_REFILL_MINS * 60_000);
   const completeCalledRef = useRef(false);
-  const { mins: gateMins, secs: gateSecs } = useGateCountdown(showLivesGate, gateTarget.current);
+  const { mins: gateMins, secs: gateSecs } = useGateCountdown(showLivesGate, gateTarget);
 
   const isQuestion = typeof step === "object" && step.type === "question";
   const currentQ   = isQuestion ? questions[(step as { type: "question"; idx: number }).idx] : null;
@@ -466,7 +466,7 @@ export default function LessonPageClient() {
             <p>
               Щоб знайти корені, використовуємо{" "}
               <strong className="font-600 text-primary">дискримінант</strong> — число, яке показує
-              скільки розв'язків має рівняння.
+              скільки розв&apos;язків має рівняння.
             </p>
             <Formula>D = b² − 4ac</Formula>
             <div className="space-y-1.5 rounded-lg bg-surface-alt p-3">
