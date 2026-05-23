@@ -18,10 +18,11 @@ type CourseCardProps = {
   subject: string;
   description: string;
   progress: number;
-  totalLessons: number;
-  completedLessons: number;
+  totalLessons?: number;
+  completedLessons?: number;
   difficulty: Difficulty;
   isEnrolled: boolean;
+  isLocked?: boolean;
   onClick?: () => void;
 };
 
@@ -35,6 +36,7 @@ export function CourseCard({
   completedLessons,
   difficulty,
   isEnrolled,
+  isLocked = false,
   onClick,
 }: CourseCardProps) {
   const diff = DIFFICULTY[difficulty];
@@ -43,10 +45,14 @@ export function CourseCard({
     <button
       type="button"
       onClick={onClick}
+      disabled={isLocked}
       className={cn(
         "w-full overflow-hidden rounded-xl border border-border bg-surface text-left shadow-card",
-        "transition-all duration-200 hover:border-primary-mid hover:shadow-modal active:scale-[0.99]",
-        !onClick && "cursor-default",
+        "transition-all duration-200",
+        isLocked
+          ? "cursor-not-allowed opacity-50"
+          : "hover:border-primary-mid hover:shadow-modal active:scale-[0.99]",
+        !onClick && !isLocked && "cursor-default",
       )}
     >
       <div className="p-4">
@@ -70,9 +76,15 @@ export function CourseCard({
         {isEnrolled && (
           <div className="mt-4">
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="font-display text-xs font-600 text-text-secondary">
-                {completedLessons} / {totalLessons} уроків
-              </span>
+              {totalLessons != null && completedLessons != null ? (
+                <span className="font-display text-xs font-600 text-text-secondary">
+                  {completedLessons} / {totalLessons} уроків
+                </span>
+              ) : (
+                <span className="font-display text-xs font-600 text-text-secondary">
+                  Прогрес
+                </span>
+              )}
               <span className="font-display text-xs font-700 text-primary">{progress}%</span>
             </div>
             <ProgressBar
@@ -88,12 +100,14 @@ export function CourseCard({
         <div
           className={cn(
             "rounded-lg py-2 text-center font-display text-sm font-700 transition-colors",
-            isEnrolled
-              ? "border border-border-strong bg-primary-light text-primary-dark"
-              : "bg-primary text-white",
+            isLocked
+              ? "border border-border bg-surface-alt text-text-secondary"
+              : isEnrolled
+                ? "border border-border-strong bg-primary-light text-primary-dark"
+                : "bg-primary text-white",
           )}
         >
-          {isEnrolled ? (progress > 0 ? "Продовжити" : "Розпочати") : "Записатися"}
+          {isLocked ? "Незабаром" : isEnrolled ? (progress > 0 ? "Продовжити" : "Розпочати") : "Записатися"}
         </div>
       </div>
     </button>
