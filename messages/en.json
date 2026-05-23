@@ -15,5 +15,51 @@
     "practice": "Practice",
     "progress": "Progress",
     "profile": "Profile"
+  },
+  "auth": {
+    "or": "or",
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "passwordConfirm": "Confirm password",
+      "nickname": "Nickname"
+    },
+    "login": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "tabEmail": "Email",
+      "tabPhone": "Phone",
+      "noAccount": "No account?",
+      "registerLink": "Register"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Start preparing for NMT",
+      "submit": "Create account",
+      "passwordHint": "At least 8 characters",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "checkEmail": "Check your email",
+      "verifyHint": "We sent a verification link. Click it to activate your account.",
+      "backToLogin": "Back to sign in"
+    },
+    "otp": {
+      "phoneLabel": "Phone number",
+      "phoneHint": "Format: +380XXXXXXXXX",
+      "sendCode": "Send code",
+      "codeSentTo": "Code sent to",
+      "codeLabel": "SMS code",
+      "verify": "Verify",
+      "changePhone": "Change number"
+    },
+    "verifyEmail": {
+      "errorTitle": "Invalid link",
+      "errorHint": "This link has expired or already been used. Please register again."
+    },
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "googleFailed": "Failed to sign in with Google",
+      "generic": "Something went wrong. Please try again."
+    }
   }
 }
