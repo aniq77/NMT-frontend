@@ -8,6 +8,7 @@ import { AnswerOption } from "@/components/ui/AnswerOption";
 import { FeedbackPanel } from "@/components/ui/FeedbackPanel";
 import { Button } from "@/components/ui/Button";
 import { lessonsApi, type CompleteLessonResult, type Question, type QuestionOption } from "@/lib/api/lessons";
+import { MathText } from "@/components/ui/MathText";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -273,7 +274,7 @@ export default function LessonPageClient() {
                 Запитання {currentIdx + 1} / {questions.length}
               </p>
               <h2 className="mt-2 font-display text-lg font-700 text-text-primary">
-                {currentQ.text}
+                <MathText text={currentQ.text} />
               </h2>
             </div>
 

@@ -1,6 +1,7 @@
 "use client";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MathText } from "./MathText";
 
 type AnswerState = "default" | "selected" | "correct" | "wrong";
 
@@ -60,7 +61,7 @@ export function AnswerOption({ index, content, state = "default", onClick, disab
       >
         {letter}
       </span>
-      <span className={cn("flex-1 font-body text-base font-medium", s.text)}>{content}</span>
+      <MathText text={content} className={cn("flex-1 font-body text-base font-medium", s.text)} />
       {state === "correct" && <Check className="h-5 w-5 shrink-0 text-correct" />}
       {state === "wrong"   && <X    className="h-5 w-5 shrink-0 text-wrong" />}
     </button>
