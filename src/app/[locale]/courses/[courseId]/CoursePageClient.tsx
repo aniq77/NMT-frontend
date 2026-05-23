@@ -1,199 +1,159 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Star } from "lucide-react";
-import { useRouter, Link } from "@/lib/navigation";
-import { LessonNode } from "@/components/ui/LessonNode";
-import { Button } from "@/components/ui/Button";
-import { withToken } from "@/lib/dev";
-import { COURSE_LESSON_IDS, COURSE_ALWAYS_COMPLETED } from "@/lib/mockLessons";
+import { Lock, MapPin } from "lucide-react";
+import { Link, useRouter } from "@/lib/navigation";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { coursesApi, type CategorySummary, type CourseDetail } from "@/lib/api/courses";
+import { cn } from "@/lib/utils";
 
-type NodeStatus = "completed" | "current" | "available" | "locked";
-type NodeType = "standard" | "challenge" | "checkpoint";
-
-type Lesson = {
-  id: string;
+type LockedCategory = {
+  slug: string;
   title: string;
-  type?: NodeType;
-  xp: number;
+  description: string;
 };
 
-type Section = {
-  id: string;
-  title: string;
-  lessons: Lesson[];
-};
-
-const SECTIONS_BY_COURSE: Record<string, Section[]> = {
-  "math-nmt": [
+const LOCKED_CATEGORIES: Record<string, LockedCategory[]> = {
+  mathematics: [
     {
-      id: "sec1",
-      title: "Тема 1: Рівняння",
-      lessons: [
-        { id: "lesson-1", title: "Лінійні рівняння",   xp: 10 },
-        { id: "lesson-2", title: "Системи рівнянь",    xp: 10 },
-        { id: "lesson-3", title: "Квадратні рівняння", xp: 15 },
-        { id: "lesson-4", title: "Дискримінант",        xp: 15 },
-        { id: "lesson-5", title: "Корені рівнянь",      xp: 15 },
-      ],
-    },
-    {
-      id: "sec2",
-      title: "Тема 2: Функції",
-      lessons: [
-        { id: "lesson-6", title: "Формула коренів",  xp: 20 },
-        { id: "lesson-7", title: "Теорема Вієта",    xp: 20 },
-        { id: "lesson-8", title: "Задачі на корені", xp: 25 },
-        { id: "lesson-9", title: "Підсумковий тест", xp: 50, type: "checkpoint" },
-      ],
-    },
-  ],
-
-  geometry: [
-    {
-      id: "geo-sec1",
-      title: "Тема 1: Тіла обертання",
-      lessons: [
-        { id: "geo-1",         title: "Циліндр",               xp: 15 },
-        { id: "lesson-sphere", title: "Куля",                  xp: 20 },
-        { id: "lesson-cone",   title: "Конус",                 xp: 20 },
-        { id: "geo-4",         title: "Переріз тіл обертання", xp: 20, type: "challenge" as const },
-      ],
-    },
-    {
-      id: "geo-sec2",
-      title: "Тема 2: Многогранники",
-      lessons: [
-        { id: "geo-5", title: "Куб і прямокутний паралелепіпед", xp: 15 },
-        { id: "geo-6", title: "Піраміди",                        xp: 20 },
-        { id: "geo-7", title: "Призми",                          xp: 20 },
-        { id: "geo-8", title: "Підсумковий тест",                xp: 50, type: "checkpoint" },
-      ],
+      slug: "geometry",
+      title: "Геометрія",
+      description: "Планіметрія, стереометрія, тіла обертання",
     },
   ],
 };
 
-const COURSE_NAMES: Record<string, string> = {
-  "math-nmt": "Математика НМТ",
-  geometry:   "Геометрія",
-};
+function CategoryCard({
+  category,
+  courseSlug,
+}: {
+  category: CategorySummary;
+  courseSlug: string;
+}) {
+  const router = useRouter();
+  const progress =
+    category.topics_count > 0
+      ? Math.round((category.completed_topics / category.topics_count) * 100)
+      : 0;
 
-function buildCompleted(courseId: string): Set<string> {
-  const base = new Set<string>(COURSE_ALWAYS_COMPLETED[courseId] ?? []);
-  if (typeof window === "undefined") return base;
-  try {
-    const stored = localStorage.getItem("completedLessons");
-    if (stored) JSON.parse(stored).forEach((id: string) => base.add(id));
-  } catch {}
-  return base;
+  return (
+    <button
+      type="button"
+      onClick={() => router.push(`/courses/${courseSlug}/categories/${category.slug}`)}
+      className="w-full rounded-xl border border-border bg-surface p-4 text-left shadow-card transition-all duration-200 hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-light">
+          <MapPin className="h-6 w-6 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-base font-700 text-text-primary">{category.title}</h3>
+          <p className="mt-0.5 font-body text-sm text-text-secondary">
+            {category.completed_topics} / {category.topics_count} острів
+            {category.topics_count !== 1 ? "ів" : ""}
+          </p>
+        </div>
+        <span className="text-text-secondary">→</span>
+      </div>
+
+      {category.topics_count > 0 && (
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="font-display text-xs font-600 text-text-secondary">Прогрес</span>
+            <span className="font-display text-xs font-700 text-primary">{progress}%</span>
+          </div>
+          <ProgressBar
+            value={progress}
+            size="sm"
+            color={progress === 100 ? "correct" : "primary"}
+          />
+        </div>
+      )}
+    </button>
+  );
 }
 
-function getLessonStatus(lessonId: string, courseId: string, completed: Set<string>): NodeStatus {
-  if (completed.has(lessonId)) return "completed";
-  const ids = COURSE_LESSON_IDS[courseId] ?? [];
-  const idx = ids.indexOf(lessonId);
-  if (idx === -1) return "locked";
-  const firstUncompleted = ids.findIndex((id) => !completed.has(id));
-  if (idx === firstUncompleted)     return "current";
-  if (idx === firstUncompleted + 1) return "available";
-  return "locked";
+function LockedCategoryCard({ category }: { category: LockedCategory }) {
+  return (
+    <div
+      className={cn(
+        "w-full rounded-xl border border-border bg-surface p-4 opacity-50",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface-alt">
+          <Lock className="h-6 w-6 text-text-secondary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-base font-700 text-text-primary">{category.title}</h3>
+          <p className="mt-0.5 font-body text-sm text-text-secondary">{category.description}</p>
+        </div>
+        <span className="rounded-lg bg-surface-alt px-2 py-1 font-display text-xs font-600 text-text-secondary">
+          Незабаром
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export default function CoursePageClient() {
-  const params     = useParams<{ courseId: string; locale: string }>();
-  const courseId   = params.courseId;
-  const router     = useRouter();
-  const courseName = COURSE_NAMES[courseId] ?? "Курс";
-  const sections   = SECTIONS_BY_COURSE[courseId] ?? SECTIONS_BY_COURSE["math-nmt"];
+  const params = useParams<{ courseId: string }>();
+  const courseId = params.courseId;
 
-  const [completed, setCompleted] = useState<Set<string>>(
-    new Set(COURSE_ALWAYS_COMPLETED[courseId] ?? []),
-  );
+  const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const read = () => setCompleted(buildCompleted(courseId));
-    read();
-    window.addEventListener("focus", read);
-    return () => window.removeEventListener("focus", read);
+    coursesApi
+      .detail(courseId)
+      .then(setCourse)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [courseId]);
+
+  const lockedCategories = LOCKED_CATEGORIES[courseId] ?? [];
 
   return (
     <div className="min-h-screen bg-canvas">
       <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-app items-center gap-3 px-4 py-3">
           <Link
-            href={withToken("/home")}
+            href="/home"
             className="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-alt hover:text-text-primary"
           >
             <span className="text-lg leading-none">←</span>
           </Link>
-          <h1 className="font-display text-base font-700 text-text-primary">{courseName}</h1>
+          <h1 className="font-display text-base font-700 text-text-primary">
+            {course?.title ?? "Курс"}
+          </h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-app px-4 py-6">
-        {sections.map((section, sectionIdx) => (
-          <div key={section.id} className={sectionIdx > 0 ? "mt-8" : undefined}>
-            <div className="mb-6 rounded-xl border border-border bg-surface-alt px-4 py-3 text-center">
-              <h2 className="font-display text-base font-700 text-text-primary">{section.title}</h2>
-            </div>
-
-            <div className="relative flex flex-col items-center">
-              {section.lessons.map((lesson, idx) => {
-                const status      = getLessonStatus(lesson.id, courseId, completed);
-                const isCurrent   = status === "current";
-                const isClickable = status !== "locked";
-
-                return (
-                  <div key={lesson.id} className="flex flex-col items-center">
-                    {idx > 0 && <div className="h-6 w-0.5 bg-border" />}
-
-                    {isCurrent ? (
-                      <div className="flex flex-col items-center">
-                        <LessonNode
-                          status={status}
-                          type={lesson.type ?? "standard"}
-                          lessonNumber={idx + 1}
-                          title={lesson.title}
-                          xp={lesson.xp}
-                        />
-                        <div className="mt-3 w-52 rounded-xl border border-border bg-surface p-3 text-center shadow-modal">
-                          <p className="font-display text-sm font-700 text-text-primary">{lesson.title}</p>
-                          <p className="mt-0.5 font-display text-xs font-600 text-reward">+{lesson.xp} XP</p>
-                          <Button
-                            size="sm"
-                            className="mt-2 w-full"
-                            onClick={() =>
-                              router.push(withToken(`/courses/${courseId}/lessons/${lesson.id}`))
-                            }
-                          >
-                            <span className="flex items-center justify-center gap-1.5">
-                              Почати урок <Star className="h-3.5 w-3.5" />
-                            </span>
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <LessonNode
-                        status={status}
-                        type={lesson.type ?? "standard"}
-                        lessonNumber={idx + 1}
-                        title={lesson.title}
-                        xp={lesson.xp}
-                        onClick={
-                          isClickable
-                            ? () => router.push(withToken(`/courses/${courseId}/lessons/${lesson.id}`))
-                            : undefined
-                        }
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+        {loading && (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-24 animate-pulse rounded-xl bg-surface-alt" />
+            ))}
           </div>
-        ))}
-        <div className="h-8" />
+        )}
+
+        {!loading && course && (
+          <>
+            {course.subject && (
+              <p className="mb-6 font-body text-sm text-text-secondary">{course.subject}</p>
+            )}
+
+            <div className="space-y-3">
+              {course.categories.map((cat) => (
+                <CategoryCard key={cat.slug} category={cat} courseSlug={courseId} />
+              ))}
+              {lockedCategories.map((cat) => (
+                <LockedCategoryCard key={cat.slug} category={cat} />
+              ))}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
