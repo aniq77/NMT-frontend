@@ -1,21 +1,13 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { Award, Gem, Medal, Shield, Trophy, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Award, Medal, Trophy, Zap } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth.store";
+import { leaderboardApi, type LeaderboardEntry, type LeaderboardSeason } from "@/lib/api/leaderboard";
 
-type LeagueId = "bronze" | "silver" | "gold" | "sapphire" | "diamond";
-
-const LEAGUE_CONFIG: Record<
-  LeagueId,
-  { name: string; icon: React.ReactNode; banner: string; text: string; sub: string }
-> = {
-  bronze:   { name: "Бронзова ліга",   icon: <Shield className="h-16 w-16 text-amber-700" />,  banner: "bg-amber-50 border-amber-200",       text: "text-amber-800",     sub: "text-amber-600" },
-  silver:   { name: "Срібна ліга",     icon: <Medal  className="h-16 w-16 text-slate-400" />,  banner: "bg-slate-50 border-slate-200",        text: "text-slate-700",     sub: "text-slate-500" },
-  gold:     { name: "Золота ліга",     icon: <Trophy className="h-16 w-16 text-yellow-500" />, banner: "bg-reward-light border-reward",       text: "text-reward-dark",   sub: "text-reward-dark/70" },
-  sapphire: { name: "Сапфірова ліга",  icon: <Gem    className="h-16 w-16 text-blue-500" />,   banner: "bg-blue-50 border-blue-200",          text: "text-blue-700",      sub: "text-blue-500" },
-  diamond:  { name: "Діамантова ліга", icon: <Gem    className="h-16 w-16 text-primary" />,    banner: "bg-primary-light border-border-strong", text: "text-primary-dark", sub: "text-primary" },
-};
+const PROMOTE_COUNT = 10;
+const DEMOTE_START  = 16;
 
 const MEDALS: React.ReactNode[] = [
   <Trophy key="gold"   className="h-7 w-7 text-yellow-500" />,
@@ -23,58 +15,13 @@ const MEDALS: React.ReactNode[] = [
   <Award  key="bronze" className="h-7 w-7 text-amber-600" />,
 ];
 
-const PROMOTE_COUNT = 10;
-const DEMOTE_START  = 16;
-const CURRENT_LEAGUE: LeagueId = "gold";
-const CURRENT_USER = "yurii.arutiunov";
-
-type Entry = { rank: number; username: string; xp: number; level: number };
-
-const WEEKLY_ENTRIES: Entry[] = [
-  { rank: 1,  username: "МатКороль",        xp: 2840, level: 12 },
-  { rank: 2,  username: "АлгеброЗірка",     xp: 2210, level: 10 },
-  { rank: 3,  username: "ТригоноМетр",      xp: 1890, level: 9  },
-  { rank: 4,  username: "ВекторЧемпіон",    xp: 1720, level: 9  },
-  { rank: 5,  username: "ФункціяМастер",    xp: 1580, level: 8  },
-  { rank: 6,  username: "ІнтегралКрал",     xp: 1380, level: 8  },
-  { rank: 7,  username: CURRENT_USER,        xp: 1250, level: 7  },
-  { rank: 8,  username: "КвадратРівняння",  xp: 1140, level: 7  },
-  { rank: 9,  username: "МатЗнавець",       xp: 980,  level: 6  },
-  { rank: 10, username: "ПіфагорФан",       xp: 850,  level: 6  },
-  { rank: 11, username: "ГеометрМайстер",   xp: 720,  level: 5  },
-  { rank: 12, username: "РівняннєЛюб",      xp: 610,  level: 5  },
-  { rank: 13, username: "НМТБоєць",         xp: 490,  level: 4  },
-  { rank: 14, username: "МатЕнтузіаст",     xp: 380,  level: 4  },
-  { rank: 15, username: "ЧислоКрал",        xp: 290,  level: 3  },
-  { rank: 16, username: "МатНовачок",       xp: 200,  level: 3  },
-  { rank: 17, username: "УчнівМатема",      xp: 150,  level: 2  },
-  { rank: 18, username: "АлгеброПочат",     xp: 110,  level: 2  },
-  { rank: 19, username: "МатСтудент",       xp:  70,  level: 2  },
-  { rank: 20, username: "ПочатківецьМат",   xp:  40,  level: 1  },
-];
-
-const MONTHLY_ENTRIES: Entry[] = WEEKLY_ENTRIES.map((e) => ({
-  ...e,
-  xp: Math.round(e.xp * 4.2 + Math.random() * 200),
-})).sort((a, b) => b.xp - a.xp).map((e, i) => ({ ...e, rank: i + 1 }));
-
-function getSeasonEnd(): Date {
-  const now = new Date();
-  const day = now.getDay();
-  const daysToSunday = day === 0 ? 7 : 7 - day;
-  const end = new Date(now);
-  end.setDate(now.getDate() + daysToSunday);
-  end.setHours(23, 59, 59, 0);
-  return end;
-}
-
-function useCountdown(end: Date) {
+function useCountdown(endIso: string) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
-  const diff = Math.max(0, end.getTime() - now.getTime());
+  const diff = Math.max(0, new Date(endIso).getTime() - now.getTime());
   return {
     days:    Math.floor(diff / 86_400_000),
     hours:   Math.floor((diff % 86_400_000) / 3_600_000),
@@ -92,6 +39,28 @@ function TimeBox({ value, label }: { value: number; label: string }) {
         </span>
       </div>
       <span className="font-display text-xs font-600 text-text-secondary">{label}</span>
+    </div>
+  );
+}
+
+function SeasonBanner({ season }: { season: LeaderboardSeason }) {
+  const { days, hours, minutes, seconds } = useCountdown(season.ends_at);
+  return (
+    <div className="border-b border-reward bg-reward-light px-4 pb-5 pt-4">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <Trophy className="h-16 w-16 text-yellow-500" />
+        <h2 className="font-display text-xl font-800 text-reward-dark">{season.title}</h2>
+        <p className="font-body text-sm text-reward-dark/70">Сезон завершується через</p>
+        <div className="flex items-end gap-2">
+          <TimeBox value={days}    label="дні" />
+          <span className="mb-3 font-display text-lg font-700 text-text-secondary">:</span>
+          <TimeBox value={hours}   label="год" />
+          <span className="mb-3 font-display text-lg font-700 text-text-secondary">:</span>
+          <TimeBox value={minutes} label="хв" />
+          <span className="mb-3 font-display text-lg font-700 text-text-secondary">:</span>
+          <TimeBox value={seconds} label="сек" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -126,9 +95,10 @@ function ZoneDivider({ type }: { type: "promote" | "safe" | "demote" }) {
   );
 }
 
-function Row({ entry, isCurrentUser }: { entry: Entry; isCurrentUser: boolean }) {
+function Row({ entry, isCurrentUser }: { entry: LeaderboardEntry; isCurrentUser: boolean }) {
   const isDemotion = entry.rank >= DEMOTE_START;
   const isTop3     = entry.rank <= 3;
+  const name = entry.nickname ?? `User ${entry.rank}`;
 
   return (
     <div
@@ -147,7 +117,7 @@ function Row({ entry, isCurrentUser }: { entry: Entry; isCurrentUser: boolean })
         {isTop3 ? MEDALS[entry.rank - 1] : `${entry.rank}.`}
       </span>
 
-      <Avatar name={entry.username} size="sm" level={entry.level} />
+      <Avatar name={name} size="sm" level={entry.level} />
 
       <span
         className={cn(
@@ -155,7 +125,7 @@ function Row({ entry, isCurrentUser }: { entry: Entry; isCurrentUser: boolean })
           isCurrentUser ? "text-primary-dark" : "text-text-primary",
         )}
       >
-        {entry.username}
+        {name}
         {isCurrentUser && (
           <span className="ml-1 font-body text-xs font-medium text-primary"> (ти)</span>
         )}
@@ -169,25 +139,83 @@ function Row({ entry, isCurrentUser }: { entry: Entry; isCurrentUser: boolean })
             isCurrentUser ? "text-primary-dark" : isDemotion ? "text-wrong-dark" : "text-text-primary",
           )}
         >
-          {entry.xp.toLocaleString("uk")}
+          {entry.points.toLocaleString("uk")}
         </span>
       </div>
     </div>
   );
 }
 
-export default function LeaderboardPage() {
-  const [tab, setTab] = useState<"weekly" | "monthly">("weekly");
-  const league = LEAGUE_CONFIG[CURRENT_LEAGUE];
-  const seasonEnd = useMemo(getSeasonEnd, []);
-  const { days, hours, minutes, seconds } = useCountdown(seasonEnd);
+type PageState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "empty" }
+  | { status: "ready"; season: LeaderboardSeason; entries: LeaderboardEntry[] };
 
-  const entries = tab === "weekly" ? WEEKLY_ENTRIES : MONTHLY_ENTRIES;
-  const userEntry = entries.find((e) => e.username === CURRENT_USER)!;
+export default function LeaderboardPage() {
+  const { user } = useAuthStore();
+  const [state, setState] = useState<PageState>({ status: "loading" });
+
+  useEffect(() => {
+    leaderboardApi
+      .get(50)
+      .then((data) => {
+        if (!data.entries.length) {
+          setState({ status: "empty" });
+        } else {
+          setState({ status: "ready", season: data.season, entries: data.entries });
+        }
+      })
+      .catch(() => setState({ status: "error" }));
+  }, []);
+
+  if (state.status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
+      </div>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas px-4">
+        <p className="font-body text-text-secondary">Не вдалося завантажити рейтинг</p>
+        <button
+          type="button"
+          onClick={() => {
+            setState({ status: "loading" });
+            leaderboardApi
+              .get(50)
+              .then((data) =>
+                setState({ status: "ready", season: data.season, entries: data.entries }),
+              )
+              .catch(() => setState({ status: "error" }));
+          }}
+          className="rounded-lg bg-primary px-4 py-2 font-display text-sm font-700 text-white"
+        >
+          Спробувати ще раз
+        </button>
+      </div>
+    );
+  }
+
+  if (state.status === "empty") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
+        <p className="font-body text-text-secondary">Рейтинг поки що порожній</p>
+      </div>
+    );
+  }
+
+  const { season, entries } = state;
+  const currentUserId = user?.id;
+  const userEntry = entries.find((e) => e.user_id === currentUserId);
   const rank10Entry = entries.find((e) => e.rank === PROMOTE_COUNT);
-  const xpToTop10 = rank10Entry && userEntry.rank > PROMOTE_COUNT
-    ? rank10Entry.xp - userEntry.xp + 1
-    : 0;
+  const xpToTop10 =
+    rank10Entry && userEntry && userEntry.rank > PROMOTE_COUNT
+      ? rank10Entry.points - userEntry.points + 1
+      : 0;
 
   const promoEntries = entries.filter((e) => e.rank <= PROMOTE_COUNT);
   const safeEntries  = entries.filter((e) => e.rank > PROMOTE_COUNT && e.rank < DEMOTE_START);
@@ -202,96 +230,68 @@ export default function LeaderboardPage() {
       </header>
 
       <div className="mx-auto max-w-app">
-        {/* League banner */}
-        <div className={cn("border-b px-4 pb-5 pt-4", league.banner)}>
-          <div className="flex flex-col items-center gap-2 text-center">
-            {league.icon}
-            <h2 className={cn("font-display text-xl font-800", league.text)}>{league.name}</h2>
-            <p className={cn("font-body text-sm", league.sub)}>Сезон завершується через</p>
-            <div className="flex items-end gap-2">
-              <TimeBox value={days}    label="дні" />
-              <span className="mb-3 font-display text-lg font-700 text-text-secondary">:</span>
-              <TimeBox value={hours}   label="год" />
-              <span className="mb-3 font-display text-lg font-700 text-text-secondary">:</span>
-              <TimeBox value={minutes} label="хв" />
-              <span className="mb-3 font-display text-lg font-700 text-text-secondary">:</span>
-              <TimeBox value={seconds} label="сек" />
-            </div>
-          </div>
-        </div>
+        <SeasonBanner season={season} />
 
-        {/* Tabs */}
-        <div className="flex border-b border-border bg-surface">
-          {(["weekly", "monthly"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={cn(
-                "flex-1 py-3 font-display text-sm font-700 transition-colors",
-                tab === t
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-text-secondary hover:text-text-primary",
-              )}
-            >
-              {t === "weekly" ? "Тижневий" : "Місячний"}
-            </button>
-          ))}
-        </div>
-
-        {/* List */}
         <div className="bg-surface pb-40">
           <ZoneDivider type="promote" />
 
           {promoEntries.map((entry) => (
-            <Row key={entry.rank} entry={entry} isCurrentUser={entry.username === CURRENT_USER} />
+            <Row key={entry.user_id} entry={entry} isCurrentUser={entry.user_id === currentUserId} />
           ))}
 
           <ZoneDivider type="safe" />
 
           {safeEntries.map((entry) => (
-            <Row key={entry.rank} entry={entry} isCurrentUser={entry.username === CURRENT_USER} />
+            <Row key={entry.user_id} entry={entry} isCurrentUser={entry.user_id === currentUserId} />
           ))}
 
-          <ZoneDivider type="demote" />
-
-          {demotEntries.map((entry) => (
-            <Row key={entry.rank} entry={entry} isCurrentUser={entry.username === CURRENT_USER} />
-          ))}
+          {demotEntries.length > 0 && (
+            <>
+              <ZoneDivider type="demote" />
+              {demotEntries.map((entry) => (
+                <Row
+                  key={entry.user_id}
+                  entry={entry}
+                  isCurrentUser={entry.user_id === currentUserId}
+                />
+              ))}
+            </>
+          )}
         </div>
       </div>
 
-      {/* Sticky user position card (above bottom nav) */}
-      <div className="fixed bottom-[72px] left-0 right-0 z-30 px-4">
-        <div className="mx-auto max-w-app overflow-hidden rounded-xl bg-primary shadow-modal">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="font-display text-sm font-600 text-white/70">
-              #{userEntry.rank}
-            </span>
-            <Avatar name={userEntry.username} size="sm" level={userEntry.level} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-display text-sm font-700 text-white">
-                {userEntry.username}
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="font-display text-sm font-700 text-white tabular-nums">
-                {userEntry.xp.toLocaleString("uk")} XP
-              </p>
-              {xpToTop10 > 0 && (
-                <p className="font-display text-xs font-600 text-white/70">
-                  до топ-10: +{xpToTop10.toLocaleString("uk")} XP
+      {userEntry && (
+        <div className="fixed bottom-[72px] left-0 right-0 z-30 px-4">
+          <div className="mx-auto max-w-app overflow-hidden rounded-xl bg-primary shadow-modal">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <span className="font-display text-sm font-600 text-white/70">
+                #{userEntry.rank}
+              </span>
+              <Avatar name={userEntry.nickname ?? "Ти"} size="sm" level={userEntry.level} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-display text-sm font-700 text-white">
+                  {userEntry.nickname ?? user?.email}
                 </p>
-              )}
-              {userEntry.rank <= PROMOTE_COUNT && (
-                <p className="font-display text-xs font-600 text-correct-light">
-                  ↑ Зона підвищення
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="font-display text-sm font-700 text-white tabular-nums">
+                  {userEntry.points.toLocaleString("uk")} XP
                 </p>
-              )}
+                {xpToTop10 > 0 && (
+                  <p className="font-display text-xs font-600 text-white/70">
+                    до топ-10: +{xpToTop10.toLocaleString("uk")} XP
+                  </p>
+                )}
+                {userEntry.rank <= PROMOTE_COUNT && (
+                  <p className="font-display text-xs font-600 text-correct-light">
+                    ↑ Зона підвищення
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
