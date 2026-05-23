@@ -1,5 +1,21 @@
 import { api } from "./client";
 
+export type QuestionOption = {
+  id: string;
+  text: string;
+  is_correct: boolean;
+  order_index: number;
+};
+
+export type Question = {
+  id: string;
+  text: string;
+  type: string;
+  explanation: string;
+  order_index: number;
+  options: QuestionOption[];
+};
+
 export type StartLessonResult = {
   id: string;
   title: string;
@@ -33,4 +49,7 @@ export const lessonsApi = {
 
   complete: (lessonId: string, payload: CompleteLessonPayload) =>
     api.post<CompleteLessonResult>(`/api/v1/lessons/${lessonId}/complete/`, payload),
+
+  questions: (lessonId: string) =>
+    api.get<Question[]>(`/api/v1/lessons/${lessonId}/questions/`),
 };
