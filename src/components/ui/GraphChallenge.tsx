@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useLayoutEffect, useState } from "react";
 
 // SVG viewport: 320 × 300, data range: x ∈ [−5, 5], y ∈ [−5, 5]
 const W = 320;
@@ -46,7 +46,9 @@ export function GraphChallenge({ prompt, subprompt, checked, isCorrect, c, onCCh
   const dragging = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const onCChangeRef = useRef(onCChange);
-  onCChangeRef.current = onCChange;
+  useLayoutEffect(() => {
+    onCChangeRef.current = onCChange;
+  });
 
   const clampedC = Math.max(-4.5, Math.min(4.5, c));
   const discriminant = -4 * clampedC;

@@ -1,55 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
-import { AlertTriangle, BookOpen, Flame, Globe, Hash, HeartCrack, Triangle, X } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { AlertTriangle, BookOpen, Flame, Hash, HeartCrack, Triangle, X } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CourseCard } from "@/components/ui/CourseCard";
 import { useAuthStore } from "@/store/auth.store";
 import { coursesApi, type CourseListItem } from "@/lib/api/courses";
 
-type Difficulty = "beginner" | "intermediate" | "advanced";
-
-type CourseMeta = {
-  slug: string;
-  icon: React.ReactNode;
-  difficulty: Difficulty;
-};
-
-const COURSE_META: Record<string, CourseMeta> = {
-  mathematics: {
-    slug: "mathematics",
-    icon: <Hash className="h-8 w-8 text-primary" />,
-    difficulty: "intermediate",
-  },
-};
-
-type LockedCourse = {
-  slug: string;
-  title: string;
-  subject: string;
-  description: string;
-  icon: React.ReactNode;
-  difficulty: Difficulty;
-};
-
-const LOCKED_COURSES: LockedCourse[] = [
-  {
-    slug: "ukrainian",
-    title: "Українська мова",
-    subject: "Граматика та правопис",
-    description: "Підготовка до НМТ з української мови та літератури. Незабаром.",
-    icon: <BookOpen className="h-8 w-8 text-primary" />,
-    difficulty: "beginner",
-  },
-  {
-    slug: "english",
-    title: "Англійська мова",
-    subject: "Граматика та лексика",
-    description: "Підготовка до НМТ з англійської мови. Незабаром.",
-    icon: <Globe className="h-8 w-8 text-primary" />,
-    difficulty: "beginner",
-  },
-];
+function getSubjectIcon(subject: string): React.ReactNode {
+  const s = subject.toLowerCase();
+  if (s.includes("алгебр") || s.includes("математ")) return <Hash className="h-8 w-8 text-primary" />;
+  if (s.includes("геометр")) return <Triangle className="h-8 w-8 text-primary" />;
+  return <BookOpen className="h-8 w-8 text-primary" />;
+}
 
 type StreakStatus = "broken" | "at-risk" | null;
 
@@ -58,7 +21,6 @@ export default function HomePage() {
   const { user, fetchMe } = useAuthStore();
 
   const [courses, setCourses] = useState<CourseListItem[]>([]);
-  const [streakStatus, setStreakStatus] = useState<StreakStatus>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
@@ -66,22 +28,26 @@ export default function HomePage() {
     coursesApi.list().then(setCourses).catch(() => {});
   }, [fetchMe]);
 
-  useEffect(() => {
-    if (!user) return;
+  const streakStatus = useMemo<StreakStatus>(() => {
+    if (!user || !user.last_activity_date) return null;
     const lastActivity = new Date(user.last_activity_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     lastActivity.setHours(0, 0, 0, 0);
     const diffDays = Math.round((today.getTime() - lastActivity.getTime()) / 86_400_000);
-    if (diffDays > 1) setStreakStatus("broken");
-    else if (diffDays === 1) setStreakStatus("at-risk");
+    if (diffDays > 1) return "broken";
+    if (diffDays === 1) return "at-risk";
+    return null;
   }, [user]);
 
-  const showBanner = !bannerDismissed && streakStatus !== null;
-
   const activeCourse = courses.find(
-    (c) => c.user_progress !== null && (c.user_progress.progress_percent ?? 0) > 0 && (c.user_progress.progress_percent ?? 0) < 100,
+    (c) =>
+      c.user_progress !== null &&
+      (c.user_progress.progress_percent ?? 0) > 0 &&
+      (c.user_progress.progress_percent ?? 0) < 100,
   );
+
+  const showBanner = !bannerDismissed && streakStatus !== null;
 
   if (!user) return null;
 
@@ -99,10 +65,11 @@ export default function HomePage() {
         >
           <div className="mx-auto flex max-w-app items-center gap-3">
             <span className="shrink-0">
-              {streakStatus === "broken"
-                ? <HeartCrack className="h-6 w-6 text-wrong-dark" />
-                : <AlertTriangle className="h-6 w-6 text-reward-dark" />
-              }
+              {streakStatus === "broken" ? (
+                <HeartCrack className="h-6 w-6 text-wrong-dark" />
+              ) : (
+                <AlertTriangle className="h-6 w-6 text-reward-dark" />
+              )}
             </span>
             <div className="min-w-0 flex-1">
               <p
@@ -144,7 +111,7 @@ export default function HomePage() {
       <main className="mx-auto max-w-app space-y-6 px-4 py-6">
         <div>
           <h1 className="font-display text-xl font-800 text-text-primary">
-            Привіт, {user.nickname}!
+            Привіт, {user.nickname ?? user.email}!
           </h1>
           <p className="mt-1 inline-flex items-center gap-1.5 font-body text-base text-text-secondary">
             {user.streak_days} днів поспіль — так тримати!
@@ -160,7 +127,7 @@ export default function HomePage() {
           >
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                {COURSE_META[activeCourse.slug]?.icon ?? <BookOpen className="h-8 w-8 text-white" />}
+                {getSubjectIcon(activeCourse.subject)}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-display text-xs font-600 opacity-80">Продовжити навчання</p>
@@ -187,42 +154,31 @@ export default function HomePage() {
 
         <div>
           <h2 className="mb-4 font-display text-lg font-700 text-text-primary">Курси</h2>
-          <div className="space-y-4">
-            {courses.map((course) => {
-              const meta = COURSE_META[course.slug];
-              const progress = course.user_progress?.progress_percent ?? 0;
-              const isEnrolled = course.user_progress !== null;
-              return (
-                <CourseCard
-                  key={course.slug}
-                  id={course.slug}
-                  icon={meta?.icon ?? <Triangle className="h-8 w-8 text-primary" />}
-                  title={course.title}
-                  subject={course.subject}
-                  description={course.description}
-                  progress={progress}
-                  difficulty={meta?.difficulty ?? "beginner"}
-                  isEnrolled={isEnrolled}
-                  onClick={() => router.push(`/courses/${course.slug}`)}
-                />
-              );
-            })}
-
-            {LOCKED_COURSES.map((course) => (
-              <CourseCard
-                key={course.slug}
-                id={course.slug}
-                icon={course.icon}
-                title={course.title}
-                subject={course.subject}
-                description={course.description}
-                progress={0}
-                difficulty={course.difficulty}
-                isEnrolled={false}
-                isLocked={true}
-              />
-            ))}
-          </div>
+          {courses.length === 0 ? (
+            <div className="rounded-xl border border-border bg-surface px-4 py-8 text-center">
+              <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {courses.map((course) => {
+                const progress = course.user_progress?.progress_percent ?? 0;
+                return (
+                  <CourseCard
+                    key={course.id}
+                    id={course.slug}
+                    icon={getSubjectIcon(course.subject)}
+                    title={course.title}
+                    subject={course.subject}
+                    description={course.description}
+                    difficulty="intermediate"
+                    isEnrolled={course.user_progress !== null}
+                    progress={progress}
+                    onClick={() => router.push(`/courses/${course.slug}`)}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </div>

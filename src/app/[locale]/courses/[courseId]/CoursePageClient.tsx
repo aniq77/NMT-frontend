@@ -75,11 +75,7 @@ function CategoryCard({
 
 function LockedCategoryCard({ category }: { category: LockedCategory }) {
   return (
-    <div
-      className={cn(
-        "w-full rounded-xl border border-border bg-surface p-4 opacity-50",
-      )}
-    >
+    <div className={cn("w-full rounded-xl border border-border bg-surface p-4 opacity-50")}>
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface-alt">
           <Lock className="h-6 w-6 text-text-secondary" />

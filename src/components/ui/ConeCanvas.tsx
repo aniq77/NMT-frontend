@@ -6,7 +6,6 @@ import * as THREE from "three";
 
 const R = 1.5;   // base radius
 const H = 3.2;   // height
-const L = Math.sqrt(R * R + H * H); // slant height ≈ 3.53
 
 // Keep x ≥ 0 half (same convention as SphereCanvas)
 const CLIP = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
