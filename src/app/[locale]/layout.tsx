@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations } from "next-intl/server";
+import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { Providers } from "@/components/providers/Providers";
 
 type Props = {
   children: React.ReactNode;
@@ -12,8 +12,19 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "common" });
-  return { title: t("appName") };
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  return {
+    openGraph: {
+      locale: locale === "en" ? "en_US" : "uk_UA",
+    },
+    alternates: {
+      languages: {
+        uk: base,
+        en: `${base}/en`,
+        "x-default": base,
+      },
+    },
+  };
 }
 
 export function generateStaticParams() {
@@ -30,21 +41,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <body>
-        <ThemeProvider
-          attribute="data-theme"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NextIntlClientProvider messages={messages}>
-            <div className="mx-auto max-w-app min-h-screen">
-              {children}
-            </div>
-          </NextIntlClientProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+    <Providers>
+      <NextIntlClientProvider messages={messages}>
+        {children}
+      </NextIntlClientProvider>
+    </Providers>
   );
 }
