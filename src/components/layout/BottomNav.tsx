@@ -2,7 +2,6 @@
 import { BookOpen, Trophy, User } from "lucide-react";
 import { Link, usePathname } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-import { withToken } from "@/lib/dev";
 
 type IconComp = React.ComponentType<{ className?: string }>;
 
@@ -23,7 +22,7 @@ export function BottomNav() {
           return (
             <Link
               key={href}
-              href={withToken(href)}
+              href={href}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1 py-3 transition-colors",
                 isActive ? "text-primary" : "text-text-secondary hover:text-text-primary",

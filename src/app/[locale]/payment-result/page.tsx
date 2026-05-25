@@ -10,7 +10,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { withToken } from "@/lib/dev";
 import { paymentApi } from "@/lib/api/payment";
 import { ApiError } from "@/lib/api/client";
 
@@ -164,12 +163,12 @@ export default function PaymentResultPage() {
 
         <div className="mt-8 space-y-3">
           {isSuccess && (
-            <Button size="lg" className="w-full" onClick={() => router.push(withToken("/home"))}>
+            <Button size="lg" className="w-full" onClick={() => router.push("/home")}>
               Перейти до навчання
             </Button>
           )}
           {canRetry && (
-            <Button size="lg" className="w-full" onClick={() => router.push(withToken("/subscription"))}>
+            <Button size="lg" className="w-full" onClick={() => router.push("/subscription")}>
               Спробувати ще раз
             </Button>
           )}
@@ -177,7 +176,7 @@ export default function PaymentResultPage() {
             variant="ghost"
             size="lg"
             className="w-full"
-            onClick={() => router.push(withToken("/home"))}
+            onClick={() => router.push("/home")}
           >
             На головну
           </Button>

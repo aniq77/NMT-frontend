@@ -12,7 +12,6 @@ import { GoogleButton } from "./GoogleButton";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useRouter, Link } from "@/lib/navigation";
-import { withToken } from "@/lib/dev";
 
 const registerSchema = z
   .object({
@@ -73,7 +72,7 @@ export function RegisterForm() {
         </h2>
         <p className="font-body text-sm text-text-secondary">{t("register.verifyHint")}</p>
         <button
-          onClick={() => router.push(withToken("/login"))}
+          onClick={() => router.push("/login")}
           className="font-display text-sm font-600 text-primary hover:underline"
         >
           {t("register.backToLogin")}
@@ -135,7 +134,7 @@ export function RegisterForm() {
 
       <p className="text-center font-body text-sm text-text-secondary">
         {t("register.hasAccount")}{" "}
-        <Link href={withToken("/login")} className="font-600 text-primary hover:underline">
+        <Link href="/login" className="font-600 text-primary hover:underline">
           {t("register.loginLink")}
         </Link>
       </p>

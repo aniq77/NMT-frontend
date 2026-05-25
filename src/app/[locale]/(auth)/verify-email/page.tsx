@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { X } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
-import { withToken } from "@/lib/dev";
 
 type Props = {
   searchParams: Promise<{ token?: string }>;
@@ -13,12 +12,11 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
   const t = await getTranslations("auth");
 
   if (!token) {
-    redirect(withToken("/login"));
+    redirect("/login");
   }
 
   try {
     await authApi.verifyEmail(token);
-    redirect(withToken("/"));
   } catch {
     return (
       <div className="flex flex-col items-center gap-4 py-4 text-center">
@@ -32,4 +30,6 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
       </div>
     );
   }
+
+  redirect("/");
 }

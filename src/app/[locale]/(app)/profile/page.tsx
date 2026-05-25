@@ -22,7 +22,6 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
-import { withToken } from "@/lib/dev";
 import { useAuthStore } from "@/store/auth.store";
 import type { User } from "@/types/auth";
 
@@ -106,7 +105,7 @@ export default function ProfilePage() {
 
   async function handleLogout() {
     await logout();
-    router.push(withToken("/login"));
+    router.push("/login");
   }
 
   async function handleRestoreStreak() {
@@ -227,7 +226,7 @@ export default function ProfilePage() {
         {/* Subscription */}
         <button
           type="button"
-          onClick={() => router.push(withToken("/subscription"))}
+          onClick={() => router.push("/subscription")}
           className="flex w-full items-center gap-3 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-4 text-left transition-colors hover:from-primary/10 hover:to-primary/15"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-button">

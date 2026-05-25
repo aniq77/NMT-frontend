@@ -12,7 +12,6 @@ import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter, Link } from "@/lib/navigation";
-import { withToken } from "@/lib/dev";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -39,7 +38,7 @@ export function LoginForm() {
     try {
       const user = await authApi.login(data);
       setUser(user);
-      router.replace(user.is_onboarded ? withToken("/") : "/onboarding");
+      router.replace(user.is_onboarded ? "/" : "/onboarding");
     } catch (err) {
       if (err instanceof ApiError) {
         const { data: apiErrors } = err;
@@ -95,7 +94,7 @@ export function LoginForm() {
 
       <p className="text-center font-body text-sm text-text-secondary">
         {t("login.noAccount")}{" "}
-        <Link href={withToken("/register")} className="font-600 text-primary hover:underline">
+        <Link href="/register" className="font-600 text-primary hover:underline">
           {t("login.registerLink")}
         </Link>
       </p>
