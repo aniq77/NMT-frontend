@@ -16,6 +16,8 @@ export type User = {
   last_activity_date: string | null;
   is_email_verified: boolean;
   is_phone_verified: boolean;
+  is_onboarded: boolean;
+  daily_goal_minutes: number | null;
   created_at: string;
   updated_at: string;
   date_joined: string;
