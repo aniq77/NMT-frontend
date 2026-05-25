@@ -20,7 +20,7 @@ export function GoogleButton({ onError }: Props) {
     try {
       const user = await authApi.loginWithGoogle({ id_token: credential });
       setUser(user);
-      router.replace("/");
+      router.replace(user.is_onboarded ? "/" : "/onboarding");
     } catch (err) {
       const message =
         err instanceof ApiError ? Object.values(err.data).flat().join(" ") : t("errors.generic");

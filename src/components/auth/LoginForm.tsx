@@ -39,7 +39,7 @@ export function LoginForm() {
     try {
       const user = await authApi.login(data);
       setUser(user);
-      router.replace(withToken("/"));
+      router.replace(user.is_onboarded ? withToken("/") : "/onboarding");
     } catch (err) {
       if (err instanceof ApiError) {
         const { data: apiErrors } = err;
