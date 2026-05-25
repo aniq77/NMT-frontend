@@ -53,6 +53,7 @@
       "changePhone": "Change number"
     },
     "verifyEmail": {
+      "verifying": "Verifying your email...",
       "errorTitle": "Invalid link",
       "errorHint": "This link has expired or already been used. Please register again."
     },
