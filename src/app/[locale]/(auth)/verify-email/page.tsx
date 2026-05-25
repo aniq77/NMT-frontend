@@ -26,7 +26,7 @@ export default function VerifyEmailPage() {
       .verifyEmail(token)
       .then((user) => {
         setUser(user);
-        router.replace("/home");
+        router.replace(user.is_onboarded ? "/home" : "/onboarding");
       })
       .catch(() => setStatus("error"));
   }, [token, router, setUser]);
