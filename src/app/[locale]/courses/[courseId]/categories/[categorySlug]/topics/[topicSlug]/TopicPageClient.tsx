@@ -101,6 +101,7 @@ export default function TopicPageClient() {
                         lessonNumber={idx + 1}
                         title={lesson.title}
                         xp={lesson.exp_reward}
+                        completionCount={lesson.completion_count}
                       />
                       <div className="mt-3 w-52 rounded-xl border border-border bg-surface p-3 text-center shadow-modal">
                         <p className="font-display text-sm font-700 text-text-primary">
@@ -138,6 +139,7 @@ export default function TopicPageClient() {
                       lessonNumber={idx + 1}
                       title={lesson.title}
                       xp={lesson.exp_reward}
+                      completionCount={lesson.completion_count}
                       onClick={
                         isClickable
                           ? () =>
