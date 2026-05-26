@@ -7,10 +7,13 @@ import { LessonNode } from "@/components/ui/LessonNode";
 import { Button } from "@/components/ui/Button";
 import { coursesApi, type LessonSummary, type TopicDetail } from "@/lib/api/courses";
 
-type NodeStatus = "completed" | "current" | "available" | "locked";
+type NodeStatus = "golden" | "completed" | "current" | "available" | "locked";
 type NodeType = "standard" | "challenge" | "checkpoint";
 
+const GOLD_COMPLETIONS = 3;
+
 function getLessonStatus(lesson: LessonSummary, lessons: LessonSummary[]): NodeStatus {
+  if (lesson.completion_count >= GOLD_COMPLETIONS) return "golden";
   if (lesson.is_completed) return "completed";
   const firstUncompleted = lessons.findIndex((l) => !l.is_completed);
   const idx = lessons.indexOf(lesson);
@@ -83,14 +86,14 @@ export default function TopicPageClient() {
             {lessons.map((lesson, idx) => {
               const status = getLessonStatus(lesson, lessons);
               const type = getLessonType(lesson);
-              const isCurrent = status === "current";
+              const isActive = status === "current" || status === "golden";
               const isClickable = status !== "locked";
 
               return (
                 <div key={lesson.id} className="flex flex-col items-center">
                   {idx > 0 && <div className="h-6 w-0.5 bg-border" />}
 
-                  {isCurrent ? (
+                  {isActive ? (
                     <div className="flex flex-col items-center">
                       <LessonNode
                         status={status}
@@ -103,9 +106,15 @@ export default function TopicPageClient() {
                         <p className="font-display text-sm font-700 text-text-primary">
                           {lesson.title}
                         </p>
-                        <p className="mt-0.5 font-display text-xs font-600 text-reward">
-                          +{lesson.exp_reward} XP
-                        </p>
+                        {status === "golden" ? (
+                          <p className="mt-0.5 font-display text-xs font-600 text-reward">
+                            {lesson.completion_count} / {GOLD_COMPLETIONS} ★
+                          </p>
+                        ) : (
+                          <p className="mt-0.5 font-display text-xs font-600 text-reward">
+                            +{lesson.exp_reward} XP
+                          </p>
+                        )}
                         <Button
                           size="sm"
                           className="mt-2 w-full"
@@ -116,7 +125,8 @@ export default function TopicPageClient() {
                           }
                         >
                           <span className="flex items-center justify-center gap-1.5">
-                            Почати урок <Star className="h-3.5 w-3.5" />
+                            {status === "golden" ? "Пройти ще раз" : "Почати урок"}{" "}
+                            <Star className="h-3.5 w-3.5" />
                           </span>
                         </Button>
                       </div>
