@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Lock, Star } from "lucide-react";
+import { Clock, Lock, Star } from "lucide-react";
 import { Link, useRouter } from "@/lib/navigation";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { coursesApi, type CategoryDetail, type TopicSummary } from "@/lib/api/courses";
@@ -22,39 +22,53 @@ function IslandCard({
       ? Math.min(Math.round((topic.completion_count / topic.required_completions) * 100), 100)
       : 0;
 
+  const isDisabled = !topic.is_unlocked || topic.is_coming_soon;
+
+  function getIcon() {
+    if (topic.is_coming_soon) return <Clock className="h-6 w-6 text-text-secondary" />;
+    if (!topic.is_unlocked) return <Lock className="h-6 w-6 text-text-secondary" />;
+    if (topic.is_gold) return "⭐";
+    return "🏝";
+  }
+
+  function getIconBg() {
+    if (topic.is_coming_soon) return "bg-surface-alt";
+    if (topic.is_gold) return "bg-reward-light";
+    if (topic.is_unlocked) return "bg-primary-light";
+    return "bg-surface-alt";
+  }
+
   return (
     <button
       type="button"
-      disabled={!topic.is_unlocked}
+      disabled={isDisabled}
       onClick={() =>
         router.push(`/courses/${courseSlug}/categories/${categorySlug}/topics/${topic.slug}`)
       }
       className={cn(
         "w-full rounded-xl border bg-surface p-4 text-left shadow-card transition-all duration-200",
-        topic.is_unlocked
-          ? "border-border hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
-          : "cursor-not-allowed border-border opacity-50",
+        topic.is_coming_soon
+          ? "cursor-not-allowed border-dashed border-border opacity-60"
+          : topic.is_unlocked
+            ? "border-border hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
+            : "cursor-not-allowed border-border opacity-50",
       )}
     >
       <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl",
-            topic.is_gold
-              ? "bg-reward-light"
-              : topic.is_unlocked
-                ? "bg-primary-light"
-                : "bg-surface-alt",
-          )}
-        >
-          {topic.is_unlocked ? (topic.is_gold ? "⭐" : "🏝") : <Lock className="h-6 w-6 text-text-secondary" />}
+        <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl", getIconBg())}>
+          {getIcon()}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="font-display text-base font-700 text-text-primary">{topic.title}</h3>
-            {topic.is_gold && (
+            {topic.is_gold && !topic.is_coming_soon && (
               <Star className="h-4 w-4 shrink-0 fill-reward text-reward" />
+            )}
+            {topic.is_coming_soon && (
+              <span className="rounded-full bg-surface-alt px-2 py-0.5 font-display text-xs font-600 text-text-secondary">
+                Незабаром
+              </span>
             )}
           </div>
           {topic.description && (
@@ -65,7 +79,7 @@ function IslandCard({
         </div>
       </div>
 
-      {topic.is_unlocked && topic.required_completions > 0 && (
+      {topic.is_unlocked && !topic.is_coming_soon && topic.required_completions > 0 && (
         <div className="mt-3">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="font-display text-xs font-600 text-text-secondary">

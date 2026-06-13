@@ -47,6 +47,7 @@ export type TopicSummary = {
   completion_count: number;
   is_gold: boolean;
   is_unlocked: boolean;
+  is_coming_soon: boolean;
 };
 
 export type CategoryDetail = {
