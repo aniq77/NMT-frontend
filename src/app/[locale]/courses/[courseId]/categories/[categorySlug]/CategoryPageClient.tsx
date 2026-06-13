@@ -38,9 +38,8 @@ function IslandCard({
   }
 
   function getIconBg() {
-    if (topic.is_coming_soon) return "bg-surface-alt";
     if (topic.is_gold) return "bg-reward-light";
-    if (topic.is_unlocked) return "bg-primary-light";
+    if (topic.is_unlocked || topic.is_coming_soon) return "bg-primary-light";
     return "bg-surface-alt";
   }
 
@@ -53,11 +52,9 @@ function IslandCard({
       }
       className={cn(
         "w-full rounded-xl border bg-surface p-4 text-left shadow-card transition-all duration-200",
-        topic.is_coming_soon
-          ? "border-dashed border-border opacity-60 hover:opacity-80"
-          : topic.is_unlocked
-            ? "border-border hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
-            : "cursor-not-allowed border-border opacity-50",
+        topic.is_unlocked || topic.is_coming_soon
+          ? "border-border hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
+          : "cursor-not-allowed border-border opacity-50",
       )}
     >
       <div className="flex items-start gap-3">
@@ -70,11 +67,6 @@ function IslandCard({
             <h3 className="font-display text-base font-700 text-text-primary">{cleanTitle}</h3>
             {topic.is_gold && !topic.is_coming_soon && (
               <Star className="h-4 w-4 shrink-0 fill-reward text-reward" />
-            )}
-            {topic.is_coming_soon && (
-              <span className="rounded-full bg-surface-alt px-2 py-0.5 font-display text-xs font-600 text-text-secondary">
-                Незабаром
-              </span>
             )}
           </div>
           {topic.description && (
