@@ -1,11 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Clock, Lock, Star } from "lucide-react";
+import { Lock, Star } from "lucide-react";
 import { Link, useRouter } from "@/lib/navigation";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { coursesApi, type CategoryDetail, type TopicSummary } from "@/lib/api/courses";
 import { cn } from "@/lib/utils";
+
+function splitTitleEmoji(title: string): [string, string] {
+  const match = title.match(/^(\p{Extended_Pictographic})\s*/u);
+  if (match) return [match[1], title.slice(match[0].length)];
+  return ["", title];
+}
 
 function IslandCard({
   topic,
@@ -17,6 +23,7 @@ function IslandCard({
   categorySlug: string;
 }) {
   const router = useRouter();
+  const [emoji, cleanTitle] = splitTitleEmoji(topic.title);
   const progress =
     topic.required_completions > 0
       ? Math.min(Math.round((topic.completion_count / topic.required_completions) * 100), 100)
@@ -25,9 +32,8 @@ function IslandCard({
   const isDisabled = !topic.is_unlocked && !topic.is_coming_soon;
 
   function getIcon() {
-    if (topic.is_coming_soon) return <Clock className="h-6 w-6 text-text-secondary" />;
-    if (!topic.is_unlocked) return <Lock className="h-6 w-6 text-text-secondary" />;
-    if (topic.is_gold) return "⭐";
+    if (emoji) return emoji;
+    if (!topic.is_unlocked && !topic.is_coming_soon) return <Lock className="h-6 w-6 text-text-secondary" />;
     return "🏝";
   }
 
@@ -61,7 +67,7 @@ function IslandCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-base font-700 text-text-primary">{topic.title}</h3>
+            <h3 className="font-display text-base font-700 text-text-primary">{cleanTitle}</h3>
             {topic.is_gold && !topic.is_coming_soon && (
               <Star className="h-4 w-4 shrink-0 fill-reward text-reward" />
             )}
