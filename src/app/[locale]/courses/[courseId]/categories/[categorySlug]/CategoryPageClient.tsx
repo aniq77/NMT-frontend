@@ -22,7 +22,7 @@ function IslandCard({
       ? Math.min(Math.round((topic.completion_count / topic.required_completions) * 100), 100)
       : 0;
 
-  const isDisabled = !topic.is_unlocked || topic.is_coming_soon;
+  const isDisabled = !topic.is_unlocked && !topic.is_coming_soon;
 
   function getIcon() {
     if (topic.is_coming_soon) return <Clock className="h-6 w-6 text-text-secondary" />;
@@ -48,7 +48,7 @@ function IslandCard({
       className={cn(
         "w-full rounded-xl border bg-surface p-4 text-left shadow-card transition-all duration-200",
         topic.is_coming_soon
-          ? "cursor-not-allowed border-dashed border-border opacity-60"
+          ? "border-dashed border-border opacity-60 hover:opacity-80"
           : topic.is_unlocked
             ? "border-border hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
             : "cursor-not-allowed border-border opacity-50",

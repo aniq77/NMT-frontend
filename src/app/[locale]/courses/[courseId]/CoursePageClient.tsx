@@ -1,27 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Lock, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Link, useRouter } from "@/lib/navigation";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { coursesApi, type CategorySummary, type CourseDetail } from "@/lib/api/courses";
 import { cn } from "@/lib/utils";
-
-type LockedCategory = {
-  slug: string;
-  title: string;
-  description: string;
-};
-
-const LOCKED_CATEGORIES: Record<string, LockedCategory[]> = {
-  mathematics: [
-    {
-      slug: "geometry",
-      title: "Геометрія",
-      description: "Планіметрія, стереометрія, тіла обертання",
-    },
-  ],
-};
 
 function CategoryCard({
   category,
@@ -73,25 +57,6 @@ function CategoryCard({
   );
 }
 
-function LockedCategoryCard({ category }: { category: LockedCategory }) {
-  return (
-    <div className={cn("w-full rounded-xl border border-border bg-surface p-4 opacity-50")}>
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface-alt">
-          <Lock className="h-6 w-6 text-text-secondary" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-base font-700 text-text-primary">{category.title}</h3>
-          <p className="mt-0.5 font-body text-sm text-text-secondary">{category.description}</p>
-        </div>
-        <span className="rounded-lg bg-surface-alt px-2 py-1 font-display text-xs font-600 text-text-secondary">
-          Незабаром
-        </span>
-      </div>
-    </div>
-  );
-}
-
 export default function CoursePageClient() {
   const params = useParams<{ courseId: string }>();
   const courseId = params.courseId;
@@ -106,8 +71,6 @@ export default function CoursePageClient() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [courseId]);
-
-  const lockedCategories = LOCKED_CATEGORIES[courseId] ?? [];
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -143,9 +106,6 @@ export default function CoursePageClient() {
             <div className="space-y-3">
               {course.categories.map((cat) => (
                 <CategoryCard key={cat.slug} category={cat} courseSlug={courseId} />
-              ))}
-              {lockedCategories.map((cat) => (
-                <LockedCategoryCard key={cat.slug} category={cat} />
               ))}
             </div>
           </>
