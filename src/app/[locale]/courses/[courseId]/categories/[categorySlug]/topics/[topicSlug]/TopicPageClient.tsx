@@ -61,14 +61,6 @@ export default function TopicPageClient() {
             <h1 className="font-display text-base font-700 text-text-primary">
               {topic?.title ?? "Острів"}
             </h1>
-            {topic && !isComing && topic.required_completions > 0 && (
-              <p className="font-body text-xs text-text-secondary">
-                {topic.completion_count} / {topic.required_completions} проходжень
-                {topic.is_gold && (
-                  <Star className="ml-1 inline h-3 w-3 fill-reward text-reward" />
-                )}
-              </p>
-            )}
             {isComing && (
               <p className="font-body text-xs text-text-secondary">Скоро з'явиться</p>
             )}
@@ -103,7 +95,7 @@ export default function TopicPageClient() {
               {lessons.map((lesson, idx) => {
                 const status: NodeStatus = isComing ? "locked" : getLessonStatus(lesson, lessons);
                 const type = getLessonType(lesson);
-                const isActive = !isComing && (status === "current" || status === "golden");
+                const isActive = !isComing && status === "current";
                 const isClickable = !isComing && status !== "locked";
 
                 return (
@@ -124,15 +116,9 @@ export default function TopicPageClient() {
                           <p className="font-display text-sm font-700 text-text-primary">
                             {lesson.title}
                           </p>
-                          {status === "golden" ? (
-                            <p className="mt-0.5 font-display text-xs font-600 text-reward">
-                              {lesson.completion_count} / {GOLD_COMPLETIONS} ★
-                            </p>
-                          ) : (
-                            <p className="mt-0.5 font-display text-xs font-600 text-reward">
-                              +{lesson.exp_reward} XP
-                            </p>
-                          )}
+                          <p className="mt-0.5 font-display text-xs font-600 text-reward">
+                            +{lesson.exp_reward} XP
+                          </p>
                           <Button
                             size="sm"
                             className="mt-2 w-full"
@@ -143,8 +129,7 @@ export default function TopicPageClient() {
                             }
                           >
                             <span className="flex items-center justify-center gap-1.5">
-                              {status === "golden" ? "Пройти ще раз" : "Почати урок"}{" "}
-                              <Star className="h-3.5 w-3.5" />
+                              Почати урок <Star className="h-3.5 w-3.5" />
                             </span>
                           </Button>
                         </div>

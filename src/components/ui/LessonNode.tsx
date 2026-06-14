@@ -46,8 +46,8 @@ export function LessonNode({
 }: LessonNodeProps) {
   const Icon = TYPE_OVERRIDES[type]?.[status] ?? ICONS[status];
   const isClickable = status !== "locked";
-  const showRing = status === "completed" && completionCount > 0 && completionCount < GOLD_CAP;
-  const ringProgress = showRing ? (RING_C * completionCount) / GOLD_CAP : 0;
+  const showRing = status === "golden" || (status === "completed" && completionCount > 0 && completionCount < GOLD_CAP);
+  const ringProgress = status === "golden" ? RING_C : showRing ? (RING_C * completionCount) / GOLD_CAP : 0;
 
   return (
     <div className="flex flex-col items-center gap-2">
