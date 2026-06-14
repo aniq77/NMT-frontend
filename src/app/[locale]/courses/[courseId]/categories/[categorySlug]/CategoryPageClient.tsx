@@ -29,44 +29,45 @@ function IslandCard({
       ? Math.min(Math.round((topic.completion_count / topic.required_completions) * 100), 100)
       : 0;
 
-  const isDisabled = !topic.is_unlocked && !topic.is_coming_soon;
-
-  function getIcon() {
-    if (emoji) return emoji;
-    if (!topic.is_unlocked && !topic.is_coming_soon) return <Lock className="h-6 w-6 text-text-secondary" />;
-    return "🏝";
-  }
-
-  function getIconBg() {
-    if (topic.is_gold) return "bg-reward-light";
-    if (topic.is_unlocked || topic.is_coming_soon) return "bg-primary-light";
-    return "bg-surface-alt";
-  }
+  // Islands open strictly in order: an island is playable only once unlocked.
+  // Not-yet-released ("coming soon") islands stay locked until published — they
+  // must not bypass the sequential progression.
+  const isUnlocked = topic.is_unlocked;
 
   return (
     <button
       type="button"
-      disabled={isDisabled}
+      disabled={!isUnlocked}
       onClick={() =>
         router.push(`/courses/${courseSlug}/categories/${categorySlug}/topics/${topic.slug}`)
       }
       className={cn(
         "w-full rounded-xl border bg-surface p-4 text-left shadow-card transition-all duration-200",
-        topic.is_unlocked || topic.is_coming_soon
+        isUnlocked
           ? "border-border hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
           : "cursor-not-allowed border-border opacity-50",
       )}
     >
       <div className="flex items-start gap-3">
-        <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl", getIconBg())}>
-          {getIcon()}
+        <div
+          className={cn(
+            "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl",
+            topic.is_gold ? "bg-reward-light" : isUnlocked ? "bg-primary-light" : "bg-surface-alt",
+          )}
+        >
+          {isUnlocked ? emoji || "🏝" : <Lock className="h-6 w-6 text-text-secondary" />}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="font-display text-base font-700 text-text-primary">{cleanTitle}</h3>
-            {topic.is_gold && !topic.is_coming_soon && (
+            {topic.is_gold && isUnlocked && (
               <Star className="h-4 w-4 shrink-0 fill-reward text-reward" />
+            )}
+            {topic.is_coming_soon && (
+              <span className="rounded-lg bg-surface-alt px-2 py-0.5 font-display text-xs font-600 text-text-secondary">
+                Незабаром
+              </span>
             )}
           </div>
           {topic.description && (
@@ -77,7 +78,7 @@ function IslandCard({
         </div>
       </div>
 
-      {topic.is_unlocked && !topic.is_coming_soon && topic.required_completions > 0 && (
+      {isUnlocked && topic.required_completions > 0 && (
         <div className="mt-3">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="font-display text-xs font-600 text-text-secondary">
