@@ -18,13 +18,26 @@ export type CourseListItem = {
   user_progress: UserCourseProgress | null;
 };
 
+export type Subject = "algebra" | "geometry" | "final";
+
+export const SUBJECT_ORDER: Subject[] = ["algebra", "geometry", "final"];
+
+export const SUBJECT_META: Record<Subject, { title: string; description: string; emoji: string }> = {
+  algebra: { title: "Алгебра і початки аналізу", description: "Числа, вирази, рівняння, функції, аналіз", emoji: "🔢" },
+  geometry: { title: "Геометрія", description: "Планіметрія, стереометрія, координати і вектори", emoji: "📐" },
+  final: { title: "Підсумкові", description: "Змішані острови за весь курс НМТ", emoji: "🏁" },
+};
+
 export type CategorySummary = {
   id: string;
   slug: string;
   title: string;
+  subject: Subject;
   order_index: number;
   topics_count: number;
   completed_topics: number;
+  is_unlocked: boolean;
+  is_coming_soon: boolean;
 };
 
 export type CourseDetail = {
