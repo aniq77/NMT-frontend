@@ -109,7 +109,23 @@ export function LessonNode({
         </span>
       )}
 
-      {xp !== undefined && status !== "locked" && (
+      {/* Mastery level badge: показує рівень освоєння теми 1/3 → 2/3 → 3/3 */}
+      {status !== "locked" && completionCount > 0 && (
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 font-display text-[11px] font-700",
+            status === "golden"
+              ? "bg-reward text-white"
+              : "bg-reward-light text-reward-dark",
+          )}
+        >
+          {status === "golden"
+            ? "★ Майстер"
+            : `${Math.min(completionCount, GOLD_CAP)}/${GOLD_CAP}`}
+        </span>
+      )}
+
+      {xp !== undefined && status !== "locked" && status !== "golden" && completionCount === 0 && (
         <span className="font-display text-xs font-700 text-reward">+{xp} XP</span>
       )}
     </div>

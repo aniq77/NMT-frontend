@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Gem, HeartCrack, PartyPopper, Trophy, Zap } from "lucide-react";
+import { Gem, HeartCrack, Lock, PartyPopper, RefreshCw, Trophy, Zap } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
 import { LessonHeader } from "@/components/layout/LessonHeader";
 import { AnswerOption } from "@/components/ui/AnswerOption";
@@ -30,7 +30,7 @@ function shuffleOptions(options: QuestionOption[]): ShuffledOption[] {
     .sort(() => Math.random() - 0.5);
 }
 
-type Phase = "loading" | "energy_gate" | "quiz" | "completing" | "done";
+type Phase = "loading" | "energy_gate" | "locked" | "load_error" | "quiz" | "completing" | "done";
 
 export default function LessonPageClient() {
   const params = useParams<{
@@ -60,6 +60,7 @@ export default function LessonPageClient() {
   const [xpEarned, setXpEarned] = useState(0);
   const [completeResult, setCompleteResult] = useState<CompleteLessonResult | null>(null);
   const [completionSaved, setCompletionSaved] = useState(false);
+  const [loadError, setLoadError] = useState<string>("");
 
   const completeCalledRef = useRef(false);
   const topicPath = `/courses/${courseId}/categories/${categorySlug}`;
@@ -68,22 +69,46 @@ export default function LessonPageClient() {
     if (user) setLives(user.lives ?? MAX_LIVES);
   }, [user]);
 
-  useEffect(() => {
+  const loadLesson = useCallback(() => {
+    setPhase("loading");
+    setLoadError("");
     Promise.all([lessonsApi.start(lessonId), lessonsApi.questions(lessonId)])
       .then(([, qs]) => {
+        if (!qs || qs.length === 0) {
+          // Start succeeded but the bank returned no questions — never show an
+          // empty, unplayable quiz. Surface it so the user can retry / go back.
+          setLoadError("Завдання для цього уроку не завантажились. Спробуйте ще раз.");
+          setPhase("load_error");
+          return;
+        }
         setQuestions(qs);
-        if (qs.length > 0) setShuffledOptions(shuffleOptions(qs[0].options));
+        setShuffledOptions(shuffleOptions(qs[0].options));
         setPhase("quiz");
       })
       .catch((err) => {
-        if (err instanceof ApiError && err.status === 400) {
-          setPhase("energy_gate");
-        } else {
-          setPhase("quiz");
+        if (err instanceof ApiError) {
+          if (err.status === 400) {
+            setPhase("energy_gate");
+            return;
+          }
+          if (err.status === 403) {
+            setPhase("locked");
+            return;
+          }
+          const detail =
+            typeof err.data?.detail === "string" ? err.data.detail : "";
+          setLoadError(detail || `Помилка завантаження (код ${err.status}).`);
+          setPhase("load_error");
+          return;
         }
+        setLoadError("Не вдалося з'єднатися із сервером. Перевірте інтернет і спробуйте ще раз.");
+        setPhase("load_error");
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
+
+  useEffect(() => {
+    loadLesson();
+  }, [loadLesson]);
 
   const currentQ: Question | undefined = questions[currentIdx];
   const isChecked = result !== null;
@@ -199,6 +224,45 @@ export default function LessonPageClient() {
           <Button variant="ghost" size="lg" className="mt-8 w-full" onClick={() => router.push(topicPath)}>
             ← Назад до острова
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Locked ────────────────────────────────────────────────────────────────────
+  if (phase === "locked") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+        <div className="mx-auto w-full max-w-app text-center">
+          <Lock className="mx-auto mb-4 h-20 w-20 text-text-secondary" />
+          <h1 className="font-display text-2xl font-800 text-text-primary">Урок ще закритий</h1>
+          <p className="mt-2 font-body text-base text-text-secondary">
+            Спочатку пройди попередню тему хоча б один раз, щоб відкрити цей урок.
+          </p>
+          <Button size="lg" className="mt-8 w-full" onClick={() => router.push(topicPath)}>
+            ← Назад до острова
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Load error ────────────────────────────────────────────────────────────────
+  if (phase === "load_error") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+        <div className="mx-auto w-full max-w-app text-center">
+          <RefreshCw className="mx-auto mb-4 h-20 w-20 text-wrong" />
+          <h1 className="font-display text-2xl font-800 text-text-primary">Не вдалося завантажити урок</h1>
+          <p className="mt-2 font-body text-base text-text-secondary">{loadError}</p>
+          <div className="mt-8 space-y-3">
+            <Button size="lg" className="w-full" onClick={loadLesson}>
+              Спробувати ще раз
+            </Button>
+            <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
+              ← Назад до острова
+            </Button>
+          </div>
         </div>
       </div>
     );
