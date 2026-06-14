@@ -60,7 +60,7 @@ export default function LessonPageClient() {
   const [completeResult, setCompleteResult] = useState<CompleteLessonResult | null>(null);
 
   const completeCalledRef = useRef(false);
-  const topicPath = `/courses/${courseId}/categories/${categorySlug}/topics/${topicSlug}`;
+  const topicPath = `/courses/${courseId}/categories/${categorySlug}`;
 
   useEffect(() => {
     if (user) setLives(user.lives ?? MAX_LIVES);
