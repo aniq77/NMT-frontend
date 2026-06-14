@@ -66,11 +66,13 @@ export default function CategoryPageClient() {
         );
 
         const allLessons: LessonEntry[] = topicDetails.flatMap((topic) =>
-          topic.lessons.map((lesson) => ({
-            ...lesson,
-            topicSlug: topic.slug,
-            topicIsUnlocked: topic.is_unlocked,
-          })),
+          [...topic.lessons]
+            .sort((a, b) => a.order_index - b.order_index)
+            .map((lesson) => ({
+              ...lesson,
+              topicSlug: topic.slug,
+              topicIsUnlocked: topic.is_unlocked,
+            })),
         );
 
         setLessons(allLessons);

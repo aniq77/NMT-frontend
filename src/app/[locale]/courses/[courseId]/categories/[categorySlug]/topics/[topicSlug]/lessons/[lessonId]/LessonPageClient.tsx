@@ -58,6 +58,7 @@ export default function LessonPageClient() {
   const [maxCombo, setMaxCombo] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
   const [completeResult, setCompleteResult] = useState<CompleteLessonResult | null>(null);
+  const [completionSaved, setCompletionSaved] = useState(false);
 
   const completeCalledRef = useRef(false);
   const topicPath = `/courses/${courseId}/categories/${categorySlug}`;
@@ -150,11 +151,20 @@ export default function LessonPageClient() {
       .complete(lessonId, { answers })
       .then((res) => {
         setCompleteResult(res);
+        setCompletionSaved(true);
         updateUser({ level: res.level, lives: res.lives, gems: res.gems });
         fetchMe().catch(() => {});
         setPhase("done");
       })
-      .catch(() => setPhase("done"));
+      .catch(() => {
+        setCompletionSaved(false);
+        setPhase("done");
+      });
+  }
+
+  function retryFinishLesson() {
+    completeCalledRef.current = false;
+    finishLesson();
   }
 
   // ── Loading ───────────────────────────────────────────────────────────────────
@@ -227,6 +237,29 @@ export default function LessonPageClient() {
   // ── Completion ────────────────────────────────────────────────────────────────
   if (phase === "done") {
     const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 100;
+
+    if (!completionSaved) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+          <div className="mx-auto w-full max-w-app text-center">
+            <HeartCrack className="mx-auto mb-4 h-20 w-20 text-wrong" />
+            <h1 className="font-display text-xl font-800 text-text-primary">Не вдалося зберегти</h1>
+            <p className="mt-2 font-body text-base text-text-secondary">
+              Прогрес не збережено через проблему з мережею. Спробуйте ще раз.
+            </p>
+            <div className="mt-8 space-y-3">
+              <Button size="lg" className="w-full" onClick={retryFinishLesson}>
+                Спробувати ще раз
+              </Button>
+              <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
+                Вийти без збереження
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
         <div className="mx-auto w-full max-w-app text-center">
