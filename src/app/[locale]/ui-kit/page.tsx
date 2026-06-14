@@ -361,28 +361,21 @@ export default function UIKitPage() {
 
         {/* ── Lesson Path Nodes ── */}
         <Section title="Вузли шляху уроків">
-          <Sub label="Статуси — standard">
+          <Sub label="Статуси прогресу">
             <div className="flex items-start justify-around gap-2 py-2">
-              <div className="flex flex-col items-center gap-1">
-                <LessonNode status="completed" lessonNumber={1} title="Виконано" xp={10} />
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <LessonNode status="current"   lessonNumber={2} title="Поточний" xp={15} />
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <LessonNode status="available" lessonNumber={3} title="Доступний" xp={10} />
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <LessonNode status="locked"    lessonNumber={4} title="Закрито" />
-              </div>
+              <LessonNode status="locked"     title="Закрито" />
+              <LessonNode status="available"  title="Доступний" />
+              <LessonNode status="progress33" title="1 прохід" />
+              <LessonNode status="progress66" title="2 проходи" />
+              <LessonNode status="mastered"   title="Освоєно" />
             </div>
           </Sub>
-          <Sub label="Типи — challenge · checkpoint">
+          <Sub label="Типи уроків">
             <div className="flex items-start justify-around gap-2 py-2">
-              <LessonNode status="current"   type="challenge"  lessonNumber={5} title="Виклик" xp={25} />
-              <LessonNode status="available" type="challenge"  lessonNumber={6} title="Виклик" xp={25} />
-              <LessonNode status="current"   type="checkpoint" lessonNumber={7} title="Тест"   xp={50} />
-              <LessonNode status="locked"    type="checkpoint" lessonNumber={8} title="Тест" />
+              <LessonNode status="available"  lessonType="standard"  title="Урок" />
+              <LessonNode status="progress33" lessonType="challenge" title="Виклик" />
+              <LessonNode status="mastered"   lessonType="boss"      title="Бос" />
+              <LessonNode status="locked"     lessonType="boss"      title="Бос" />
             </div>
           </Sub>
         </Section>

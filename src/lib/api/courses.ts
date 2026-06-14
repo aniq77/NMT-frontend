@@ -66,6 +66,7 @@ export type LessonSummary = {
   difficulty: string;
   is_boss: boolean;
   is_completed: boolean;
+  completion_count?: number;
 };
 
 export type TopicDetail = {

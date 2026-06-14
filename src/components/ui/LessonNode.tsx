@@ -1,68 +1,92 @@
 "use client";
-import { Check, Circle, Lock, Star, Trophy, Zap } from "lucide-react";
+import { Lock, Star, Trophy, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NodeStatus = "completed" | "current" | "available" | "locked";
-type NodeType = "standard" | "challenge" | "checkpoint";
-
-type IconComp = React.ComponentType<{ className?: string }>;
-
-const ICONS: Record<NodeStatus, IconComp> = {
-  completed: Check,
-  current:   Star,
-  available: Circle,
-  locked:    Lock,
-};
-
-const TYPE_OVERRIDES: Partial<Record<NodeType, Partial<Record<NodeStatus, IconComp>>>> = {
-  challenge:  { current: Zap,    available: Zap },
-  checkpoint: { current: Trophy, available: Trophy },
-};
+export type RoadmapStatus = "locked" | "available" | "progress33" | "progress66" | "mastered";
+export type LessonNodeType = "standard" | "challenge" | "boss";
 
 type LessonNodeProps = {
-  status: NodeStatus;
-  type?: NodeType;
-  lessonNumber: number;
+  status: RoadmapStatus;
+  lessonType?: LessonNodeType;
   title?: string;
-  xp?: number;
   onClick?: () => void;
 };
 
-export function LessonNode({ status, type = "standard", lessonNumber, title, xp, onClick }: LessonNodeProps) {
-  const Icon = TYPE_OVERRIDES[type]?.[status] ?? ICONS[status];
-  const isClickable = status !== "locked";
+const R = 36;
+const CIRCUMFERENCE = 2 * Math.PI * R;
+
+function ArcRing({ percent }: { percent: number }) {
+  const dash = CIRCUMFERENCE * (percent / 100);
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0"
+      width={80}
+      height={80}
+      style={{ transform: "rotate(-90deg)" }}
+      aria-hidden
+    >
+      <circle
+        cx={40}
+        cy={40}
+        r={R}
+        fill="none"
+        stroke="#FFB800"
+        strokeWidth={4}
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${CIRCUMFERENCE - dash}`}
+      />
+    </svg>
+  );
+}
+
+export function LessonNode({ status, lessonType = "standard", title, onClick }: LessonNodeProps) {
+  const isLocked = status === "locked";
+  const isMastered = status === "mastered";
+
+  const Icon = isLocked
+    ? Lock
+    : lessonType === "boss"
+    ? Trophy
+    : lessonType === "challenge"
+    ? Zap
+    : Star;
+
+  const arcPercent =
+    status === "progress33" ? 33
+    : status === "progress66" ? 66
+    : isMastered ? 100
+    : 0;
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <button
-        type="button"
-        onClick={isClickable ? onClick : undefined}
-        disabled={status === "locked"}
-        aria-label={title ?? `Урок ${lessonNumber}`}
-        className={cn(
-          "flex h-16 w-16 select-none items-center justify-center rounded-full border-4 font-display text-xl font-700 transition-all duration-200",
-          status === "completed" && "cursor-pointer hover:scale-105 border-correct-dark bg-correct text-white shadow-[0_4px_0_#165C3A]",
-          status === "current"   && "animate-pulse cursor-pointer border-primary-dark bg-primary text-white shadow-button hover:scale-105",
-          status === "available" && "cursor-pointer border-border bg-surface text-text-primary shadow-card hover:scale-105 hover:border-primary",
-          status === "locked"    && "cursor-not-allowed border-border bg-surface-alt text-text-secondary opacity-60",
-        )}
-      >
-        <Icon className="h-7 w-7" />
-      </button>
+      <div className="relative flex h-20 w-20 items-center justify-center">
+        {arcPercent > 0 && <ArcRing percent={arcPercent} />}
+        <button
+          type="button"
+          onClick={!isLocked ? onClick : undefined}
+          disabled={isLocked}
+          aria-label={title}
+          className={cn(
+            "flex h-16 w-16 select-none items-center justify-center rounded-full border-4 transition-all duration-200",
+            isLocked && "cursor-not-allowed border-border bg-surface-alt text-text-secondary opacity-60",
+            status === "available" && "animate-pulse cursor-pointer border-primary bg-primary text-white shadow-button hover:scale-105",
+            (status === "progress33" || status === "progress66") && "cursor-pointer border-border bg-surface text-text-secondary shadow-card hover:scale-105 hover:border-primary",
+            isMastered && "cursor-pointer border-reward bg-surface text-reward shadow-card hover:scale-105",
+          )}
+        >
+          <Icon className="h-7 w-7" />
+        </button>
+      </div>
 
       {title && (
         <span
           className={cn(
             "max-w-[80px] text-center font-display text-xs font-600 leading-tight",
-            status === "locked" ? "text-text-secondary/60" : "text-text-secondary",
+            isLocked ? "text-text-secondary/60" : "text-text-secondary",
           )}
         >
           {title}
         </span>
-      )}
-
-      {xp !== undefined && status !== "locked" && (
-        <span className="font-display text-xs font-700 text-reward">+{xp} XP</span>
       )}
     </div>
   );
