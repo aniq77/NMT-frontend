@@ -46,8 +46,11 @@ export function LessonNode({
 }: LessonNodeProps) {
   const Icon = TYPE_OVERRIDES[type]?.[status] ?? ICONS[status];
   const isClickable = status !== "locked";
-  const showRing = status === "golden" || (status === "completed" && completionCount > 0 && completionCount < GOLD_CAP);
-  const ringProgress = status === "golden" ? RING_C : showRing ? (RING_C * completionCount) / GOLD_CAP : 0;
+  // Show ring for golden (full) or any non-locked status with partial mastery progress
+  const showRing =
+    status === "golden" ||
+    (completionCount > 0 && completionCount < GOLD_CAP && status !== "locked");
+  const ringProgress = status === "golden" ? RING_C : (RING_C * completionCount) / GOLD_CAP;
 
   return (
     <div className="flex flex-col items-center gap-2">

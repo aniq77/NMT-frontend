@@ -60,13 +60,39 @@ export default function CategoryPageClient() {
 
         setCategoryTitle(category.title);
 
+        // Fetch all topic details in order
+        const sortedTopicSummaries = [...category.topics].sort(
+          (a, b) => a.order_index - b.order_index,
+        );
         const topicDetails = await Promise.all(
-          category.topics
-            .sort((a, b) => a.order_index - b.order_index)
-            .map((t) => coursesApi.topicDetail(courseId, categorySlug, t.slug)),
+          sortedTopicSummaries.map((t) =>
+            coursesApi.topicDetail(courseId, categorySlug, t.slug),
+          ),
         );
 
-        const allLessons: LessonEntry[] = topicDetails.flatMap((topic) =>
+        // Compute effective unlock status with cascading:
+        // if the backend hasn't unlocked a topic yet but all lessons in the
+        // previous topic are completed (via API or client cache), unlock it.
+        const effectiveUnlock = topicDetails.map((t) => t.is_unlocked);
+        let anyChanged = true;
+        while (anyChanged) {
+          anyChanged = false;
+          for (let i = 1; i < topicDetails.length; i++) {
+            if (!effectiveUnlock[i] && effectiveUnlock[i - 1]) {
+              const prevAllDone = topicDetails[i - 1].lessons.every(
+                (l) =>
+                  l.is_completed ||
+                  lessonProgressCache.getCompletionCount(l.id) !== null,
+              );
+              if (prevAllDone) {
+                effectiveUnlock[i] = true;
+                anyChanged = true;
+              }
+            }
+          }
+        }
+
+        const allLessons: LessonEntry[] = topicDetails.flatMap((topic, topicIdx) =>
           [...topic.lessons]
             .sort((a, b) => a.order_index - b.order_index)
             .map((lesson) => {
@@ -80,7 +106,7 @@ export default function CategoryPageClient() {
                 is_completed: lesson.is_completed || cachedCount !== null,
                 completion_count: completionCount,
                 topicSlug: topic.slug,
-                topicIsUnlocked: topic.is_unlocked,
+                topicIsUnlocked: effectiveUnlock[topicIdx],
               };
             }),
         );
