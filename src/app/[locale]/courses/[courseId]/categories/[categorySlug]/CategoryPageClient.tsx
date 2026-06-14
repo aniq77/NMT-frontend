@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { Link, useRouter } from "@/lib/navigation";
 import { LessonNode } from "@/components/ui/LessonNode";
 import { coursesApi, type LessonSummary } from "@/lib/api/courses";
+import { lessonProgressCache } from "@/lib/lessonProgressCache";
 
 type NodeStatus = "golden" | "completed" | "current" | "available" | "locked";
 type NodeType = "standard" | "challenge" | "checkpoint";
@@ -68,11 +69,20 @@ export default function CategoryPageClient() {
         const allLessons: LessonEntry[] = topicDetails.flatMap((topic) =>
           [...topic.lessons]
             .sort((a, b) => a.order_index - b.order_index)
-            .map((lesson) => ({
-              ...lesson,
-              topicSlug: topic.slug,
-              topicIsUnlocked: topic.is_unlocked,
-            })),
+            .map((lesson) => {
+              const cachedCount = lessonProgressCache.getCompletionCount(lesson.id);
+              const completionCount =
+                cachedCount !== null
+                  ? Math.max(lesson.completion_count, cachedCount)
+                  : lesson.completion_count;
+              return {
+                ...lesson,
+                is_completed: lesson.is_completed || cachedCount !== null,
+                completion_count: completionCount,
+                topicSlug: topic.slug,
+                topicIsUnlocked: topic.is_unlocked,
+              };
+            }),
         );
 
         setLessons(allLessons);

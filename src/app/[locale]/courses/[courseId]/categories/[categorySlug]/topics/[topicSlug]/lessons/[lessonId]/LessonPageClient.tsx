@@ -18,6 +18,7 @@ import {
 import { MathText } from "@/components/ui/MathText";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/store/auth.store";
+import { lessonProgressCache } from "@/lib/lessonProgressCache";
 
 const MAX_LIVES = 5;
 
@@ -150,6 +151,7 @@ export default function LessonPageClient() {
     lessonsApi
       .complete(lessonId, { answers })
       .then((res) => {
+        lessonProgressCache.set(lessonId, res.completion_count);
         setCompleteResult(res);
         setCompletionSaved(true);
         updateUser({ level: res.level, lives: res.lives, gems: res.gems });
