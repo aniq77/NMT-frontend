@@ -22,9 +22,11 @@ function isSubject(value: string): value is Subject {
 
 function IslandCard({
   island,
+  unlocked,
   courseSlug,
 }: {
   island: CategorySummary;
+  unlocked: boolean;
   courseSlug: string;
 }) {
   const router = useRouter();
@@ -37,11 +39,11 @@ function IslandCard({
   return (
     <button
       type="button"
-      disabled={!island.is_unlocked}
+      disabled={!unlocked}
       onClick={() => router.push(`/courses/${courseSlug}/categories/${island.slug}`)}
       className={cn(
         "w-full rounded-xl border bg-surface p-4 text-left shadow-card transition-all duration-200",
-        island.is_unlocked
+        unlocked
           ? "border-border hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
           : "cursor-not-allowed border-border opacity-50",
       )}
@@ -50,10 +52,10 @@ function IslandCard({
         <div
           className={cn(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl",
-            island.is_unlocked ? "bg-primary-light" : "bg-surface-alt",
+            unlocked ? "bg-primary-light" : "bg-surface-alt",
           )}
         >
-          {island.is_unlocked ? "🏝" : <Lock className="h-6 w-6 text-text-secondary" />}
+          {unlocked ? "🏝" : <Lock className="h-6 w-6 text-text-secondary" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -68,10 +70,10 @@ function IslandCard({
             {completedTopics} / {totalTopics} тем
           </p>
         </div>
-        <span className="text-text-secondary">{island.is_unlocked ? "→" : ""}</span>
+        <span className="text-text-secondary">{unlocked ? "→" : ""}</span>
       </div>
 
-      {island.is_unlocked && totalTopics > 0 && (
+      {unlocked && totalTopics > 0 && (
         <div className="mt-3">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="font-display text-xs font-600 text-text-secondary">Прогрес</span>
@@ -100,10 +102,20 @@ export default function SubjectPageClient() {
       .finally(() => setLoading(false));
   }, [courseId]);
 
-  const islands = (course?.categories ?? [])
+  const sortedIslands = (course?.categories ?? [])
     .filter((cat) => cat.subject === subject)
     .sort((a, b) => a.order_index - b.order_index);
 
+  // Cascade unlock: if island N-1 is fully completed (per progressStore),
+  // treat island N as unlocked even if the backend hasn't updated yet.
+  const islandUnlocked = sortedIslands.map((island, i) => {
+    if (island.is_unlocked) return true;
+    if (i === 0) return false;
+    const prev = progressStore.getCategory(sortedIslands[i - 1].slug);
+    return prev !== null && prev.totalTopics > 0 && prev.completedTopics >= prev.totalTopics;
+  });
+
+  const islands = sortedIslands;
   const title = subject ? SUBJECT_META[subject].title : "Розділ";
 
   return (
@@ -131,8 +143,13 @@ export default function SubjectPageClient() {
 
         {!loading && (
           <div className="space-y-3">
-            {islands.map((island) => (
-              <IslandCard key={island.slug} island={island} courseSlug={courseId} />
+            {islands.map((island, idx) => (
+              <IslandCard
+                key={island.slug}
+                island={island}
+                unlocked={islandUnlocked[idx]}
+                courseSlug={courseId}
+              />
             ))}
 
             {islands.length === 0 && (

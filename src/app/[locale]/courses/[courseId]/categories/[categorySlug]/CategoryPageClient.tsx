@@ -69,9 +69,31 @@ export default function CategoryPageClient() {
           ),
         );
 
+        // Determine if this island is accessible: either the API says so, or the
+        // previous island in the same subject is fully completed (client-side cascade).
+        const subjectCats = course.categories
+          .filter((c) => c.subject === catMeta?.subject)
+          .sort((a, b) => a.order_index - b.order_index);
+        const catIdx = subjectCats.findIndex((c) => c.slug === categorySlug);
+        const prevIslandCompleted =
+          catIdx > 0
+            ? (() => {
+                const p = progressStore.getCategory(subjectCats[catIdx - 1].slug);
+                return p !== null && p.totalTopics > 0 && p.completedTopics >= p.totalTopics;
+              })()
+            : false;
+        const islandAccessible = (catMeta?.is_unlocked ?? false) || prevIslandCompleted;
+
+        // Start with API topic unlock flags.
+        // If the island is accessible but the first topic is still locked on the backend,
+        // unlock it on the client so the user can actually start lessons.
+        const effectiveUnlock = topicDetails.map((t) => t.is_unlocked);
+        if (islandAccessible && topicDetails.length > 0 && !effectiveUnlock[0]) {
+          effectiveUnlock[0] = true;
+        }
+
         // Cascade unlock: if previous topic's lessons are all done (API or cache),
         // unlock the next topic even if the backend hasn't updated yet.
-        const effectiveUnlock = topicDetails.map((t) => t.is_unlocked);
         let anyChanged = true;
         while (anyChanged) {
           anyChanged = false;
