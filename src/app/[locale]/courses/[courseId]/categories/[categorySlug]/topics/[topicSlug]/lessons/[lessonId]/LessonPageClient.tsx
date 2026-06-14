@@ -7,7 +7,14 @@ import { LessonHeader } from "@/components/layout/LessonHeader";
 import { AnswerOption } from "@/components/ui/AnswerOption";
 import { FeedbackPanel } from "@/components/ui/FeedbackPanel";
 import { Button } from "@/components/ui/Button";
-import { lessonsApi, type CompleteLessonResult, type Question, type QuestionOption } from "@/lib/api/lessons";
+import {
+  lessonsApi,
+  type AnswerPayload,
+  type CompleteLessonResult,
+  type Question,
+  type QuestionOption,
+  type QuestionResult,
+} from "@/lib/api/lessons";
 import { MathText } from "@/components/ui/MathText";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/store/auth.store";
@@ -41,6 +48,9 @@ export default function LessonPageClient() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [checkedId, setCheckedId] = useState<string | null>(null);
+  const [result, setResult] = useState<QuestionResult | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [answers, setAnswers] = useState<AnswerPayload[]>([]);
   const [lives, setLives] = useState(MAX_LIVES);
   const [showLivesGate, setShowLivesGate] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
@@ -74,25 +84,41 @@ export default function LessonPageClient() {
   }, [lessonId]);
 
   const currentQ: Question | undefined = questions[currentIdx];
-  const isChecked = checkedId !== null;
-  const isCorrect = isChecked && currentQ?.options.find((o) => o.id === checkedId)?.is_correct === true;
+  const isChecked = result !== null;
+  const isCorrect = result?.is_correct === true;
   const progress = questions.length > 0 ? Math.round((currentIdx / questions.length) * 100) : 0;
 
-  function handleCheck() {
-    if (!selectedId || !currentQ) return;
-    setCheckedId(selectedId);
-    const correct = currentQ.options.find((o) => o.id === selectedId)?.is_correct ?? false;
-    if (correct) {
-      setCorrectCount((p) => p + 1);
-      setXpEarned((p) => p + (currentQ ? Math.round(50 / questions.length) : 0));
-      setComboStreak((p) => {
-        const next = p + 1;
-        setMaxCombo((prev) => Math.max(prev, next));
-        return next;
-      });
-    } else {
-      setLives((p) => Math.max(0, p - 1));
-      setComboStreak(0);
+  async function handleCheck() {
+    if (!selectedId || !currentQ || submitting) return;
+    setSubmitting(true);
+
+    const payload: AnswerPayload = {
+      question_id: currentQ.id,
+      selected_option_ids: [selectedId],
+    };
+
+    try {
+      const res = await lessonsApi.answer(lessonId, payload);
+      setResult(res);
+      setCheckedId(selectedId);
+      setAnswers((prev) => [...prev, payload]);
+
+      if (res.is_correct) {
+        setCorrectCount((p) => p + 1);
+        setXpEarned((p) => p + (questions.length > 0 ? Math.round(50 / questions.length) : 0));
+        setComboStreak((p) => {
+          const next = p + 1;
+          setMaxCombo((prev) => Math.max(prev, next));
+          return next;
+        });
+      } else {
+        setLives((p) => Math.max(0, p - 1));
+        setComboStreak(0);
+      }
+    } catch {
+      // Network/validation error — leave the question unanswered so the user can retry.
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -105,6 +131,7 @@ export default function LessonPageClient() {
     const nextIdx = currentIdx + 1;
     setSelectedId(null);
     setCheckedId(null);
+    setResult(null);
 
     if (nextIdx < questions.length) {
       setCurrentIdx(nextIdx);
@@ -119,14 +146,11 @@ export default function LessonPageClient() {
     completeCalledRef.current = true;
     setPhase("completing");
 
-    const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 100;
-    const passed = score >= 50;
-
     lessonsApi
-      .complete(lessonId, { score, passed, max_combo: maxCombo })
-      .then((result) => {
-        setCompleteResult(result);
-        updateUser({ level: result.level, lives: result.lives, gems: result.gems });
+      .complete(lessonId, { answers })
+      .then((res) => {
+        setCompleteResult(res);
+        updateUser({ level: res.level, lives: res.lives, gems: res.gems });
         fetchMe().catch(() => {});
         setPhase("done");
       })
@@ -282,7 +306,7 @@ export default function LessonPageClient() {
               {shuffledOptions.map((option, i) => {
                 let state: "default" | "selected" | "correct" | "wrong" = "default";
                 if (isChecked) {
-                  if (option.is_correct) state = "correct";
+                  if (result?.correct_option_ids.includes(option.id)) state = "correct";
                   else if (option.id === checkedId) state = "wrong";
                 } else if (option.id === selectedId) {
                   state = "selected";
@@ -308,7 +332,7 @@ export default function LessonPageClient() {
           {isChecked ? (
             <FeedbackPanel
               type={isCorrect ? "correct" : "wrong"}
-              explanation={currentQ?.explanation}
+              explanation={result?.explanation}
               xpGained={isCorrect ? Math.round(50 / questions.length) : 0}
               onContinue={handleContinue}
             />
@@ -317,10 +341,10 @@ export default function LessonPageClient() {
               <Button
                 size="lg"
                 className="w-full"
-                disabled={selectedId === null}
+                disabled={selectedId === null || submitting}
                 onClick={handleCheck}
               >
-                Перевірити
+                {submitting ? "Перевіряємо..." : "Перевірити"}
               </Button>
             </div>
           )}
