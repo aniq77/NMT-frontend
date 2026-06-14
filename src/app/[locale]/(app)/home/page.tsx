@@ -67,7 +67,7 @@ export default function HomePage() {
   }, [fetchMe]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.last_activity_date) return;
     const lastActivity = new Date(user.last_activity_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);

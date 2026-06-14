@@ -141,7 +141,7 @@ export default function ProfilePage() {
         <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface py-6 shadow-card">
           <Avatar
             src={undefined}
-            name={user.nickname}
+            name={user.nickname ?? undefined}
             level={user.level}
             size="lg"
           />
