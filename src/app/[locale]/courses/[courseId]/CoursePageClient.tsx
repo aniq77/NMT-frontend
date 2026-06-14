@@ -11,13 +11,8 @@ import {
   type CourseDetail,
   type Subject,
 } from "@/lib/api/courses";
-import { progressStore } from "@/lib/progressStore";
 
 function isIslandCompleted(cat: CategorySummary): boolean {
-  const stored = progressStore.getCategory(cat.slug);
-  if (stored !== null) {
-    return stored.totalTopics > 0 && stored.completedTopics >= stored.totalTopics;
-  }
   return cat.topics_count > 0 && cat.completed_topics >= cat.topics_count;
 }
 

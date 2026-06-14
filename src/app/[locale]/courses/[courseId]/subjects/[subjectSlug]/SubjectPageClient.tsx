@@ -12,7 +12,6 @@ import {
   type Subject,
 } from "@/lib/api/courses";
 import { cn } from "@/lib/utils";
-import { progressStore } from "@/lib/progressStore";
 
 const SUBJECTS = ["algebra", "geometry", "final"] as const;
 
@@ -22,17 +21,15 @@ function isSubject(value: string): value is Subject {
 
 function IslandCard({
   island,
-  unlocked,
   courseSlug,
 }: {
   island: CategorySummary;
-  unlocked: boolean;
   courseSlug: string;
 }) {
   const router = useRouter();
-  const stored = progressStore.getCategory(island.slug);
-  const completedTopics = stored?.completedTopics ?? island.completed_topics;
-  const totalTopics = stored?.totalTopics ?? island.topics_count;
+  const unlocked = island.is_unlocked;
+  const completedTopics = island.completed_topics;
+  const totalTopics = island.topics_count;
   const progress =
     totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
@@ -102,20 +99,10 @@ export default function SubjectPageClient() {
       .finally(() => setLoading(false));
   }, [courseId]);
 
-  const sortedIslands = (course?.categories ?? [])
+  const islands = (course?.categories ?? [])
     .filter((cat) => cat.subject === subject)
     .sort((a, b) => a.order_index - b.order_index);
 
-  // Cascade unlock: if island N-1 is fully completed (per progressStore),
-  // treat island N as unlocked even if the backend hasn't updated yet.
-  const islandUnlocked = sortedIslands.map((island, i) => {
-    if (island.is_unlocked) return true;
-    if (i === 0) return false;
-    const prev = progressStore.getCategory(sortedIslands[i - 1].slug);
-    return prev !== null && prev.totalTopics > 0 && prev.completedTopics >= prev.totalTopics;
-  });
-
-  const islands = sortedIslands;
   const title = subject ? SUBJECT_META[subject].title : "Розділ";
 
   return (
@@ -143,13 +130,8 @@ export default function SubjectPageClient() {
 
         {!loading && (
           <div className="space-y-3">
-            {islands.map((island, idx) => (
-              <IslandCard
-                key={island.slug}
-                island={island}
-                unlocked={islandUnlocked[idx]}
-                courseSlug={courseId}
-              />
+            {islands.map((island) => (
+              <IslandCard key={island.slug} island={island} courseSlug={courseId} />
             ))}
 
             {islands.length === 0 && (

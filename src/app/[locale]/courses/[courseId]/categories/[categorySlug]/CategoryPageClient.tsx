@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 import { Link, useRouter } from "@/lib/navigation";
 import { LessonNode } from "@/components/ui/LessonNode";
 import { coursesApi, type LessonSummary } from "@/lib/api/courses";
-import { progressStore } from "@/lib/progressStore";
 
 type NodeStatus = "golden" | "completed" | "current" | "available" | "locked";
 type NodeType = "standard" | "challenge" | "checkpoint";
@@ -69,82 +68,17 @@ export default function CategoryPageClient() {
           ),
         );
 
-        // Determine if this island is accessible: either the API says so, or the
-        // previous island in the same subject is fully completed (client-side cascade).
-        const subjectCats = course.categories
-          .filter((c) => c.subject === catMeta?.subject)
-          .sort((a, b) => a.order_index - b.order_index);
-        const catIdx = subjectCats.findIndex((c) => c.slug === categorySlug);
-        const prevIslandCompleted =
-          catIdx > 0
-            ? (() => {
-                const p = progressStore.getCategory(subjectCats[catIdx - 1].slug);
-                return p !== null && p.totalTopics > 0 && p.completedTopics >= p.totalTopics;
-              })()
-            : false;
-        const islandAccessible = (catMeta?.is_unlocked ?? false) || prevIslandCompleted;
-
-        // Start with API topic unlock flags.
-        // If the island is accessible but the first topic is still locked on the backend,
-        // unlock it on the client so the user can actually start lessons.
-        const effectiveUnlock = topicDetails.map((t) => t.is_unlocked);
-        if (islandAccessible && topicDetails.length > 0 && !effectiveUnlock[0]) {
-          effectiveUnlock[0] = true;
-        }
-
-        // Cascade unlock: if previous topic's lessons are all done (API or cache),
-        // unlock the next topic even if the backend hasn't updated yet.
-        let anyChanged = true;
-        while (anyChanged) {
-          anyChanged = false;
-          for (let i = 1; i < topicDetails.length; i++) {
-            if (!effectiveUnlock[i] && effectiveUnlock[i - 1]) {
-              const prevAllDone = topicDetails[i - 1].lessons.every(
-                (l) => l.is_completed || progressStore.getLesson(l.id) !== null,
-              );
-              if (prevAllDone) {
-                effectiveUnlock[i] = true;
-                anyChanged = true;
-              }
-            }
-          }
-        }
-
-        // Build flat lesson list, applying localStorage cache over stale API data
-        const allLessons: LessonEntry[] = topicDetails.flatMap((topic, topicIdx) =>
+        // Trust the backend: it tracks completion and unlocks topics correctly
+        // (a topic opens once the previous one has >= 1 completion).
+        const allLessons: LessonEntry[] = topicDetails.flatMap((topic) =>
           [...topic.lessons]
             .sort((a, b) => a.order_index - b.order_index)
-            .map((lesson) => {
-              const cachedCount = progressStore.getLesson(lesson.id);
-              const completionCount =
-                cachedCount !== null
-                  ? Math.max(lesson.completion_count, cachedCount)
-                  : lesson.completion_count;
-              return {
-                ...lesson,
-                is_completed: lesson.is_completed || cachedCount !== null,
-                completion_count: completionCount,
-                topicSlug: topic.slug,
-                topicIsUnlocked: effectiveUnlock[topicIdx],
-              };
-            }),
+            .map((lesson) => ({
+              ...lesson,
+              topicSlug: topic.slug,
+              topicIsUnlocked: topic.is_unlocked,
+            })),
         );
-
-        // Compute and persist category-level progress so SubjectPageClient
-        // and CoursePageClient can show correct counts without extra API calls.
-        const completedTopics = topicDetails.filter((topic) =>
-          topic.lessons.length > 0 &&
-          topic.lessons.every(
-            (l) => l.is_completed || progressStore.getLesson(l.id) !== null,
-          ),
-        ).length;
-
-        progressStore.setCategory(categorySlug, {
-          completedTopics,
-          totalTopics: topicDetails.length,
-          completedLessons: allLessons.filter((l) => l.is_completed).length,
-          totalLessons: allLessons.length,
-        });
 
         setLessons(allLessons);
       } catch {
