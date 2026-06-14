@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { Link, useRouter } from "@/lib/navigation";
 import { LessonNode } from "@/components/ui/LessonNode";
 import { coursesApi, type LessonSummary } from "@/lib/api/courses";
-import { lessonProgressCache } from "@/lib/lessonProgressCache";
+import { progressStore } from "@/lib/progressStore";
 
 type NodeStatus = "golden" | "completed" | "current" | "available" | "locked";
 type NodeType = "standard" | "challenge" | "checkpoint";
@@ -60,7 +60,6 @@ export default function CategoryPageClient() {
 
         setCategoryTitle(category.title);
 
-        // Fetch all topic details in order
         const sortedTopicSummaries = [...category.topics].sort(
           (a, b) => a.order_index - b.order_index,
         );
@@ -70,9 +69,8 @@ export default function CategoryPageClient() {
           ),
         );
 
-        // Compute effective unlock status with cascading:
-        // if the backend hasn't unlocked a topic yet but all lessons in the
-        // previous topic are completed (via API or client cache), unlock it.
+        // Cascade unlock: if previous topic's lessons are all done (API or cache),
+        // unlock the next topic even if the backend hasn't updated yet.
         const effectiveUnlock = topicDetails.map((t) => t.is_unlocked);
         let anyChanged = true;
         while (anyChanged) {
@@ -80,9 +78,7 @@ export default function CategoryPageClient() {
           for (let i = 1; i < topicDetails.length; i++) {
             if (!effectiveUnlock[i] && effectiveUnlock[i - 1]) {
               const prevAllDone = topicDetails[i - 1].lessons.every(
-                (l) =>
-                  l.is_completed ||
-                  lessonProgressCache.getCompletionCount(l.id) !== null,
+                (l) => l.is_completed || progressStore.getLesson(l.id) !== null,
               );
               if (prevAllDone) {
                 effectiveUnlock[i] = true;
@@ -92,11 +88,12 @@ export default function CategoryPageClient() {
           }
         }
 
+        // Build flat lesson list, applying localStorage cache over stale API data
         const allLessons: LessonEntry[] = topicDetails.flatMap((topic, topicIdx) =>
           [...topic.lessons]
             .sort((a, b) => a.order_index - b.order_index)
             .map((lesson) => {
-              const cachedCount = lessonProgressCache.getCompletionCount(lesson.id);
+              const cachedCount = progressStore.getLesson(lesson.id);
               const completionCount =
                 cachedCount !== null
                   ? Math.max(lesson.completion_count, cachedCount)
@@ -110,6 +107,22 @@ export default function CategoryPageClient() {
               };
             }),
         );
+
+        // Compute and persist category-level progress so SubjectPageClient
+        // and CoursePageClient can show correct counts without extra API calls.
+        const completedTopics = topicDetails.filter((topic) =>
+          topic.lessons.length > 0 &&
+          topic.lessons.every(
+            (l) => l.is_completed || progressStore.getLesson(l.id) !== null,
+          ),
+        ).length;
+
+        progressStore.setCategory(categorySlug, {
+          completedTopics,
+          totalTopics: topicDetails.length,
+          completedLessons: allLessons.filter((l) => l.is_completed).length,
+          totalLessons: allLessons.length,
+        });
 
         setLessons(allLessons);
       } catch {

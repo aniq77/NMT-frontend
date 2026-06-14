@@ -12,6 +12,7 @@ import {
   type Subject,
 } from "@/lib/api/courses";
 import { cn } from "@/lib/utils";
+import { progressStore } from "@/lib/progressStore";
 
 const SUBJECTS = ["algebra", "geometry", "final"] as const;
 
@@ -27,10 +28,11 @@ function IslandCard({
   courseSlug: string;
 }) {
   const router = useRouter();
+  const stored = progressStore.getCategory(island.slug);
+  const completedTopics = stored?.completedTopics ?? island.completed_topics;
+  const totalTopics = stored?.totalTopics ?? island.topics_count;
   const progress =
-    island.topics_count > 0
-      ? Math.round((island.completed_topics / island.topics_count) * 100)
-      : 0;
+    totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
   return (
     <button
@@ -63,13 +65,13 @@ function IslandCard({
             )}
           </div>
           <p className="mt-0.5 font-body text-sm text-text-secondary">
-            {island.completed_topics} / {island.topics_count} тем
+            {completedTopics} / {totalTopics} тем
           </p>
         </div>
         <span className="text-text-secondary">{island.is_unlocked ? "→" : ""}</span>
       </div>
 
-      {island.is_unlocked && island.topics_count > 0 && (
+      {island.is_unlocked && totalTopics > 0 && (
         <div className="mt-3">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="font-display text-xs font-600 text-text-secondary">Прогрес</span>
