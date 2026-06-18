@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Gem, Swords } from "lucide-react";
+import { Copy, Gem, Swords } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ApiError } from "@/lib/api/client";
+import { toast } from "@/store/toast.store";
 import {
   friendsApi,
   type FriendUser,
@@ -146,11 +147,26 @@ export function ChallengeModal({
             Виклик надіслано! Він діє 3 хвилини. Щойно суперник прийме його, бій з’явиться у вкладці
             «Дуелі».
           </p>
-          <div className="rounded-lg bg-surface-alt p-3 text-left">
-            <p className="font-display text-xs font-600 uppercase tracking-widest text-text-secondary">
-              Код виклику
-            </p>
-            <p className="mt-1 break-all font-mono text-xs text-text-primary">{created.id}</p>
+          <div className="flex items-center gap-2 rounded-xl bg-surface-alt p-3 text-left">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-xs font-600 uppercase tracking-widest text-text-secondary">
+                Код виклику
+              </p>
+              <p className="mt-1 break-all font-mono text-xs text-text-primary">{created.id}</p>
+            </div>
+            <button
+              type="button"
+              aria-label="Скопіювати код"
+              onClick={() => {
+                navigator.clipboard
+                  ?.writeText(created.id)
+                  .then(() => toast.success("Код скопійовано"))
+                  .catch(() => toast.error("Не вдалося скопіювати"));
+              }}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary-dark transition-colors hover:brightness-95"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
           </div>
           <Button className="w-full" onClick={onClose}>
             Закрити

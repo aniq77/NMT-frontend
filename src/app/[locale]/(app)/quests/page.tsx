@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { questsApi, type QuestGoalType, type UserQuestProgress } from "@/lib/api/quests";
 import { useAuthStore } from "@/store/auth.store";
+import { toast } from "@/store/toast.store";
 import { cn } from "@/lib/utils";
 
 type IconComp = React.ComponentType<{ className?: string }>;
@@ -39,7 +40,7 @@ function QuestCard({
     <div
       className={cn(
         "rounded-2xl p-4 transition-colors",
-        isClaimed ? "border border-correct/40 bg-correct-light/40 shadow-soft" : "glass",
+        isClaimed ? "border border-correct/40 bg-correct-light/40 shadow-soft" : "glass lift",
       )}
     >
       <div className="flex items-start gap-3">
@@ -141,6 +142,11 @@ export default function QuestsPage() {
     try {
       const res = await questsApi.claim(id);
       updateUser({ gems: res.gems, exp: res.exp });
+      const parts = [
+        res.reward_gems > 0 ? `+${res.reward_gems} 💎` : null,
+        res.reward_exp > 0 ? `+${res.reward_exp} XP` : null,
+      ].filter(Boolean);
+      toast.success(parts.length ? `Нагороду отримано · ${parts.join(" · ")}` : "Нагороду отримано");
       setState((prev) =>
         prev.status === "ready"
           ? {
@@ -189,7 +195,7 @@ export default function QuestsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-app space-y-3 px-4 py-6">
+      <main className="stagger mx-auto max-w-app space-y-3 px-4 py-6">
         {state.quests.length === 0 ? (
           <p className="py-12 text-center font-body text-sm text-text-secondary">
             На сьогодні завдань немає

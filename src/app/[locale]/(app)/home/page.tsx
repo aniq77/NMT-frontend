@@ -119,7 +119,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
+        <div className="stagger grid grid-cols-4 gap-2">
           {[
             { href: "/quests", Icon: Target, label: "Завдання" },
             { href: "/shop", Icon: ShoppingBag, label: "Крамниця" },
@@ -130,7 +130,7 @@ export default function HomePage() {
               key={href}
               type="button"
               onClick={() => router.push(href)}
-              className="glass flex flex-col items-center gap-1.5 rounded-2xl py-3 transition-transform hover:-translate-y-0.5 active:scale-[0.97]"
+              className="glass lift flex flex-col items-center gap-1.5 rounded-2xl py-3 active:scale-[0.97]"
             >
               <Icon className="h-6 w-6 text-primary" />
               <span className="font-display text-xs font-700 text-text-primary">{label}</span>
@@ -178,7 +178,7 @@ export default function HomePage() {
               <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="stagger space-y-4">
               {courses.map((course) => {
                 const progress = course.user_progress?.progress_percent ?? 0;
                 return (

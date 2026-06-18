@@ -6,6 +6,7 @@ import { useRouter } from "@/lib/navigation";
 import { AnswerOption } from "@/components/ui/AnswerOption";
 import { Button } from "@/components/ui/Button";
 import { MathText } from "@/components/ui/MathText";
+import { Modal } from "@/components/ui/Modal";
 import { ApiError } from "@/lib/api/client";
 import { lessonsApi, type Question } from "@/lib/api/lessons";
 import { pvpApi, type BattleDetail, type BattleResult } from "@/lib/api/pvp";
@@ -37,6 +38,7 @@ export default function BattlePage() {
   const [maxCombo, setMaxCombo] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [result, setResult] = useState<BattleResult | null>(null);
+  const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
 
   const submittedRef = useRef(false);
 
@@ -176,8 +178,8 @@ export default function BattlePage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
         <div className="mx-auto w-full max-w-app text-center">
-          <Swords className="mx-auto mb-4 h-20 w-20 text-primary" />
-          <h1 className="font-display text-2xl font-800 text-text-primary">Дуель!</h1>
+          <Swords className="float mx-auto mb-4 h-20 w-20 text-primary" />
+          <h1 className="text-glow font-display text-2xl font-800 text-primary-dark">Дуель!</h1>
           <p className="mt-2 font-body text-base text-text-secondary">
             проти {opponent?.nickname ?? "суперника"}
           </p>
@@ -200,11 +202,40 @@ export default function BattlePage() {
             <Button size="lg" className="w-full" onClick={() => setPhase("quiz")}>
               Почати бій
             </Button>
-            <Button variant="ghost" size="lg" className="w-full" onClick={handleForfeit}>
+            <Button variant="ghost" size="lg" className="w-full" onClick={() => setShowForfeitConfirm(true)}>
               Здатися
             </Button>
           </div>
         </div>
+
+        <Modal
+          open={showForfeitConfirm}
+          onClose={() => setShowForfeitConfirm(false)}
+          title="Здатися?"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="font-body text-sm text-text-secondary">
+              {battle.wager_gems > 0
+                ? `Суперник переможе, а ваша ставка ${battle.wager_gems} кристалів перейде йому. Нагороди ви не отримаєте.`
+                : "Суперник переможе, а ви не отримаєте нагороди за цей бій."}
+            </p>
+            <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={() => setShowForfeitConfirm(false)}>
+                Продовжити бій
+              </Button>
+              <Button
+                className="flex-1 !bg-none bg-wrong text-white"
+                onClick={() => {
+                  setShowForfeitConfirm(false);
+                  handleForfeit();
+                }}
+              >
+                Здатися
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }
@@ -241,7 +272,7 @@ export default function BattlePage() {
           ) : (
             <>
               <Trophy
-                className={`mx-auto mb-4 h-20 w-20 ${isWin ? "text-reward" : isDraw ? "text-text-secondary" : "text-wrong"}`}
+                className={`pop-in mx-auto mb-4 h-20 w-20 ${isWin ? "text-reward" : isDraw ? "text-text-secondary" : "text-wrong"}`}
               />
               <h1 className="font-display text-2xl font-800 text-text-primary">
                 {isWin ? "Перемога!" : isDraw ? "Нічия" : "Поразка"}

@@ -140,7 +140,7 @@ export default function PvPPage() {
                 Поки що немає боїв. Викличте друга на дуель!
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="stagger space-y-2">
                 {state.battles.map((b) => {
                   const meta = STATUS_META[b.status];
                   const won = b.status === "finished" && b.winner_user_id === user?.id;

@@ -94,7 +94,7 @@ export default function ShopPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-app space-y-3 px-4 py-6">
+      <main className="stagger mx-auto max-w-app space-y-3 px-4 py-6">
         {state.items.length === 0 && (
           <p className="py-12 text-center font-body text-sm text-text-secondary">
             Поки що немає товарів
@@ -107,7 +107,7 @@ export default function ShopPage() {
           return (
             <div
               key={item.id}
-              className="glass flex items-center gap-3 rounded-2xl p-4"
+              className="glass lift flex items-center gap-3 rounded-2xl p-4"
             >
               <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", bg)}>
                 <Icon className={cn("h-6 w-6", tint)} />
@@ -173,7 +173,7 @@ export default function ShopPage() {
       <Modal open={result !== null} onClose={() => setResult(null)} title="Готово!" size="sm">
         {result && (
           <div className="space-y-4 text-center">
-            <Sparkles className="mx-auto h-12 w-12 text-reward" />
+            <Sparkles className="pop-in mx-auto h-12 w-12 text-reward" />
             <p className="font-body text-sm text-text-secondary">
               <span className="font-700 text-text-primary">{result.item_name}</span> придбано.
             </p>

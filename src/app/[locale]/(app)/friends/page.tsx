@@ -13,6 +13,7 @@ import {
   type FriendUser,
   type Friendship,
 } from "@/lib/api/friends";
+import { toast } from "@/store/toast.store";
 import { cn } from "@/lib/utils";
 
 type Tab = "friends" | "requests";
@@ -62,14 +63,16 @@ export default function FriendsPage() {
 
   useEffect(fetchData, [fetchData]);
 
-  const runAction = async (id: string, action: () => Promise<unknown>) => {
+  const runAction = async (id: string, action: () => Promise<unknown>, successMsg?: string) => {
     setBusyId(id);
     try {
       await action();
       setBusyId(null);
+      if (successMsg) toast.success(successMsg);
       fetchData();
     } catch {
       setBusyId(null);
+      toast.error("Не вдалося виконати дію");
     }
   };
 
@@ -82,6 +85,7 @@ export default function FriendsPage() {
       await friendsApi.sendRequest(value);
       setAddSuccess(true);
       setAddId("");
+      toast.success("Запит надіслано");
       fetchData();
     } catch (err) {
       setAddError(
@@ -157,7 +161,7 @@ export default function FriendsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-app space-y-3 px-4 py-6">
+      <main key={tab} className="stagger mx-auto max-w-app space-y-3 px-4 py-6">
         {tab === "friends" && (
           <>
             {friends.length === 0 ? (
@@ -168,7 +172,7 @@ export default function FriendsPage() {
               friends.map((f) => (
                 <div
                   key={f.id}
-                  className="glass flex items-center gap-3 rounded-2xl p-3"
+                  className="glass lift flex items-center gap-3 rounded-2xl p-3"
                 >
                   <Avatar
                     name={f.friend.nickname ?? "Гравець"}
@@ -195,7 +199,7 @@ export default function FriendsPage() {
                     type="button"
                     aria-label="Видалити друга"
                     disabled={busyId === f.friend.id}
-                    onClick={() => runAction(f.friend.id, () => friendsApi.remove(f.friend.id))}
+                    onClick={() => runAction(f.friend.id, () => friendsApi.remove(f.friend.id), "Друга видалено")}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-wrong-light hover:text-wrong-dark disabled:opacity-50"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -219,7 +223,7 @@ export default function FriendsPage() {
                   {incoming.map((r) => (
                     <div
                       key={r.id}
-                      className="glass flex items-center gap-3 rounded-2xl p-3"
+                      className="glass lift flex items-center gap-3 rounded-2xl p-3"
                     >
                       <Avatar
                         name={r.from_user.nickname ?? "Гравець"}
@@ -237,7 +241,7 @@ export default function FriendsPage() {
                         type="button"
                         aria-label="Прийняти"
                         disabled={busyId === r.id}
-                        onClick={() => runAction(r.id, () => friendsApi.accept(r.id))}
+                        onClick={() => runAction(r.id, () => friendsApi.accept(r.id), "Тепер ви друзі 🎉")}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-correct-light text-correct-dark transition-colors hover:bg-correct hover:text-white disabled:opacity-50"
                       >
                         <Check className="h-5 w-5" />
@@ -268,7 +272,7 @@ export default function FriendsPage() {
                   {outgoing.map((r) => (
                     <div
                       key={r.id}
-                      className="glass flex items-center gap-3 rounded-2xl p-3"
+                      className="glass lift flex items-center gap-3 rounded-2xl p-3"
                     >
                       <Avatar
                         name={r.to_user.nickname ?? "Гравець"}

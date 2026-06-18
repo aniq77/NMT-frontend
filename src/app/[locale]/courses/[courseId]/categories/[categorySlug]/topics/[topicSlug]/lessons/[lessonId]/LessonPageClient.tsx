@@ -7,6 +7,7 @@ import { LessonHeader } from "@/components/layout/LessonHeader";
 import { AnswerOption } from "@/components/ui/AnswerOption";
 import { FeedbackPanel } from "@/components/ui/FeedbackPanel";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import {
   lessonsApi,
   type AnswerPayload,
@@ -56,6 +57,7 @@ export default function LessonPageClient() {
   const [showLivesGate, setShowLivesGate] = useState(false);
   const [restoringLife, setRestoringLife] = useState(false);
   const [lifeRestoreError, setLifeRestoreError] = useState<string>("");
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [comboStreak, setComboStreak] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
@@ -405,14 +407,46 @@ export default function LessonPageClient() {
   }
 
   // ── Quiz ──────────────────────────────────────────────────────────────────────
+  const hasQuizProgress =
+    answers.length > 0 || currentIdx > 0 || checkedId !== null || selectedId !== null;
+  const requestQuit = () => {
+    if (hasQuizProgress) setShowQuitConfirm(true);
+    else router.push(topicPath);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <LessonHeader
         progress={progress}
-        onClose={() => router.push(topicPath)}
+        onClose={requestQuit}
         xpEarned={xpEarned}
         lives={lives}
       />
+
+      <Modal
+        open={showQuitConfirm}
+        onClose={() => setShowQuitConfirm(false)}
+        title="Вийти з уроку?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="font-body text-sm text-text-secondary">
+            Якщо вийти зараз, весь прогрес цього уроку буде втрачено, а витрачену енергію не
+            повернуть.
+          </p>
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1" onClick={() => setShowQuitConfirm(false)}>
+              Залишитись
+            </Button>
+            <Button
+              className="flex-1 !bg-none bg-wrong text-white"
+              onClick={() => router.push(topicPath)}
+            >
+              Вийти
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <div className="mx-auto w-full max-w-app flex-1 space-y-4 px-4 py-5 pb-40">
         {currentQ && (

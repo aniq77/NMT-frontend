@@ -24,6 +24,7 @@ import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuthStore } from "@/store/auth.store";
+import { toast } from "@/store/toast.store";
 import type { User } from "@/types/auth";
 
 const AUTH_PROVIDER_LABELS: Record<User["auth_provider"], { label: string; icon: React.ReactNode }> = {
@@ -114,8 +115,10 @@ export default function ProfilePage() {
     setStreakError("");
     try {
       await restoreStreak();
+      toast.success("Серію відновлено! 🔥");
     } catch {
       setStreakError("Не вдалося відновити серію. Спробуйте ще раз.");
+      toast.error("Не вдалося відновити серію");
     } finally {
       setIsRestoringStreak(false);
     }
@@ -135,7 +138,7 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-app space-y-4 px-4 py-6">
+      <main className="stagger mx-auto max-w-app space-y-4 px-4 py-6">
 
         {/* Hero */}
         <div className="glass flex flex-col items-center gap-3 rounded-2xl py-6">
@@ -228,7 +231,7 @@ export default function ProfilePage() {
         <button
           type="button"
           onClick={() => router.push("/subscription")}
-          className="glass flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left transition-transform hover:-translate-y-0.5"
+          className="glass ring-glow lift flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[image:var(--grad-reward)] shadow-button">
             <Crown className="h-5 w-5 text-[#5a3a00]" />
