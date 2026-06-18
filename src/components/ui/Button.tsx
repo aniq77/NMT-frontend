@@ -14,9 +14,9 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-white shadow-button hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50",
+    "btn-grad-primary shadow-button hover:brightness-[1.06] hover:-translate-y-px active:scale-[0.98] disabled:opacity-50 disabled:hover:translate-y-0",
   secondary:
-    "bg-primary-light text-primary-dark border border-border hover:bg-surface-alt active:scale-[0.98] disabled:opacity-50",
+    "glass-soft text-primary-dark hover:brightness-[1.03] active:scale-[0.98] disabled:opacity-50",
   ghost:
     "bg-transparent text-primary hover:bg-primary-light active:scale-[0.98] disabled:opacity-50",
 };
@@ -33,7 +33,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center rounded-xl font-display font-700 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer select-none",
+        "inline-flex items-center justify-center rounded-full font-display font-700 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer select-none",
         variantClasses[variant],
         sizeClasses[size],
         className,

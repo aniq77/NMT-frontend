@@ -1,49 +1,61 @@
 @import "tailwindcss";
 
 @theme {
-  /* Colors — Primary */
-  --color-primary:       #5C3FE8;
-  --color-primary-light: #EDE8FF;
-  --color-primary-mid:   #C4B8FF;
-  --color-primary-dark:  #3B2599;
+  /* ─── Colors — Primary (teal / emerald) ─────────────────────── */
+  --color-primary:       #1f9e92;
+  --color-primary-light: #d3efe7;
+  --color-primary-mid:   #7cc8bd;
+  --color-primary-dark:  #0f5c54;
 
-  /* Colors — Feedback */
-  --color-correct:       #23A86A;
-  --color-correct-light: #EAFAF3;
-  --color-correct-dark:  #165C3A;
-  --color-wrong:         #FF5B4C;
-  --color-wrong-light:   #FFEAEA;
-  --color-wrong-dark:    #7A1C1C;
+  /* ─── Colors — Feedback ─────────────────────────────────────── */
+  --color-correct:       #3fae73;
+  --color-correct-light: #d8f3e0;
+  --color-correct-dark:  #1f7a55;
+  --color-wrong:         #e8794a;
+  --color-wrong-light:   #ffe7da;
+  --color-wrong-dark:    #b04e29;
 
-  /* Colors — Gamification */
-  --color-reward:        #FFB800;
-  --color-reward-light:  #FFF4CC;
-  --color-reward-dark:   #7A5200;
+  /* ─── Colors — Gamification (gold) ──────────────────────────── */
+  --color-reward:        #efb43d;
+  --color-reward-light:  #fff1cf;
+  --color-reward-dark:   #9a6e1f;
 
-  /* Colors — Surfaces */
-  --color-canvas:        #F7F5FF;
-  --color-surface:       #FFFFFF;
-  --color-surface-alt:   #F0EEFF;
+  /* ─── Extra accents ─────────────────────────────────────────── */
+  --color-violet:        #7d6fd1;
+  --color-violet-dark:   #5a4ba0;
+  --color-water:         #1f8fa6;
+  --color-ember:         #e8794a;
+  --color-gold:          #f3c25a;
+  --color-mint:          #bff2d8;
 
-  /* Colors — Borders */
-  --color-border:        #E0DCF8;
-  --color-border-strong: #C4B8FF;
+  /* ─── Surfaces ──────────────────────────────────────────────── */
+  --color-canvas:        transparent;
+  --color-surface:       rgba(255, 255, 255, 0.82);
+  --color-surface-alt:   rgba(255, 255, 255, 0.58);
 
-  /* Colors — Text */
-  --color-text-primary:   #1A1033;
-  --color-text-secondary: #6B5FA6;
+  /* ─── Borders ───────────────────────────────────────────────── */
+  --color-border:        rgba(15, 92, 84, 0.14);
+  --color-border-strong: rgba(15, 92, 84, 0.30);
 
-  /* Font families */
+  /* ─── Text ──────────────────────────────────────────────────── */
+  --color-text-primary:   #0f3b39;
+  --color-text-secondary: #3a615e;
+
+  /* ─── Glass system ──────────────────────────────────────────── */
+  --glass-bg:    rgba(255, 255, 255, 0.62);
+  --glass-line:  rgba(255, 255, 255, 0.85);
+
+  /* ─── Font families (kept) ──────────────────────────────────── */
   --font-display: "Nunito", system-ui, sans-serif;
   --font-body:    "Inter", system-ui, sans-serif;
   --font-mono:    "JetBrains Mono", monospace;
 
-  /* Font weights */
+  /* ─── Font weights ──────────────────────────────────────────── */
   --font-weight-600: 600;
   --font-weight-700: 700;
   --font-weight-800: 800;
 
-  /* Font sizes */
+  /* ─── Font sizes ────────────────────────────────────────────── */
   --text-xs:   11px;  --text-xs--line-height:   1.4;
   --text-sm:   13px;  --text-sm--line-height:   1.5;
   --text-base: 15px;  --text-base--line-height: 1.6;
@@ -52,58 +64,225 @@
   --text-xl:   28px;  --text-xl--line-height:   1.2;
   --text-2xl:  38px;  --text-2xl--line-height:  1.1;
 
-  /* Border radius */
+  /* ─── Border radius ─────────────────────────────────────────── */
   --radius-sm:   8px;
   --radius-md:   12px;
   --radius-lg:   16px;
   --radius-xl:   20px;
+  --radius-2xl:  26px;
+  --radius-3xl:  34px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-card:   0 2px 8px rgba(92, 63, 232, 0.08);
-  --shadow-modal:  0 8px 32px rgba(92, 63, 232, 0.16);
-  --shadow-button: 0 4px 12px rgba(92, 63, 232, 0.25);
+  /* ─── Shadows ───────────────────────────────────────────────── */
+  --shadow-card:   0 22px 50px -22px rgba(10, 59, 56, 0.5);
+  --shadow-soft:   0 12px 28px -16px rgba(10, 59, 56, 0.45);
+  --shadow-modal:  0 30px 60px -24px rgba(10, 59, 56, 0.55);
+  --shadow-button: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 12px 24px -12px rgba(10, 59, 56, 0.6);
+
+  /* ─── Gradients ─────────────────────────────────────────────── */
+  --grad-primary: linear-gradient(135deg, #1f9e92, #1f7a55);
+  --grad-reward:  linear-gradient(135deg, #ffe7a8, #f3c25a);
+  --grad-violet:  linear-gradient(135deg, #7d6fd1, #5a4ba0);
+  --grad-fill:    linear-gradient(90deg, #4fbf83, #f3c25a);
+
+  /* Foreground color used on solid/gradient primary buttons */
+  --btn-primary-fg: #ffffff;
 
   /* Max width — --container-* maps to max-w-* in v4 */
   --container-app: 480px;
 }
 
-/* ─── Dark mode overrides ─────────────────────────────────────── */
+/* ─── Dark mode overrides (magical night) ─────────────────────── */
 [data-theme="dark"] {
-  --color-canvas:         #1A1033;
-  --color-surface:        #241848;
-  --color-surface-alt:    #2E2060;
-  --color-border:         #3B2599;
-  --color-border-strong:  #5C3FE8;
-  --color-text-primary:   #F0EEFF;
-  --color-text-secondary: #C4B8FF;
+  --color-primary:       #33d6c2;
+  --color-primary-light: rgba(51, 214, 194, 0.16);
+  --color-primary-mid:   #2aa79a;
+  --color-primary-dark:  #6ff0de;
+
+  --color-correct:       #54e0a0;
+  --color-correct-light: rgba(84, 224, 160, 0.16);
+  --color-correct-dark:  #7cf0bb;
+  --color-wrong:         #ff8a52;
+  --color-wrong-light:   rgba(255, 138, 82, 0.16);
+  --color-wrong-dark:    #ffb38f;
+
+  --color-reward:        #ffd27a;
+  --color-reward-light:  rgba(255, 210, 122, 0.14);
+  --color-reward-dark:   #ffe3a8;
+
+  --color-violet:        #9b8cff;
+  --color-violet-dark:   #b9acff;
+  --color-water:         #5cdcef;
+  --color-ember:         #ff8a52;
+  --color-gold:          #ffd27a;
+  --color-mint:          #9cf0cf;
+
+  --color-canvas:        transparent;
+  --color-surface:       rgba(16, 40, 50, 0.62);
+  --color-surface-alt:   rgba(16, 40, 50, 0.42);
+
+  --color-border:        rgba(120, 210, 200, 0.22);
+  --color-border-strong: rgba(120, 210, 200, 0.40);
+
+  --color-text-primary:   #e9f7f2;
+  --color-text-secondary: #a6c8c2;
+
+  --glass-bg:   rgba(16, 40, 50, 0.55);
+  --glass-line: rgba(120, 210, 200, 0.22);
+
+  --shadow-card:   0 24px 60px -22px rgba(0, 0, 0, 0.7);
+  --shadow-soft:   0 14px 34px -18px rgba(0, 0, 0, 0.65);
+  --shadow-modal:  0 34px 70px -26px rgba(0, 0, 0, 0.8);
+  --shadow-button: inset 0 2px 0 rgba(255, 255, 255, 0.22), 0 12px 26px -12px rgba(0, 0, 0, 0.7);
+
+  --grad-primary: linear-gradient(135deg, #5ff0db, #33d6c2);
+  --grad-reward:  linear-gradient(135deg, #fff0c8, #ffd27a);
+  --grad-violet:  linear-gradient(135deg, #9b8cff, #6f5fd0);
+  --grad-fill:    linear-gradient(90deg, #54e0a0, #ffd27a);
+
+  --btn-primary-fg: #06221f;
+}
+
+/* ─── Theme background (sky / night) ──────────────────────────── */
+:root {
+  --bg-sky:
+    radial-gradient(1100px 640px at 82% -10%, rgba(255, 236, 180, 0.85), transparent 60%),
+    radial-gradient(820px 560px at 10% 4%, rgba(180, 242, 216, 0.65), transparent 55%),
+    linear-gradient(180deg, #cdeef6 0%, #d9f4ea 44%, #eafbf2 100%);
+}
+[data-theme="dark"] {
+  --bg-sky:
+    radial-gradient(900px 560px at 84% 6%, rgba(150, 200, 255, 0.22), transparent 60%),
+    radial-gradient(760px 520px at 12% 92%, rgba(40, 167, 196, 0.16), transparent 55%),
+    linear-gradient(180deg, #0a1830 0%, #0c2a39 50%, #0e3a3a 100%);
 }
 
 /* ─── Base ────────────────────────────────────────────────────── */
-html,
+html {
+  background-color: #cdeef6;
+}
+[data-theme="dark"] html {
+  background-color: #0a1830;
+}
 body {
-  background-color: var(--color-canvas);
+  background: var(--bg-sky) fixed;
   color: var(--color-text-primary);
   font-family: var(--font-body), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+::selection {
+  background: var(--color-gold);
+  color: #3a2a00;
+}
+[data-theme="dark"] ::selection {
+  color: #1a2030;
+}
+
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-@keyframes step-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ─── Glass surfaces ──────────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  border: 1.5px solid var(--glass-line);
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.glass-soft {
+  background: var(--glass-bg);
+  border: 1.5px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
+/* Decorative background layer visibility per theme */
+.bg-decor .dark-only { display: none; }
+[data-theme="dark"] .bg-decor .light-only { display: none; }
+[data-theme="dark"] .bg-decor .dark-only { display: block; }
+
+/* Text glow used for headings on the dark theme */
+.text-glow {
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5), 0 16px 34px rgba(15, 92, 84, 0.18);
+}
+[data-theme="dark"] .text-glow {
+  text-shadow: 0 0 30px rgba(51, 214, 194, 0.4);
+}
+
+/* Gradient primary button surface */
+.btn-grad-primary {
+  background-image: var(--grad-primary);
+  color: var(--btn-primary-fg);
+}
+
+/* Progress shine sweep */
+.progress-shine {
+  position: relative;
+  overflow: hidden;
+}
+.progress-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: shine 2.8s linear infinite;
+}
+
+/* ─── Keyframes ───────────────────────────────────────────────── */
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 .step-in {
   animation: step-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes shine {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(240%); }
+}
+
+@keyframes wave {
+  0%, 60%, 100% { transform: rotate(0); }
+  10% { transform: rotate(16deg); }
+  30% { transform: rotate(-8deg); }
+  45% { transform: rotate(12deg); }
+}
+.animate-wave {
+  display: inline-block;
+  transform-origin: 70% 80%;
+  animation: wave 2.4s ease-in-out infinite;
+}
+
+@keyframes drift   { from { transform: translateX(-12vw); } to { transform: translateX(118vw); } }
+@keyframes driftR  { from { transform: translateX(12vw); }  to { transform: translateX(-130vw); } }
+@keyframes spin8   { to { transform: rotate(8deg); } }
+@keyframes rise {
+  0%   { transform: translateY(0); opacity: 0; }
+  12%  { opacity: 0.85; }
+  88%  { opacity: 0.85; }
+  100% { transform: translateY(-108vh) translateX(34px); opacity: 0; }
+}
+@keyframes aurora1 {
+  0%, 100% { transform: translateX(-6%) scaleY(1); }
+  50%      { transform: translateX(6%) scaleY(1.15); }
+}
+@keyframes aurora2 {
+  0%, 100% { transform: translateX(5%); }
+  50%      { transform: translateX(-5%); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-wave,
+  .progress-shine::after,
+  .bg-decor * {
+    animation: none !important;
+  }
 }

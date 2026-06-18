@@ -58,10 +58,8 @@ export function FeedbackPanel({ type, explanation, xpGained, onContinue }: Feedb
         onClick={onContinue}
         size="lg"
         className={cn(
-          "w-full",
-          isCorrect
-            ? "bg-correct shadow-[0_4px_0_#165C3A] hover:bg-correct-dark"
-            : "bg-wrong shadow-[0_4px_0_#7A1C1C] hover:bg-wrong-dark",
+          "w-full !bg-none text-white",
+          isCorrect ? "bg-correct hover:bg-correct-dark" : "bg-wrong hover:bg-wrong-dark",
         )}
       >
         Продовжити

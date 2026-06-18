@@ -22,6 +22,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuthStore } from "@/store/auth.store";
 import type { User } from "@/types/auth";
 
@@ -41,9 +42,9 @@ function formatDate(iso: string): string {
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+    <div className="glass overflow-hidden rounded-2xl">
       <div className="border-b border-border px-4 py-3">
-        <h2 className="font-display text-sm font-700 uppercase tracking-widest text-text-secondary">
+        <h2 className="font-display text-sm font-700 uppercase tracking-widest text-primary">
           {title}
         </h2>
       </div>
@@ -85,7 +86,7 @@ function InfoRow({
 
 function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-xl bg-surface-alt px-3 py-3 text-center">
+    <div className="glass-soft flex flex-col items-center gap-1 rounded-2xl px-3 py-3 text-center">
       {icon}
       <span className="font-display text-md font-700 text-text-primary tabular-nums">{value}</span>
       <span className="font-display text-xs font-600 text-text-secondary">{label}</span>
@@ -128,16 +129,16 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm">
+      <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
         <div className="mx-auto flex max-w-app items-center px-4 py-3">
-          <h1 className="font-display text-base font-700 text-text-primary">Профіль</h1>
+          <h1 className="font-display text-base font-800 text-primary-dark">Профіль</h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-app space-y-4 px-4 py-6">
 
         {/* Hero */}
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface py-6 shadow-card">
+        <div className="glass flex flex-col items-center gap-3 rounded-2xl py-6">
           <Avatar
             src={undefined}
             name={user.nickname ?? undefined}
@@ -170,7 +171,7 @@ export default function ProfilePage() {
 
         {/* Restore streak */}
         {canRestoreStreak && (
-          <div className="rounded-xl border border-reward/30 bg-reward-light p-4">
+          <div className="rounded-2xl border border-reward/40 bg-reward-light p-4 shadow-soft">
             <div className="flex items-start gap-3">
               <Flame className="mt-0.5 h-5 w-5 shrink-0 text-reward-dark" />
               <div className="flex-1">
@@ -227,10 +228,10 @@ export default function ProfilePage() {
         <button
           type="button"
           onClick={() => router.push("/subscription")}
-          className="flex w-full items-center gap-3 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-4 text-left transition-colors hover:from-primary/10 hover:to-primary/15"
+          className="glass flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left transition-transform hover:-translate-y-0.5"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-button">
-            <Crown className="h-5 w-5 text-white" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[image:var(--grad-reward)] shadow-button">
+            <Crown className="h-5 w-5 text-[#5a3a00]" />
           </div>
           <div className="flex-1">
             <p className="font-display text-sm font-700 text-text-primary">Premium підписка</p>
@@ -238,6 +239,12 @@ export default function ProfilePage() {
           </div>
           <ChevronRight className="h-5 w-5 shrink-0 text-text-secondary" />
         </button>
+
+        {/* Appearance */}
+        <div className="glass flex items-center justify-between rounded-2xl px-4 py-3.5">
+          <p className="font-display text-sm font-700 text-text-primary">Тема</p>
+          <ThemeToggle />
+        </div>
 
         {/* Logout */}
         <div className="pb-4 pt-2">

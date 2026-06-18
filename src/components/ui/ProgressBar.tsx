@@ -23,7 +23,7 @@ export function ProgressBar({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-full bg-border",
+        "w-full overflow-hidden rounded-full bg-black/10",
         size === "xs" && "h-1.5",
         size === "sm" && "h-2.5",
         size === "md" && "h-3.5",
@@ -35,10 +35,10 @@ export function ProgressBar({
         aria-valuenow={value}
         aria-valuemax={max}
         className={cn(
-          "h-full rounded-full",
-          color === "primary" && "bg-primary",
+          "progress-shine h-full rounded-full",
+          color === "primary" && "bg-[image:var(--grad-fill)]",
           color === "correct" && "bg-correct",
-          color === "reward" && "bg-reward",
+          color === "reward" && "bg-[image:var(--grad-reward)]",
           color === "wrong" && "bg-wrong",
           animated && "transition-[width] duration-500 ease-out",
         )}

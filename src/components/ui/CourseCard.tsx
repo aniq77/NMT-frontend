@@ -47,17 +47,17 @@ export function CourseCard({
       onClick={onClick}
       disabled={isLocked}
       className={cn(
-        "w-full overflow-hidden rounded-xl border border-border bg-surface text-left shadow-card",
+        "glass w-full overflow-hidden rounded-2xl text-left",
         "transition-all duration-200",
         isLocked
-          ? "cursor-not-allowed opacity-50"
-          : "hover:border-primary-mid hover:shadow-modal active:scale-[0.99]",
+          ? "cursor-not-allowed opacity-55"
+          : "hover:-translate-y-1 hover:shadow-modal active:scale-[0.99]",
         !onClick && !isLocked && "cursor-default",
       )}
     >
       <div className="p-4">
         <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-light shadow-card">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[image:var(--grad-primary)] text-white shadow-soft">
             {icon}
           </div>
           <div className="min-w-0 flex-1">
@@ -99,12 +99,12 @@ export function CourseCard({
       <div className="border-t border-border px-4 py-3">
         <div
           className={cn(
-            "rounded-lg py-2 text-center font-display text-sm font-700 transition-colors",
+            "rounded-full py-2.5 text-center font-display text-sm font-700 transition-colors",
             isLocked
               ? "border border-border bg-surface-alt text-text-secondary"
               : isEnrolled
                 ? "border border-border-strong bg-primary-light text-primary-dark"
-                : "bg-primary text-white",
+                : "btn-grad-primary shadow-button",
           )}
         >
           {isLocked ? "Незабаром" : isEnrolled ? (progress > 0 ? "Продовжити" : "Розпочати") : "Записатися"}

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { AlertTriangle, BookOpen, Flame, Hash, HeartCrack, Triangle, X } from "lucide-react";
+import { AlertTriangle, BookOpen, Flame, Hash, HeartCrack, ShoppingBag, Swords, Target, Triangle, Users, X } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CourseCard } from "@/components/ui/CourseCard";
@@ -9,9 +9,9 @@ import { coursesApi, type CourseListItem } from "@/lib/api/courses";
 
 function getSubjectIcon(subject: string): React.ReactNode {
   const s = subject.toLowerCase();
-  if (s.includes("алгебр") || s.includes("математ")) return <Hash className="h-8 w-8 text-primary" />;
-  if (s.includes("геометр")) return <Triangle className="h-8 w-8 text-primary" />;
-  return <BookOpen className="h-8 w-8 text-primary" />;
+  if (s.includes("алгебр") || s.includes("математ")) return <Hash className="h-8 w-8 text-white" />;
+  if (s.includes("геометр")) return <Triangle className="h-8 w-8 text-white" />;
+  return <BookOpen className="h-8 w-8 text-white" />;
 }
 
 type StreakStatus = "broken" | "at-risk" | null;
@@ -110,13 +110,32 @@ export default function HomePage() {
 
       <main className="mx-auto max-w-app space-y-6 px-4 py-6">
         <div>
-          <h1 className="font-display text-xl font-800 text-text-primary">
-            Привіт, {user.nickname ?? user.email}!
+          <h1 className="text-glow font-display text-2xl font-800 text-primary-dark">
+            Привіт, {user.nickname ?? user.email}! <span className="animate-wave">👋</span>
           </h1>
           <p className="mt-1 inline-flex items-center gap-1.5 font-body text-base text-text-secondary">
             {user.streak_days} днів поспіль — так тримати!
             <Flame className="h-4 w-4 text-reward" />
           </p>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { href: "/quests", Icon: Target, label: "Завдання" },
+            { href: "/shop", Icon: ShoppingBag, label: "Крамниця" },
+            { href: "/friends", Icon: Users, label: "Друзі" },
+            { href: "/pvp", Icon: Swords, label: "Дуелі" },
+          ].map(({ href, Icon, label }) => (
+            <button
+              key={href}
+              type="button"
+              onClick={() => router.push(href)}
+              className="glass flex flex-col items-center gap-1.5 rounded-2xl py-3 transition-transform hover:-translate-y-0.5 active:scale-[0.97]"
+            >
+              <Icon className="h-6 w-6 text-primary" />
+              <span className="font-display text-xs font-700 text-text-primary">{label}</span>
+            </button>
+          ))}
         </div>
 
         {activeCourse && (
@@ -153,7 +172,7 @@ export default function HomePage() {
         )}
 
         <div>
-          <h2 className="mb-4 font-display text-lg font-700 text-text-primary">Курси</h2>
+          <h2 className="mb-4 font-display text-xl font-800 text-primary-dark">Курси</h2>
           {courses.length === 0 ? (
             <div className="rounded-xl border border-border bg-surface px-4 py-8 text-center">
               <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>

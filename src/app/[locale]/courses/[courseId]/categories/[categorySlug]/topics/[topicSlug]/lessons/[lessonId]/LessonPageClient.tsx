@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/lessons";
 import { MathText } from "@/components/ui/MathText";
 import { ApiError } from "@/lib/api/client";
+import { shopApi } from "@/lib/api/shop";
 import { useAuthStore } from "@/store/auth.store";
 
 const MAX_LIVES = 5;
@@ -53,6 +54,8 @@ export default function LessonPageClient() {
   const [answers, setAnswers] = useState<AnswerPayload[]>([]);
   const [lives, setLives] = useState(MAX_LIVES);
   const [showLivesGate, setShowLivesGate] = useState(false);
+  const [restoringLife, setRestoringLife] = useState(false);
+  const [lifeRestoreError, setLifeRestoreError] = useState<string>("");
   const [correctCount, setCorrectCount] = useState(0);
   const [comboStreak, setComboStreak] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
@@ -279,16 +282,40 @@ export default function LessonPageClient() {
           <div className="mt-6 space-y-3">
             <Button
               size="lg"
+              loading={restoringLife}
               className="w-full bg-reward text-reward-dark hover:bg-reward-dark hover:text-white"
-              onClick={() => {
-                setLives(1);
-                setShowLivesGate(false);
+              onClick={async () => {
+                setLifeRestoreError("");
+                setRestoringLife(true);
+                try {
+                  const items = await shopApi.list();
+                  const item = items.find((i) => i.item_type === "life_restore");
+                  if (!item) {
+                    setLifeRestoreError("Відновлення наразі недоступне");
+                    return;
+                  }
+                  const res = await shopApi.purchase(item.id);
+                  updateUser({ gems: res.gems, lives: res.lives, energy: res.energy });
+                  setLives(res.lives);
+                  setShowLivesGate(false);
+                } catch (err) {
+                  setLifeRestoreError(
+                    err instanceof ApiError && err.status === 400
+                      ? "Недостатньо кристалів"
+                      : "Не вдалося відновити життя",
+                  );
+                } finally {
+                  setRestoringLife(false);
+                }
               }}
             >
               <span className="flex items-center justify-center gap-2">
-                <Gem className="h-5 w-5" /> Витратити 10 кристалів
+                <Gem className="h-5 w-5" /> Відновити життя за кристали
               </span>
             </Button>
+            {lifeRestoreError && (
+              <p className="font-body text-sm text-wrong-dark">{lifeRestoreError}</p>
+            )}
             <Button variant="ghost" size="lg" className="w-full" onClick={() => router.push(topicPath)}>
               Назад до острова
             </Button>

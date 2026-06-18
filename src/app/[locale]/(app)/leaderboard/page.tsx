@@ -223,16 +223,16 @@ export default function LeaderboardPage() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm">
+      <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
         <div className="mx-auto max-w-app px-4 py-3">
-          <h1 className="font-display text-base font-700 text-text-primary">Рейтинг</h1>
+          <h1 className="font-display text-base font-800 text-primary-dark">Рейтинг</h1>
         </div>
       </header>
 
       <div className="mx-auto max-w-app">
         <SeasonBanner season={season} />
 
-        <div className="bg-surface pb-40">
+        <div className="glass-soft mt-3 overflow-hidden rounded-2xl pb-40">
           <ZoneDivider type="promote" />
 
           {promoEntries.map((entry) => (
@@ -262,7 +262,7 @@ export default function LeaderboardPage() {
 
       {userEntry && (
         <div className="fixed bottom-[72px] left-0 right-0 z-30 px-4">
-          <div className="mx-auto max-w-app overflow-hidden rounded-xl bg-primary shadow-modal">
+          <div className="btn-grad-primary mx-auto max-w-app overflow-hidden rounded-2xl shadow-modal">
             <div className="flex items-center gap-3 px-4 py-3">
               <span className="font-display text-sm font-600 text-white/70">
                 #{userEntry.rank}

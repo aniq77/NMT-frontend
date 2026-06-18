@@ -26,20 +26,20 @@ export function Avatar({ src, name, level, size = "md", className }: AvatarProps
     <div className={cn("relative inline-flex shrink-0", className)}>
       <div
         className={cn(
-          "flex items-center justify-center overflow-hidden rounded-full border-2 border-border bg-primary-light",
+          "flex items-center justify-center overflow-hidden rounded-full border-2 border-[var(--glass-line)] bg-[image:radial-gradient(circle_at_35%_30%,var(--color-mint),var(--color-primary))] shadow-soft",
           s.wrapper,
         )}
       >
         {src ? (
           <img src={src} alt={name ?? "avatar"} className="h-full w-full object-cover" />
         ) : (
-          <span className={cn("font-display font-700 text-primary", s.text)}>{initials}</span>
+          <span className={cn("font-display font-700 text-white", s.text)}>{initials}</span>
         )}
       </div>
       {level !== undefined && (
         <span
           className={cn(
-            "absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-surface bg-reward font-display font-700 leading-none text-white",
+            "absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-[var(--glass-line)] bg-[image:var(--grad-reward)] font-display font-700 leading-none text-[#5a3a00]",
             s.badge,
           )}
         >

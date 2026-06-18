@@ -15,8 +15,8 @@ export function Card({ children, padding = "md", elevated = false, className }: 
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-surface",
-        elevated && "shadow-card",
+        "rounded-2xl",
+        elevated ? "glass" : "glass-soft",
         PADDING[padding],
         className,
       )}
