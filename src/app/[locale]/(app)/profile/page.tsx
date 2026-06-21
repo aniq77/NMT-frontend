@@ -12,6 +12,7 @@ import {
   Globe,
   Heart,
   Mail,
+  Pencil,
   Smartphone,
   Star,
   Trophy,
@@ -19,19 +20,37 @@ import {
   Zap,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { SkinIcon, hasSkinIcon } from "@/components/ui/SkinIcon";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuthStore } from "@/store/auth.store";
 import { toast } from "@/store/toast.store";
+import { achievementsApi } from "@/lib/api/achievements";
 import type { User } from "@/types/auth";
+import type { Achievement, AchievementTier } from "@/types/achievements";
+
+// ---------------------------------------------------------------------------
+// Lookup tables
+// ---------------------------------------------------------------------------
 
 const AUTH_PROVIDER_LABELS: Record<User["auth_provider"], { label: string; icon: React.ReactNode }> = {
   email:  { label: "Пошта",   icon: <Mail       className="h-5 w-5 text-text-secondary" /> },
   google: { label: "Google",  icon: <Globe      className="h-5 w-5 text-text-secondary" /> },
   phone:  { label: "Телефон", icon: <Smartphone className="h-5 w-5 text-text-secondary" /> },
 };
+
+const TIER_DOT: Record<AchievementTier, string> = {
+  platinum: "bg-violet-500",
+  gold:     "bg-reward",
+  silver:   "bg-slate-400",
+  bronze:   "bg-orange-500",
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("uk-UA", {
@@ -40,6 +59,10 @@ function formatDate(iso: string): string {
     year: "numeric",
   }).format(new Date(iso));
 }
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -95,14 +118,94 @@ function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
+function UnlockedAchievementsSection({
+  achievements,
+  loading,
+  onViewAll,
+}: {
+  achievements: Achievement[];
+  loading: boolean;
+  onViewAll: () => void;
+}) {
+  const unlocked = achievements.filter((a) => a.unlocked);
+
+  return (
+    <div className="glass overflow-hidden rounded-2xl">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <h2 className="font-display text-sm font-700 uppercase tracking-widest text-primary">Досягнення</h2>
+        {!loading && (
+          <span className="font-display text-xs font-600 text-text-secondary tabular-nums">
+            {unlocked.length}/{achievements.length}
+          </span>
+        )}
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div className="divide-y divide-border">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3">
+              <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-border" />
+              <div className="h-3 w-1/2 animate-pulse rounded bg-border" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && unlocked.length === 0 && (
+        <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
+          <Trophy className="h-7 w-7 text-text-secondary/40" />
+          <p className="font-body text-sm text-text-secondary">Ще немає нагород</p>
+          <p className="font-body text-xs text-text-secondary/70">Завершіть урок, щоб отримати першу</p>
+        </div>
+      )}
+
+      {/* Unlocked list */}
+      {!loading && unlocked.length > 0 && (
+        <div className="divide-y divide-border">
+          {unlocked.map((ach) => (
+            <div key={ach.id} className="flex items-center gap-3 px-4 py-3">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${TIER_DOT[ach.tier]}`} />
+              <p className="flex-1 font-display text-sm font-600 text-text-primary">{ach.title}</p>
+              <Check className="h-4 w-4 shrink-0 text-correct" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Footer link */}
+      {!loading && (
+        <button
+          onClick={onViewAll}
+          className="flex w-full items-center justify-center gap-1.5 border-t border-border px-4 py-3 font-display text-sm font-600 text-primary hover:bg-primary/5 transition-colors"
+        >
+          Всі досягнення <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, fetchMe, restoreStreak, logout } = useAuthStore();
   const [isRestoringStreak, setIsRestoringStreak] = useState(false);
   const [streakError, setStreakError] = useState("");
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
 
   useEffect(() => {
     fetchMe().catch(() => {});
+    achievementsApi
+      .list()
+      .then(setAchievements)
+      .catch(() => {})
+      .finally(() => setAchievementsLoading(false));
   }, [fetchMe]);
 
   async function handleLogout() {
@@ -142,12 +245,26 @@ export default function ProfilePage() {
 
         {/* Hero */}
         <div className="glass flex flex-col items-center gap-3 rounded-2xl py-6">
-          <Avatar
-            src={undefined}
-            name={user.nickname ?? undefined}
-            level={user.level}
-            size="lg"
-          />
+          <button
+            onClick={() => router.push("/avatar")}
+            className="relative transition-transform hover:scale-[1.04] active:scale-[0.97]"
+            aria-label="Змінити аватар"
+          >
+            <Avatar
+              name={user.nickname ?? undefined}
+              level={user.level}
+              size="lg"
+              gradient={user.equipped_skin?.gradient}
+              icon={
+                user.equipped_skin && hasSkinIcon(user.equipped_skin.code)
+                  ? <SkinIcon code={user.equipped_skin.code} className="h-8 w-8" />
+                  : undefined
+              }
+            />
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-canvas bg-primary shadow-soft">
+              <Pencil className="h-2.5 w-2.5 text-white" />
+            </span>
+          </button>
           <div className="text-center">
             <h2 className="font-display text-lg font-700 text-text-primary">@{user.nickname ?? user.email}</h2>
             <p className="mt-0.5 font-body text-sm text-text-secondary">{user.email}</p>
@@ -167,9 +284,9 @@ export default function ProfilePage() {
 
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-3">
-          <StatBox icon={<Flame className="h-7 w-7 text-reward"       />} label="Серія"    value={`${user.streak_days}д`} />
-          <StatBox icon={<Gem   className="h-7 w-7 text-primary-dark" />} label="Кристали" value={user.gems} />
-          <StatBox icon={<Heart className="h-7 w-7 text-wrong"        />} label="Серця"    value={`${user.lives}/5`} />
+          <StatBox icon={<Flame  className="h-7 w-7 text-reward"       />} label="Серія"    value={`${user.streak_days}д`} />
+          <StatBox icon={<Gem    className="h-7 w-7 text-primary-dark" />} label="Кристали" value={user.gems} />
+          <StatBox icon={<Trophy className="h-7 w-7 text-reward-dark"  />} label="Нагороди" value={user.unlocked_achievement_count} />
         </div>
 
         {/* Restore streak */}
@@ -203,9 +320,17 @@ export default function ProfilePage() {
         )}
 
         {/* Achievements */}
-        <SectionCard title="Досягнення">
-          <InfoRow icon={<Trophy       className="h-5 w-5 text-reward-dark"   />} label="Максимальна серія"    value={`${user.best_streak_days} днів`} />
-          <InfoRow icon={<Zap          className="h-5 w-5 text-reward"        />} label="Всього XP"            value={`${user.exp.toLocaleString("uk")} XP`} />
+        <UnlockedAchievementsSection
+          achievements={achievements}
+          loading={achievementsLoading}
+          onViewAll={() => router.push("/achievements")}
+        />
+
+        {/* Stats */}
+        <SectionCard title="Статистика">
+          <InfoRow icon={<Heart        className="h-5 w-5 text-wrong"          />} label="Серця"               value={`${user.lives}/5`} />
+          <InfoRow icon={<Flame        className="h-5 w-5 text-reward-dark"    />} label="Максимальна серія"   value={`${user.best_streak_days} днів`} />
+          <InfoRow icon={<Zap          className="h-5 w-5 text-reward"         />} label="Всього XP"           value={`${user.exp.toLocaleString("uk")} XP`} />
           <InfoRow icon={<Calendar     className="h-5 w-5 text-text-secondary" />} label="Приєднався"          value={formatDate(user.date_joined)} />
           {user.last_activity_date && (
             <InfoRow icon={<CalendarDays className="h-5 w-5 text-text-secondary" />} label="Остання активність" value={formatDate(user.last_activity_date)} />

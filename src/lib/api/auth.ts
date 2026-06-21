@@ -25,4 +25,10 @@ export const authApi = {
 
   verifyEmail: (token: string) =>
     api.get<User>(`/api/v1/auth/verify-email/?token=${encodeURIComponent(token)}`),
+
+  requestPasswordReset: (email: string) =>
+    api.post<{ detail: string }>("/api/v1/auth/password/reset/request/", { email }),
+
+  confirmPasswordReset: (payload: { token: string; new_password: string; new_password_confirm: string }) =>
+    api.post<{ detail: string }>("/api/v1/auth/password/reset/confirm/", payload),
 };

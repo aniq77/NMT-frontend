@@ -1,9 +1,17 @@
+export type EquippedSkin = {
+  code: string;
+  name: string;
+  gradient: string;
+  rarity: string;
+};
+
 export type User = {
   id: string;
   email: string;
   nickname: string | null;
   auth_provider: "email" | "google" | "phone";
   active_avatar_type: "custom" | "character";
+  equipped_skin: EquippedSkin | null;
   energy: number;
   exp: number;
   exp_to_next_level: number;
@@ -18,6 +26,7 @@ export type User = {
   is_phone_verified: boolean;
   is_onboarded: boolean;
   daily_goal_minutes: number | null;
+  unlocked_achievement_count: number;
   created_at: string;
   updated_at: string;
   date_joined: string;
