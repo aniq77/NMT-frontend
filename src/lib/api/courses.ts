@@ -28,11 +28,47 @@ export const SUBJECT_META: Record<Subject, { title: string; description: string;
   final: { title: "Підсумкові", description: "Змішані острови за весь курс НМТ", emoji: "🏁" },
 };
 
+export type Block =
+  | "foundations"
+  | "algebra"
+  | "functions"
+  | "trigonometry"
+  | "analysis"
+  | "applied"
+  | "geometry"
+  | "endgame";
+
+// Pedagogical section headers shown above the islands within a subject.
+// Order matches the backend Category.order_index sequence.
+export const BLOCK_ORDER: Block[] = [
+  "foundations",
+  "algebra",
+  "functions",
+  "trigonometry",
+  "analysis",
+  "applied",
+  "geometry",
+  "endgame",
+];
+
+export const BLOCK_META: Record<Block, { title: string; emoji: string }> = {
+  foundations: { title: "Основи математики", emoji: "🧱" },
+  algebra: { title: "Алгебра", emoji: "➗" },
+  functions: { title: "Функції", emoji: "📈" },
+  trigonometry: { title: "Тригонометрія", emoji: "📐" },
+  analysis: { title: "Аналіз", emoji: "♾️" },
+  applied: { title: "Прикладна математика", emoji: "🎲" },
+  geometry: { title: "Геометрія", emoji: "📏" },
+  endgame: { title: "Ендгейм", emoji: "🏁" },
+};
+
 export type CategorySummary = {
   id: string;
   slug: string;
   title: string;
   subject: Subject;
+  // "" for legacy rows that predate the block grouping.
+  block: Block | "";
   order_index: number;
   topics_count: number;
   completed_topics: number;

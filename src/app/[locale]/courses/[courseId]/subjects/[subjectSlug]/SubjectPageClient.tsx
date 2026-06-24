@@ -5,8 +5,11 @@ import { Lock } from "lucide-react";
 import { Link, useRouter } from "@/lib/navigation";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import {
+  BLOCK_META,
+  BLOCK_ORDER,
   coursesApi,
   SUBJECT_META,
+  type Block,
   type CategorySummary,
   type CourseDetail,
   type Subject,
@@ -103,6 +106,18 @@ export default function SubjectPageClient() {
     .filter((cat) => cat.subject === subject)
     .sort((a, b) => a.order_index - b.order_index);
 
+  // Group islands under their pedagogical block header. Islands keep their
+  // order_index order within a block; blocks follow the canonical BLOCK_ORDER.
+  // Any island without a block (legacy data) falls into a headerless group.
+  const blocksPresent: (Block | "")[] = [
+    ...BLOCK_ORDER.filter((b) => islands.some((i) => i.block === b)),
+    ...(islands.some((i) => !i.block) ? ([""] as const) : []),
+  ];
+  const blockGroups = blocksPresent.map((block) => ({
+    block,
+    islands: islands.filter((i) => i.block === block),
+  }));
+
   const title = subject ? SUBJECT_META[subject].title : "Розділ";
 
   return (
@@ -129,9 +144,21 @@ export default function SubjectPageClient() {
         )}
 
         {!loading && (
-          <div className="space-y-3">
-            {islands.map((island) => (
-              <IslandCard key={island.slug} island={island} courseSlug={courseId} />
+          <div className="space-y-6">
+            {blockGroups.map(({ block, islands: blockIslands }) => (
+              <section key={block || "no-block"} className="space-y-3">
+                {block && (
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="text-lg leading-none">{BLOCK_META[block].emoji}</span>
+                    <h2 className="font-display text-sm font-700 uppercase tracking-wide text-text-secondary">
+                      {BLOCK_META[block].title}
+                    </h2>
+                  </div>
+                )}
+                {blockIslands.map((island) => (
+                  <IslandCard key={island.slug} island={island} courseSlug={courseId} />
+                ))}
+              </section>
             ))}
 
             {islands.length === 0 && (
