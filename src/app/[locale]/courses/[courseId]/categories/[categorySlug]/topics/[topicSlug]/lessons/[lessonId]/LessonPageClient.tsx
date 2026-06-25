@@ -40,7 +40,7 @@ export default function LessonPageClient() {
     topicSlug: string;
     lessonId: string;
   }>();
-  const { courseId, categorySlug, topicSlug, lessonId } = params;
+  const { courseId, categorySlug, lessonId } = params;
   const router = useRouter();
   const { user, updateUser, fetchMe } = useAuthStore();
 
@@ -59,23 +59,28 @@ export default function LessonPageClient() {
   const [lifeRestoreError, setLifeRestoreError] = useState<string>("");
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
-  const [comboStreak, setComboStreak] = useState(0);
-  const [maxCombo, setMaxCombo] = useState(0);
+  const [, setComboStreak] = useState(0);
+  const [, setMaxCombo] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
   const [completeResult, setCompleteResult] = useState<CompleteLessonResult | null>(null);
   const [completionSaved, setCompletionSaved] = useState(false);
   const [loadError, setLoadError] = useState<string>("");
 
   const completeCalledRef = useRef(false);
+  const answersRef = useRef<AnswerPayload[]>([]);
   const topicPath = `/courses/${courseId}/categories/${categorySlug}`;
 
   useEffect(() => {
-    if (user) setLives(user.lives ?? MAX_LIVES);
+    if (!user) return;
+    queueMicrotask(() => setLives(user.lives ?? MAX_LIVES));
   }, [user]);
 
   const loadLesson = useCallback(() => {
     setPhase("loading");
     setLoadError("");
+    setAnswers([]);
+    answersRef.current = [];
+    completeCalledRef.current = false;
     Promise.all([lessonsApi.start(lessonId), lessonsApi.questions(lessonId)])
       .then(([, qs]) => {
         if (!qs || qs.length === 0) {
@@ -111,7 +116,7 @@ export default function LessonPageClient() {
   }, [lessonId]);
 
   useEffect(() => {
-    loadLesson();
+    queueMicrotask(loadLesson);
   }, [loadLesson]);
 
   const currentQ: Question | undefined = questions[currentIdx];
@@ -132,7 +137,9 @@ export default function LessonPageClient() {
       const res = await lessonsApi.answer(lessonId, payload);
       setResult(res);
       setCheckedId(selectedId);
-      setAnswers((prev) => [...prev, payload]);
+      const nextAnswers = [...answersRef.current, payload];
+      answersRef.current = nextAnswers;
+      setAnswers(nextAnswers);
 
       if (res.is_correct) {
         setCorrectCount((p) => p + 1);
@@ -168,17 +175,17 @@ export default function LessonPageClient() {
       setCurrentIdx(nextIdx);
       setShuffledOptions(shuffleOptions(questions[nextIdx].options));
     } else {
-      finishLesson();
+      finishLesson(answersRef.current);
     }
   }
 
-  function finishLesson() {
+  function finishLesson(answersToSubmit = answersRef.current) {
     if (completeCalledRef.current) return;
     completeCalledRef.current = true;
     setPhase("completing");
 
     lessonsApi
-      .complete(lessonId, { answers })
+      .complete(lessonId, { answers: answersToSubmit })
       .then((res) => {
         setCompleteResult(res);
         setCompletionSaved(true);

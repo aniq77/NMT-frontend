@@ -65,7 +65,7 @@ export default function TopicPageClient() {
             {topic?.title ?? "Острів"}
           </h1>
           {isComing && (
-            <p className="font-body text-xs text-text-secondary">Скоро з'явиться</p>
+            <p className="font-body text-xs text-text-secondary">Скоро з&apos;явиться</p>
           )}
         </div>
       </header>

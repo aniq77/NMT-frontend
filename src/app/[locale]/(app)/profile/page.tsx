@@ -355,17 +355,21 @@ export default function ProfilePage() {
         {/* Subscription */}
         <button
           type="button"
-          onClick={() => router.push("/subscription")}
-          className="glass ring-glow lift flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left"
+          disabled
+          className="glass flex w-full cursor-not-allowed items-center gap-3 rounded-2xl px-4 py-4 text-left opacity-70"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[image:var(--grad-reward)] shadow-button">
             <Crown className="h-5 w-5 text-[#5a3a00]" />
           </div>
           <div className="flex-1">
             <p className="font-display text-sm font-700 text-text-primary">Premium підписка</p>
-            <p className="font-body text-xs text-text-secondary">Розблокуй усі функції — 99 ₴ / місяць</p>
+            <p className="font-body text-xs text-text-secondary">
+              Скоро буде доступна після запуску платежів
+            </p>
           </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-text-secondary" />
+          <span className="rounded-full bg-surface-alt px-2 py-1 font-display text-xs font-700 text-text-secondary">
+            Скоро
+          </span>
         </button>
 
         {/* Appearance */}

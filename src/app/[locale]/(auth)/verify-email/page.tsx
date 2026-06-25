@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckCircle, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "@/lib/navigation";

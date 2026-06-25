@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Gem, Heart, Sparkles, Zap } from "lucide-react";
+import { Flame, Gem, Heart, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ApiError } from "@/lib/api/client";
@@ -14,6 +14,7 @@ const ITEM_CONFIG: Record<ShopItemType, { Icon: IconComp; tint: string; bg: stri
   energy_refill: { Icon: Zap, tint: "text-reward-dark", bg: "bg-reward-light" },
   life_restore: { Icon: Heart, tint: "text-wrong-dark", bg: "bg-wrong-light" },
   exp_boost: { Icon: Sparkles, tint: "text-primary-dark", bg: "bg-primary-light" },
+  streak_freeze: { Icon: Flame, tint: "text-reward-dark", bg: "bg-reward-light" },
 };
 
 type PageState =
