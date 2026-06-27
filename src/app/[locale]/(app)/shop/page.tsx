@@ -1,10 +1,17 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Gem, Heart, Sparkles, Zap } from "lucide-react";
+import { Flame, Gem, Heart, PackageOpen, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ApiError } from "@/lib/api/client";
-import { shopApi, type PurchaseResponse, type ShopItem, type ShopItemType } from "@/lib/api/shop";
+import {
+  shopApi,
+  type InventoryUseResponse,
+  type PurchaseResponse,
+  type ShopItem,
+  type ShopItemType,
+  type UserItem,
+} from "@/lib/api/shop";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +21,25 @@ const ITEM_CONFIG: Record<ShopItemType, { Icon: IconComp; tint: string; bg: stri
   energy_refill: { Icon: Zap, tint: "text-reward-dark", bg: "bg-reward-light" },
   life_restore: { Icon: Heart, tint: "text-wrong-dark", bg: "bg-wrong-light" },
   exp_boost: { Icon: Sparkles, tint: "text-primary-dark", bg: "bg-primary-light" },
+  streak_freeze: { Icon: Flame, tint: "text-cyan-700", bg: "bg-cyan-100" },
+};
+
+const ITEM_LABELS: Record<ShopItemType, string> = {
+  energy_refill: "Енергія",
+  life_restore: "Життя",
+  exp_boost: "EXP boost",
+  streak_freeze: "Захист серії",
 };
 
 type PageState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "ready"; items: ShopItem[] };
+
+type InventoryState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; items: UserItem[] };
 
 export default function ShopPage() {
   const { user, updateUser } = useAuthStore();
@@ -28,6 +48,10 @@ export default function ShopPage() {
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PurchaseResponse | null>(null);
+  const [inventoryState, setInventoryState] = useState<InventoryState>({ status: "loading" });
+  const [usingItemId, setUsingItemId] = useState<string | null>(null);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [inventoryResult, setInventoryResult] = useState<InventoryUseResponse | null>(null);
 
   const fetchItems = useCallback(() => {
     shopApi
@@ -36,12 +60,22 @@ export default function ShopPage() {
       .catch(() => setState({ status: "error" }));
   }, []);
 
+  const fetchInventory = useCallback(() => {
+    shopApi
+      .inventory()
+      .then((items) => setInventoryState({ status: "ready", items }))
+      .catch(() => setInventoryState({ status: "error" }));
+  }, []);
+
   const reload = () => {
     setState({ status: "loading" });
+    setInventoryState({ status: "loading" });
     fetchItems();
+    fetchInventory();
   };
 
   useEffect(fetchItems, [fetchItems]);
+  useEffect(fetchInventory, [fetchInventory]);
 
   const handleConfirm = async () => {
     if (!selected) return;
@@ -52,6 +86,9 @@ export default function ShopPage() {
       updateUser({ gems: res.gems, energy: res.energy, lives: res.lives });
       setSelected(null);
       setResult(res);
+      if (res.delivered_to === "inventory") {
+        fetchInventory();
+      }
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
         setError("Недостатньо кристалів");
@@ -60,6 +97,22 @@ export default function ShopPage() {
       }
     } finally {
       setBuying(false);
+    }
+  };
+
+  const handleUseInventoryItem = async (userItem: UserItem) => {
+    setUsingItemId(userItem.id);
+    setInventoryError(null);
+    setInventoryResult(null);
+    try {
+      const res = await shopApi.useInventoryItem(userItem.id);
+      updateUser({ gems: res.gems, energy: res.energy, lives: res.lives });
+      setInventoryResult(res);
+      fetchInventory();
+    } catch {
+      setInventoryError("Не вдалося використати предмет. Спробуйте ще раз.");
+    } finally {
+      setUsingItemId(null);
     }
   };
 
@@ -95,6 +148,98 @@ export default function ShopPage() {
       </header>
 
       <main className="stagger mx-auto max-w-app space-y-3 px-4 py-6">
+        <section className="glass rounded-3xl p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-sm font-800 text-text-primary">Мій інвентар</h2>
+              <p className="font-body text-xs text-text-secondary">
+                Предмети, які можна використати пізніше
+              </p>
+            </div>
+            <PackageOpen className="h-5 w-5 shrink-0 text-primary" />
+          </div>
+
+          {inventoryState.status === "loading" && (
+            <div className="flex items-center gap-2 rounded-2xl bg-white/50 px-3 py-4 font-body text-sm text-text-secondary">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
+              Завантажуємо інвентар...
+            </div>
+          )}
+
+          {inventoryState.status === "error" && (
+            <div className="space-y-3 rounded-2xl bg-wrong-light/60 p-3">
+              <p className="font-body text-sm text-wrong-dark">
+                Не вдалося завантажити інвентар
+              </p>
+              <Button size="sm" variant="secondary" onClick={fetchInventory}>
+                Спробувати ще раз
+              </Button>
+            </div>
+          )}
+
+          {inventoryState.status === "ready" && inventoryState.items.length === 0 && (
+            <p className="rounded-2xl bg-white/50 px-3 py-4 font-body text-sm text-text-secondary">
+              Інвентар порожній. Предмети з доставкою в інвентар зʼявляться тут після покупки.
+            </p>
+          )}
+
+          {inventoryState.status === "ready" && inventoryState.items.length > 0 && (
+            <div className="space-y-2">
+              {inventoryState.items.map((userItem) => {
+                const item = userItem.item;
+                const { Icon, tint, bg } = ITEM_CONFIG[item.item_type];
+                return (
+                  <div
+                    key={userItem.id}
+                    className="flex items-center gap-3 rounded-2xl bg-white/60 p-3"
+                  >
+                    <span
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                        bg,
+                      )}
+                    >
+                      <Icon className={cn("h-5 w-5", tint)} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-display text-sm font-700 text-text-primary">
+                          {item.name}
+                        </h3>
+                        <span className="rounded-full bg-primary-light px-2 py-0.5 font-display text-[11px] font-700 text-primary-dark">
+                          x{userItem.quantity}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 font-body text-xs text-text-secondary">
+                        {ITEM_LABELS[item.item_type]}
+                        {item.description ? ` · ${item.description}` : ""}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      loading={usingItemId === userItem.id}
+                      onClick={() => handleUseInventoryItem(userItem)}
+                      className="shrink-0"
+                    >
+                      Використати
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {inventoryError && (
+            <p className="mt-3 font-body text-sm text-wrong-dark">{inventoryError}</p>
+          )}
+          {inventoryResult && (
+            <p className="mt-3 font-body text-sm text-correct-dark">
+              {inventoryResult.item_name} використано.
+            </p>
+          )}
+        </section>
+
         {state.items.length === 0 && (
           <p className="py-12 text-center font-body text-sm text-text-secondary">
             Поки що немає товарів
