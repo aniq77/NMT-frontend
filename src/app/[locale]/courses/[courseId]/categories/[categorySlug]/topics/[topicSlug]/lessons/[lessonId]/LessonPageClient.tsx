@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Gem, HeartCrack, Lock, PartyPopper, RefreshCw, Trophy, Zap } from "lucide-react";
+import { Gem, HeartCrack, Lock, PartyPopper, RefreshCw, Skull, Swords, Trophy, Zap } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
 import { LessonHeader } from "@/components/layout/LessonHeader";
 import { AnswerOption } from "@/components/ui/AnswerOption";
@@ -20,6 +20,13 @@ import { MathText } from "@/components/ui/MathText";
 import { ApiError } from "@/lib/api/client";
 import { shopApi } from "@/lib/api/shop";
 import { useAuthStore } from "@/store/auth.store";
+import {
+  BossBattleStage,
+  BOSS_MAX_HP,
+  COMBO_FOR_CRIT,
+  HERO_MAX_HP,
+  type BattleTurn,
+} from "./BossBattleStage";
 
 const MAX_LIVES = 5;
 
@@ -66,6 +73,15 @@ export default function LessonPageClient() {
   const [completionSaved, setCompletionSaved] = useState(false);
   const [loadError, setLoadError] = useState<string>("");
 
+  // ── Boss battle (only active when the lesson is a boss) ───────────────────────
+  const [isBoss, setIsBoss] = useState(false);
+  const [bossName, setBossName] = useState("Бос");
+  const [bossHp, setBossHp] = useState(BOSS_MAX_HP);
+  const [heroHp, setHeroHp] = useState(HERO_MAX_HP);
+  const [battleCombo, setBattleCombo] = useState(0);
+  const [battleTurn, setBattleTurn] = useState<BattleTurn | null>(null);
+  const [battleOutcome, setBattleOutcome] = useState<"win" | "lose" | null>(null);
+
   const completeCalledRef = useRef(false);
   const topicPath = `/courses/${courseId}/categories/${categorySlug}`;
 
@@ -77,13 +93,22 @@ export default function LessonPageClient() {
     setPhase("loading");
     setLoadError("");
     Promise.all([lessonsApi.start(lessonId), lessonsApi.questions(lessonId)])
-      .then(([, qs]) => {
+      .then(([startRes, qs]) => {
         if (!qs || qs.length === 0) {
           // Start succeeded but the bank returned no questions — never show an
           // empty, unplayable quiz. Surface it so the user can retry / go back.
           setLoadError("Завдання для цього уроку не завантажились. Спробуйте ще раз.");
           setPhase("load_error");
           return;
+        }
+        setIsBoss(startRes.is_boss);
+        if (startRes.is_boss) {
+          setBossName(startRes.title || "Бос");
+          setBossHp(BOSS_MAX_HP);
+          setHeroHp(HERO_MAX_HP);
+          setBattleCombo(0);
+          setBattleTurn(null);
+          setBattleOutcome(null);
         }
         setQuestions(qs);
         setShuffledOptions(shuffleOptions(qs[0].options));
@@ -142,9 +167,26 @@ export default function LessonPageClient() {
           setMaxCombo((prev) => Math.max(prev, next));
           return next;
         });
+        if (isBoss) {
+          // Hero hits the boss. Crit on every COMBO_FOR_CRIT-th correct in a
+          // row (+1 dmg), then the combo resets.
+          const nextCombo = battleCombo + 1;
+          const crit = nextCombo >= COMBO_FOR_CRIT;
+          const damage = 1 + (crit ? 1 : 0);
+          setBossHp((p) => Math.max(0, p - damage));
+          setBattleCombo(crit ? 0 : nextCombo);
+          setBattleTurn((t) => ({ key: (t?.key ?? 0) + 1, attacker: "hero", crit }));
+        }
       } else {
-        setLives((p) => Math.max(0, p - 1));
         setComboStreak(0);
+        if (isBoss) {
+          // Boss hits the hero. Battle HP is separate from global lives.
+          setHeroHp((p) => Math.max(0, p - 1));
+          setBattleCombo(0);
+          setBattleTurn((t) => ({ key: (t?.key ?? 0) + 1, attacker: "boss", crit: false }));
+        } else {
+          setLives((p) => Math.max(0, p - 1));
+        }
       }
     } catch {
       // Network/validation error — leave the question unanswered so the user can retry.
@@ -154,7 +196,18 @@ export default function LessonPageClient() {
   }
 
   function handleContinue() {
-    if (lives === 0 && !isCorrect) {
+    if (isBoss) {
+      if (bossHp <= 0) {
+        setBattleOutcome("win");
+        finishLesson();
+        return;
+      }
+      if (heroHp <= 0) {
+        setBattleOutcome("lose");
+        finishLesson();
+        return;
+      }
+    } else if (lives === 0 && !isCorrect) {
       setShowLivesGate(true);
       return;
     }
@@ -195,6 +248,25 @@ export default function LessonPageClient() {
   function retryFinishLesson() {
     completeCalledRef.current = false;
     finishLesson();
+  }
+
+  // Boss defeat → fight again from scratch. loadLesson re-charges energy and
+  // resets the battle (bossHp/heroHp/combo), so just clear the quiz run here.
+  function restartBattle() {
+    completeCalledRef.current = false;
+    setCurrentIdx(0);
+    setSelectedId(null);
+    setCheckedId(null);
+    setResult(null);
+    setAnswers([]);
+    setCorrectCount(0);
+    setComboStreak(0);
+    setMaxCombo(0);
+    setXpEarned(0);
+    setCompleteResult(null);
+    setCompletionSaved(false);
+    setBattleOutcome(null);
+    loadLesson();
   }
 
   // ── Loading ───────────────────────────────────────────────────────────────────
@@ -353,6 +425,84 @@ export default function LessonPageClient() {
       );
     }
 
+    if (isBoss) {
+      const outcome: "win" | "lose" =
+        battleOutcome ?? (completeResult?.status === "completed" ? "win" : "lose");
+
+      if (outcome === "lose") {
+        return (
+          <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+            <div className="mx-auto w-full max-w-app text-center">
+              <Skull className="mx-auto mb-6 h-20 w-20 text-wrong" />
+              <h1 className="font-display text-2xl font-800 text-text-primary">Тебе переможено</h1>
+              <p className="mt-2 font-body text-base text-text-secondary">
+                {bossName} виявився сильнішим. Ти втратив одне життя — збери сили й спробуй ще раз.
+              </p>
+              <div className="mt-8 space-y-3">
+                <Button size="lg" className="w-full" onClick={restartBattle}>
+                  ⚔️ Битися знову
+                </Button>
+                <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
+                  ← Назад до острова
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+          <div className="mx-auto w-full max-w-app text-center">
+            <Swords className="mx-auto mb-6 h-20 w-20 text-primary" />
+            <h1 className="font-display text-2xl font-800 text-text-primary">Боса переможено!</h1>
+            <p className="mt-2 font-body text-base text-text-secondary">{bossName} повалено ⚔️</p>
+
+            <div className="mx-auto mt-6 flex w-fit items-center gap-4 rounded-full bg-reward-light px-6 py-3">
+              <span className="flex items-center gap-1.5 font-display text-lg font-700 text-reward-dark">
+                <Zap className="h-5 w-5" /> +{completeResult?.exp ?? xpEarned} XP
+              </span>
+              {(completeResult?.gems ?? 0) > 0 && (
+                <span className="flex items-center gap-1.5 font-display text-lg font-700 text-reward-dark">
+                  <Gem className="h-5 w-5" /> {completeResult?.gems}
+                </span>
+              )}
+            </div>
+
+            {completeResult?.is_gold && (
+              <p className="mt-3 font-display text-sm font-700 text-reward">★ Боса пройдено — острів засяяв золотом!</p>
+            )}
+
+            {(completeResult?.unlocked_achievements ?? []).length > 0 && (
+              <div className="mt-5 space-y-2">
+                {completeResult!.unlocked_achievements.map((a) => (
+                  <div
+                    key={a.code}
+                    className="flex items-center gap-3 rounded-xl border border-reward/30 bg-reward-light px-4 py-2.5"
+                  >
+                    <Trophy className="h-5 w-5 shrink-0 text-reward-dark" />
+                    <div className="min-w-0 flex-1 text-left">
+                      <p className="font-display text-sm font-700 text-reward-dark">{a.title}</p>
+                      <p className="font-display text-xs font-600 text-reward-dark/70">{a.tier}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-8 space-y-3">
+              <Button size="lg" className="w-full" onClick={() => router.push(topicPath)}>
+                Продовжити
+              </Button>
+              <Button variant="ghost" size="md" className="w-full" onClick={() => router.push("/home")}>
+                На головну
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
         <div className="mx-auto w-full max-w-app text-center">
@@ -420,7 +570,7 @@ export default function LessonPageClient() {
         progress={progress}
         onClose={requestQuit}
         xpEarned={xpEarned}
-        lives={lives}
+        lives={isBoss ? heroHp : lives}
       />
 
       <Modal
@@ -451,6 +601,15 @@ export default function LessonPageClient() {
       <div className="mx-auto w-full max-w-app flex-1 space-y-4 px-4 py-5 pb-40">
         {currentQ && (
           <>
+            {isBoss && (
+              <BossBattleStage
+                bossName={bossName}
+                bossHp={bossHp}
+                heroHp={heroHp}
+                combo={battleCombo}
+                turn={battleTurn}
+              />
+            )}
             <div className="rounded-xl border border-border bg-surface p-5 shadow-card">
               <p className="font-display text-xs font-600 uppercase tracking-widest text-text-secondary">
                 Запитання {currentIdx + 1} / {questions.length}
