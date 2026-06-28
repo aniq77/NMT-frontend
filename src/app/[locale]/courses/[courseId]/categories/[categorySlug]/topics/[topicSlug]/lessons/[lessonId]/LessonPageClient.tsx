@@ -571,6 +571,7 @@ export default function LessonPageClient() {
         onClose={requestQuit}
         xpEarned={xpEarned}
         lives={isBoss ? heroHp : lives}
+        minimal={isBoss}
       />
 
       <Modal
@@ -612,7 +613,7 @@ export default function LessonPageClient() {
             )}
             <div className="rounded-xl border border-border bg-surface p-5 shadow-card">
               <p className="font-display text-xs font-600 uppercase tracking-widest text-text-secondary">
-                Запитання {currentIdx + 1} / {questions.length}
+                {isBoss ? `⚔️ Раунд ${currentIdx + 1}` : `Запитання ${currentIdx + 1} / ${questions.length}`}
               </p>
               <h2 className="mt-2 font-display text-lg font-700 text-text-primary">
                 <MathText text={currentQ.text} />

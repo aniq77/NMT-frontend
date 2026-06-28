@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { Heart, Zap } from "lucide-react";
 
 /**
- * Presentational battle stage for boss lessons — placeholder visuals only.
+ * Boss battle stage — placeholder visuals only.
  *
- * It knows nothing about questions or the API: it renders the current HP/combo
- * and plays a short attack/hit animation whenever `turn.key` changes. The
- * fighters are emoji placeholders behind a stable contract (hero/boss + their
- * states), so real sprites/skins can replace them later without touching the
- * battle logic in LessonPageClient.
+ * Layout mirrors a classic RPG fight: hero + HP top-left, boss + HP top-right,
+ * the two fighters facing each other on a scene below; the question card lives
+ * under this component (in LessonPageClient). Fighters are emoji placeholders
+ * behind a stable hero/boss + animation-state contract, so real sprites/skins
+ * can replace them later without touching the battle logic.
  */
 
 export const BOSS_MAX_HP = 15;
@@ -30,6 +30,21 @@ type Props = {
   turn: BattleTurn | null;
 };
 
+function Hearts({ filled, total, size = "sm" }: { filled: number; total: number; size?: "sm" | "xs" }) {
+  const cls = size === "xs" ? "h-3 w-3" : "h-4 w-4";
+  return (
+    <div className="flex flex-wrap items-center gap-0.5">
+      {Array.from({ length: total }).map((_, i) => (
+        <Heart
+          key={i}
+          className={i < filled ? `${cls} text-wrong` : `${cls} text-border`}
+          fill={i < filled ? "currentColor" : "none"}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function BossBattleStage({ bossName, bossHp, heroHp, combo, turn }: Props) {
   const [fx, setFx] = useState<{ attacker: "hero" | "boss"; crit: boolean } | null>(null);
 
@@ -38,65 +53,52 @@ export function BossBattleStage({ bossName, bossHp, heroHp, combo, turn }: Props
     setFx({ attacker: turn.attacker, crit: turn.crit });
     const t = setTimeout(() => setFx(null), 600);
     return () => clearTimeout(t);
-  }, [turn?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turn?.key]);
 
   const heroAttacking = fx?.attacker === "hero";
   const bossAttacking = fx?.attacker === "boss";
-  const bossHpPct = Math.max(0, Math.round((bossHp / BOSS_MAX_HP) * 100));
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
-      {/* Boss */}
-      <div className="flex items-center gap-3">
-        <div
-          className="text-4xl transition-transform duration-200"
-          style={{
-            transform: bossAttacking
-              ? "translateY(8px) scale(1.05)"
-              : heroAttacking
-                ? "translateX(6px) rotate(4deg)" // recoil when hit
-                : "none",
-            filter: heroAttacking ? "brightness(1.6) saturate(1.4)" : "none",
-          }}
-          aria-hidden
-        >
-          👹
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-sm font-700 text-text-primary">{bossName}</p>
-          <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-canvas">
-            <div
-              className="h-full rounded-full bg-wrong transition-[width] duration-500 ease-out"
-              style={{ width: `${bossHpPct}%` }}
-            />
+    <div className="overflow-hidden rounded-2xl border border-border shadow-card">
+      {/* HP panels */}
+      <div className="flex items-start justify-between gap-2 bg-surface px-3 py-2">
+        <div className="rounded-xl bg-canvas px-2.5 py-1.5">
+          <p className="font-display text-xs font-700 text-text-primary">🧑‍🦱 Герой</p>
+          <div className="mt-1">
+            <Hearts filled={heroHp} total={HERO_MAX_HP} />
           </div>
-          <p className="mt-0.5 text-right font-display text-xs font-600 text-text-secondary">
-            {Math.max(0, bossHp)} / {BOSS_MAX_HP} HP
+        </div>
+        <div className="max-w-[62%] rounded-xl bg-canvas px-2.5 py-1.5">
+          <p className="truncate text-right font-display text-xs font-700 text-text-primary">
+            👹 {bossName}
           </p>
+          <div className="mt-1 flex justify-end">
+            <Hearts filled={bossHp} total={BOSS_MAX_HP} size="xs" />
+          </div>
         </div>
       </div>
 
-      {/* Clash indicator */}
-      <div className="my-2 flex h-6 items-center justify-center">
-        {fx && (
-          <span
-            className="font-display text-lg font-800"
-            style={{ color: fx.crit ? "var(--color-reward, #FFB800)" : undefined }}
-          >
-            {heroAttacking ? (fx.crit ? "⚡ КРИТ! ⚔️" : "⚔️") : "💥"}
-          </span>
-        )}
-      </div>
+      {/* Battle scene */}
+      <div
+        className="relative h-40 w-full"
+        style={{
+          background:
+            "linear-gradient(to bottom, #8fd3ff 0%, #c3ecff 44%, #8bd17a 45%, #5aa84a 100%)",
+        }}
+      >
+        <div className="absolute left-1/2 top-3 -translate-x-1/2 text-3xl opacity-70" aria-hidden>
+          🏰
+        </div>
 
-      {/* Hero */}
-      <div className="flex items-center gap-3">
+        {/* Hero (left, faces right) */}
         <div
-          className="text-4xl transition-transform duration-200"
+          className="absolute bottom-2 left-4 text-5xl transition-transform duration-200"
           style={{
             transform: heroAttacking
-              ? "translateY(-8px) scale(1.05)"
+              ? "translateX(30px) scale(1.08)"
               : bossAttacking
-                ? "translateX(-6px) rotate(-4deg)" // recoil when hit
+                ? "translateX(-4px) rotate(-6deg)"
                 : "none",
             filter: bossAttacking ? "brightness(0.7) saturate(0.6)" : "none",
           }}
@@ -104,33 +106,46 @@ export function BossBattleStage({ bossName, bossHp, heroHp, combo, turn }: Props
         >
           🧙
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-sm font-700 text-text-primary">Герой</p>
-          <div className="mt-1 flex items-center gap-1">
-            {Array.from({ length: HERO_MAX_HP }).map((_, i) => (
-              <Heart
-                key={i}
-                className={
-                  i < heroHp ? "h-5 w-5 text-wrong" : "h-5 w-5 text-border"
-                }
-                fill={i < heroHp ? "currentColor" : "none"}
-              />
-            ))}
+
+        {/* Boss (right) */}
+        <div
+          className="absolute bottom-2 right-4 text-5xl transition-transform duration-200"
+          style={{
+            transform: bossAttacking
+              ? "translateX(-30px) scale(1.08)"
+              : heroAttacking
+                ? "translateX(4px) rotate(6deg)"
+                : "none",
+            filter: heroAttacking ? "brightness(1.5) saturate(1.4)" : "none",
+          }}
+          aria-hidden
+        >
+          👹
+        </div>
+
+        {/* Clash effect */}
+        {fx && (
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse font-display text-2xl font-800"
+            style={{
+              color: fx.crit ? "#FFB800" : "#ffffff",
+              textShadow: "0 1px 4px rgba(0,0,0,0.55)",
+            }}
+          >
+            {heroAttacking ? (fx.crit ? "⚡ КРИТ! ⚔️" : "⚔️") : "💥"}
           </div>
-          {/* Combo pips → crit at COMBO_FOR_CRIT */}
-          <div className="mt-1.5 flex items-center gap-1.5">
-            <span className="font-display text-xs font-600 text-text-secondary">Серія</span>
-            {Array.from({ length: COMBO_FOR_CRIT }).map((_, i) => (
-              <Zap
-                key={i}
-                className={i < combo ? "h-4 w-4 text-reward" : "h-4 w-4 text-border"}
-                fill={i < combo ? "currentColor" : "none"}
-              />
-            ))}
-            <span className="font-display text-xs font-600 text-text-secondary">
-              {combo}/{COMBO_FOR_CRIT}
-            </span>
-          </div>
+        )}
+
+        {/* Combo pips */}
+        <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/30 px-2 py-0.5">
+          <span className="font-display text-[10px] font-700 text-white/90">Серія</span>
+          {Array.from({ length: COMBO_FOR_CRIT }).map((_, i) => (
+            <Zap
+              key={i}
+              className={i < combo ? "h-3 w-3 text-reward" : "h-3 w-3 text-white/40"}
+              fill={i < combo ? "currentColor" : "none"}
+            />
+          ))}
         </div>
       </div>
     </div>
