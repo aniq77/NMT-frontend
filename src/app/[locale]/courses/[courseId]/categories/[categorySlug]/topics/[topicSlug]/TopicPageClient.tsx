@@ -12,8 +12,13 @@ type NodeType = "standard" | "challenge" | "checkpoint";
 const GOLD_COMPLETIONS = 3;
 
 function getLessonStatus(lesson: LessonSummary, lessons: LessonSummary[]): NodeStatus {
-  if (lesson.completion_count >= GOLD_COMPLETIONS) return "golden";
-  if (lesson.is_completed) return "completed";
+  // A boss golds on a single clear (no 3-pass mastery grind / "1/3" badge).
+  if (lesson.is_boss) {
+    if (lesson.is_completed || lesson.completion_count >= 1) return "golden";
+  } else {
+    if (lesson.completion_count >= GOLD_COMPLETIONS) return "golden";
+    if (lesson.is_completed) return "completed";
+  }
   const firstUncompleted = lessons.findIndex((l) => !l.is_completed);
   const idx = lessons.indexOf(lesson);
   if (idx === firstUncompleted) return "current";

@@ -17,8 +17,14 @@ const GOLD_COMPLETIONS = 3;
 
 function getLessonStatus(lesson: LessonEntry, allLessons: LessonEntry[]): NodeStatus {
   if (!lesson.topicIsUnlocked) return "locked";
-  if (lesson.completion_count >= GOLD_COMPLETIONS) return "golden";
-  if (lesson.is_completed) return "completed";
+  // A boss is a single decisive fight: beating it once golds it — no 3-pass
+  // mastery grind, so it never shows a "1/3" progress badge.
+  if (lesson.is_boss) {
+    if (lesson.is_completed || lesson.completion_count >= 1) return "golden";
+  } else {
+    if (lesson.completion_count >= GOLD_COMPLETIONS) return "golden";
+    if (lesson.is_completed) return "completed";
+  }
   const firstUncompleted = allLessons.findIndex(
     (l) => l.topicIsUnlocked && !l.is_completed,
   );
