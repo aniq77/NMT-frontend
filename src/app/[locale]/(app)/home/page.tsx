@@ -83,18 +83,16 @@ export default function HomePage() {
 
   const showBanner = !bannerDismissed && streakStatus !== null;
 
-  if (!user) return null;
-
   return (
     <div className="relative min-h-screen text-text-primary">
-      <AppHeader user={user} />
+      {user ? <AppHeader user={user} /> : null}
       <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
         <section>
           <h1 className="text-glow font-display text-[42px] font-800 leading-none text-text-primary md:text-[58px]">
-            Привіт, {user.nickname ?? user.email}! <span className="inline-block animate-wave">👋</span>
+            Привіт, {user?.nickname ?? user?.email ?? "друже"}! <span className="inline-block animate-wave">👋</span>
           </h1>
           <p className="mt-3 flex items-center gap-2 font-body text-base font-700 text-text-secondary">
-            {user.streak_days} днів поспіль. Темп чудовий.
+            {user?.streak_days ?? 0} днів поспіль. Темп чудовий.
             <Flame className="h-4 w-4 text-reward" />
           </p>
         </section>
@@ -111,7 +109,7 @@ export default function HomePage() {
                 </p>
                 <p className="mt-1 font-body text-sm font-700 text-text-secondary">
                   {streakStatus === "broken"
-                    ? `Твоя серія з ${user.streak_days} днів скинулась. Повернись у подорож сьогодні.`
+                    ? `Твоя серія з ${user?.streak_days ?? 0} днів скинулась. Повернись у подорож сьогодні.`
                     : "Пройди урок сьогодні, щоб зберегти інерцію і забрати нагороду за ритм."}
                 </p>
               </div>
