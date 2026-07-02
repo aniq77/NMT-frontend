@@ -14,7 +14,7 @@ export function AppHeader({ user }: { user: HeaderUser }) {
             <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
-            NMT&nbsp;JOURNEY
+            Cresco&nbsp;test
           </span>
         </div>
         <div className="flex items-center gap-1.5">

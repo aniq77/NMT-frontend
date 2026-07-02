@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "@/lib/navigation";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { DarkThemeBackdrop } from "@/components/theme/DarkThemeShell";
 import { useAuthStore } from "@/store/auth.store";
 import { coursesApi, type CourseListItem } from "@/lib/api/courses";
 
@@ -53,6 +54,15 @@ const QUICK_LINKS = [
 ] as const;
 
 type StyleKey = "math" | "ukr" | "hist" | "bio" | "phys";
+
+// Home shows every region (like the mockup); only Математика is playable for now.
+const SUBJECTS: { key: StyleKey; title: string; desc: string; active: boolean }[] = [
+  { key: "math", title: "Математика", desc: "Підготовка до НМТ з математики — серед сузір’їв формул та геометрії зір.", active: true },
+  { key: "ukr", title: "Українська мова", desc: "Правопис, граматика та стилістика — все для впевненої грамотності.", active: false },
+  { key: "hist", title: "Історія України", desc: "Від Київської Русі до сьогодення — події, дати та особистості.", active: false },
+  { key: "bio", title: "Біологія", desc: "Клітини, організми та екосистеми — як влаштоване життя навколо.", active: false },
+  { key: "phys", title: "Фізика", desc: "Сили, енергія та закони природи — зрозуміло і без зайвого.", active: false },
+];
 
 const EMBLEMS: Record<StyleKey, React.ReactNode> = {
   math: (
@@ -132,30 +142,24 @@ const SCENES: Record<StyleKey, React.ReactNode> = {
   ),
 };
 
-function getStyleKey(subject: string): StyleKey {
-  const s = subject.toLowerCase();
-  if (s.includes("українськ") || s.includes("мова")) return "ukr";
-  if (s.includes("істор")) return "hist";
-  if (s.includes("біолог") || s.includes("хім")) return "bio";
-  if (s.includes("фізик")) return "phys";
-  return "math";
-}
-
 export default function HomePage() {
   const router = useRouter();
   const { user, fetchMe } = useAuthStore();
 
   const [courses, setCourses] = useState<CourseListItem[]>([]);
-  const [loadingCourses, setLoadingCourses] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     fetchMe().catch(() => {});
-    coursesApi.list()
-      .then(setCourses)
-      .catch(() => {})
-      .finally(() => setLoadingCourses(false));
+    coursesApi.list().then(setCourses).catch(() => {});
   }, [fetchMe]);
+
+  const mathProgress = useMemo(() => {
+    const math = courses.find(
+      (c) => c.slug === "mathematics" || c.subject?.toLowerCase().includes("матем") || c.title?.toLowerCase().includes("матем"),
+    );
+    return math?.user_progress?.progress_percent ?? 0;
+  }, [courses]);
 
   const streakStatus = useMemo<StreakStatus>(() => {
     if (!user || !user.last_activity_date) return null;
@@ -172,81 +176,90 @@ export default function HomePage() {
   const showBanner = !bannerDismissed && streakStatus !== null;
 
   return (
-    <div className="relative min-h-screen text-text-primary">
-      {user ? <AppHeader user={user} /> : null}
-      <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
-        <h1 className="hello">Привіт, {user?.nickname ?? user?.email ?? "друже"}!</h1>
-        <p className="streakline">
-          {user?.streak_days ?? 0} днів поспіль — так тримати! <Flame />
-        </p>
+    <div data-theme="dark" className="relative min-h-screen text-text-primary">
+      <DarkThemeBackdrop />
+      <div className="relative z-10">
+        {user ? <AppHeader user={user} /> : null}
+        <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
+          <h1 className="hello">Привіт, {user?.nickname ?? user?.email ?? "друже"}!</h1>
+          <p className="streakline">
+            {user?.streak_days ?? 0} днів поспіль — так тримати! <Flame />
+          </p>
 
-        {showBanner ? (
-          <div className="home-banner">
-            <div className="ic">
-              <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
-                <path d="M16 3 C16 3 8 9 8 17.5 C8 23.5 11.6 27.5 16 27.5 C20.4 27.5 24 23.5 24 17.5 C24 14 22 11 22 11 C22 14 19 15.5 19 12 C19 7 16 3 16 3Z" fill="#fff" />
-                <path d="M16 12 C16 12 12 15.5 12 20 C12 23 13.8 25 16 25 C18.2 25 20 23 20 20 C20 17.5 18 16 18 16 C18 18 16 18.5 16 16 C16 14 16 12 16 12Z" fill="#ffd98a" />
-              </svg>
-            </div>
-            <div className="tx">
-              <b>{streakStatus === "broken" ? "Серію втрачено" : "Продовжуй серію сьогодні!"}</b>
-              <span>
-                {streakStatus === "broken"
-                  ? `Твоя серія з ${user?.streak_days ?? 0} днів скинулась — почни нову`
-                  : "Один урок — і твоя серія живе далі"}
-              </span>
-            </div>
-            <button type="button" className="x" onClick={() => setBannerDismissed(true)} aria-label="Закрити">✕</button>
-          </div>
-        ) : null}
-
-        <div className="quick-actions">
-          {QUICK_LINKS.map(({ href, cls, label, icon, badge }) => (
-            <button key={href} type="button" className={`qa ${cls}`} onClick={() => router.push(href)}>
-              {badge ? <span className="qa-badge">{badge}</span> : null}
-              <span className="qa-ic">{icon}</span>
-              <span className="qa-name">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        <h2 className="sec-title">
-          Курси <small>{courses.length} регіонів світу</small>
-        </h2>
-        <p className="sec-sub">
-          Кожен предмет — окрема магічна земля. Обирай регіон і вирушай у подорож до НМТ.
-        </p>
-
-        <div className="courses">
-          {courses.map((course) => {
-            const progress = course.user_progress?.progress_percent ?? 0;
-            const key = getStyleKey(course.subject);
-            const started = (course.user_progress?.progress_percent ?? 0) > 0;
-            return (
-              <button key={course.id} type="button" className={`course c-${key}`} onClick={() => router.push(`/courses/${course.slug}`)}>
-                <div className="scene">{SCENES[key]}</div>
-                <div className="emblem">{EMBLEMS[key]}</div>
-                <div>
-                  <h3>{course.title}</h3>
-                  <p className="desc">{course.description}</p>
-                  <div className="prog">
-                    <div className="row"><span>Прогрес</span><span>{progress}%</span></div>
-                    <div className="track"><div className="fill" style={{ width: `${Math.max(progress, 6)}%` }} /></div>
-                  </div>
-                  <span className="go">{started ? "Продовжити" : "Розпочати"} <span>→</span></span>
-                </div>
-              </button>
-            );
-          })}
-          {courses.length === 0 ? (
-            <div className="glass rounded-[26px] px-4 py-8 text-center">
-              <p className="font-body text-sm text-text-secondary">
-                {loadingCourses ? "Завантаження курсів..." : "Курси зʼявляться зовсім скоро ✨"}
-              </p>
+          {showBanner ? (
+            <div className="home-banner">
+              <div className="ic">
+                <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+                  <path d="M16 3 C16 3 8 9 8 17.5 C8 23.5 11.6 27.5 16 27.5 C20.4 27.5 24 23.5 24 17.5 C24 14 22 11 22 11 C22 14 19 15.5 19 12 C19 7 16 3 16 3Z" fill="#fff" />
+                  <path d="M16 12 C16 12 12 15.5 12 20 C12 23 13.8 25 16 25 C18.2 25 20 23 20 20 C20 17.5 18 16 18 16 C18 18 16 18.5 16 16 C16 14 16 12 16 12Z" fill="#ffd98a" />
+                </svg>
+              </div>
+              <div className="tx">
+                <b>{streakStatus === "broken" ? "Серію втрачено" : "Продовжуй серію сьогодні!"}</b>
+                <span>
+                  {streakStatus === "broken"
+                    ? `Твоя серія з ${user?.streak_days ?? 0} днів скинулась — почни нову`
+                    : "Один урок — і твоя серія живе далі"}
+                </span>
+              </div>
+              <button type="button" className="x" onClick={() => setBannerDismissed(true)} aria-label="Закрити">✕</button>
             </div>
           ) : null}
-        </div>
-      </main>
+
+          <div className="quick-actions">
+            {QUICK_LINKS.map(({ href, cls, label, icon, badge }) => (
+              <button key={href} type="button" className={`qa ${cls}`} onClick={() => router.push(href)}>
+                {badge ? <span className="qa-badge">{badge}</span> : null}
+                <span className="qa-ic">{icon}</span>
+                <span className="qa-name">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          <h2 className="sec-title">
+            Курси <small>{SUBJECTS.length} регіонів світу</small>
+          </h2>
+          <p className="sec-sub">
+            Кожен предмет — окрема магічна земля. Обирай регіон і вирушай у подорож до НМТ.
+          </p>
+
+          <div className="courses">
+            {SUBJECTS.map((s) => {
+              const progress = s.active ? mathProgress : 0;
+              const inner = (
+                <>
+                  <div className="scene">{SCENES[s.key]}</div>
+                  <div className="emblem">{EMBLEMS[s.key]}</div>
+                  <div>
+                    <h3>
+                      {s.title}
+                      {!s.active ? <span className="lvl-badge">Скоро</span> : null}
+                    </h3>
+                    <p className="desc">{s.desc}</p>
+                    <div className="prog">
+                      <div className="row"><span>Прогрес</span><span>{progress}%</span></div>
+                      <div className="track"><div className="fill" style={{ width: `${Math.max(progress, 6)}%` }} /></div>
+                    </div>
+                    <span className="go">
+                      {s.active ? (progress > 0 ? "Продовжити" : "Розпочати") : "Скоро"} <span>→</span>
+                    </span>
+                  </div>
+                </>
+              );
+
+              return s.active ? (
+                <button key={s.key} type="button" className={`course c-${s.key}`} onClick={() => router.push("/courses/mathematics")}>
+                  {inner}
+                </button>
+              ) : (
+                <div key={s.key} className={`course c-${s.key}`} style={{ cursor: "default" }} aria-disabled>
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
