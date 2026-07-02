@@ -1,25 +1,13 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useTheme } from "next-themes";
-import { AlertTriangle, BookOpen, Flame, Hash, HeartCrack, ShoppingBag, Swords, Target, Triangle, Users, X } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
-import { AppHeader } from "@/components/layout/AppHeader";
 import { StatChip } from "@/components/ui/StatChip";
-import { CourseCard } from "@/components/ui/CourseCard";
 import { useAuthStore } from "@/store/auth.store";
 import { coursesApi, type CourseListItem } from "@/lib/api/courses";
 import { questsApi } from "@/lib/api/quests";
 
-function getSubjectIcon(subject: string): React.ReactNode {
-  const s = subject.toLowerCase();
-  if (s.includes("алгебр") || s.includes("математ")) return <Hash className="h-8 w-8 text-white" />;
-  if (s.includes("геометр")) return <Triangle className="h-8 w-8 text-white" />;
-  return <BookOpen className="h-8 w-8 text-white" />;
-}
-
 type StreakStatus = "broken" | "at-risk" | null;
 
-/* ── Dark ("magical night") theme assets — used only when theme === dark ── */
 const FlameGlyph = () => (
   <svg viewBox="0 0 18 18" fill="none" width="17" height="17">
     <path d="M9 1.5 C9 1.5 4.5 5 4.5 9.8 C4.5 13.2 6.6 15.5 9 15.5 C11.4 15.5 13.5 13.2 13.5 9.8 C13.5 8 12.5 6.5 12.5 6.5 C12.5 8 11 8.8 11 7 C11 4.5 9 1.5 9 1.5Z" fill="#ff7a3c" />
@@ -31,16 +19,16 @@ const QUICK_LINKS = [
   {
     href: "/quests", cls: "qa-tasks", label: "Завдання",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="#5ff0db" strokeWidth={2}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
         <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="1.4" fill="#5ff0db" stroke="none" />
+        <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
       </svg>
     ),
   },
   {
     href: "/shop", cls: "qa-shop", label: "Крамниця",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="#ffd27a" strokeWidth={2} strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round">
         <path d="M5 8h14l-1 12H6L5 8z" /><path d="M9 8a3 3 0 0 1 6 0" strokeLinecap="round" />
       </svg>
     ),
@@ -48,7 +36,7 @@ const QUICK_LINKS = [
   {
     href: "/friends", cls: "qa-friends", label: "Друзі",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="#9b8cff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c0-3 2.5-4.6 5.5-4.6s5.5 1.6 5.5 4.6" />
         <path d="M16 5.5a3 3 0 0 1 0 5.6M17.5 14.6c2.3.5 3.5 2 3.5 4.4" />
       </svg>
@@ -57,7 +45,7 @@ const QUICK_LINKS = [
   {
     href: "/pvp", cls: "qa-duels", label: "Дуелі",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="#ff8a52" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M14.5 3.5 21 3l-.5 6.5-9 9" /><path d="M3 16l5 5" />
         <path d="M9.5 3.5 3 3l.5 6.5 9 9" /><path d="M21 16l-5 5" />
       </svg>
@@ -155,18 +143,13 @@ const SCENES: Record<StyleKey, React.ReactNode> = {
 
 export default function HomePage() {
   const router = useRouter();
-  const { resolvedTheme } = useTheme();
   const { user, fetchMe } = useAuthStore();
 
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [questsDone, setQuestsDone] = useState(0);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // next-themes is client-only; read the theme after mount to avoid hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
     fetchMe().catch(() => {});
     coursesApi.list().then(setCourses).catch(() => {});
     // Badge = daily quests finished but not yet claimed.
@@ -182,13 +165,6 @@ export default function HomePage() {
     return math?.user_progress?.progress_percent ?? 0;
   }, [courses]);
 
-  const activeCourse = courses.find(
-    (c) =>
-      c.user_progress !== null &&
-      (c.user_progress.progress_percent ?? 0) > 0 &&
-      (c.user_progress.progress_percent ?? 0) < 100,
-  );
-
   const streakStatus = useMemo<StreakStatus>(() => {
     if (!user || !user.last_activity_date) return null;
     const lastActivity = new Date(user.last_activity_date);
@@ -202,268 +178,109 @@ export default function HomePage() {
   }, [user]);
 
   const showBanner = !bannerDismissed && streakStatus !== null;
-  const isDark = mounted && resolvedTheme === "dark";
-
-  /* ═══════════════ DARK — magical-night mockup ═══════════════ */
-  if (isDark) {
-    return (
-      <div className="relative min-h-screen text-text-primary">
-        <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-          <div className="flex items-center justify-between px-[clamp(16px,4vw,40px)] py-3">
-            <div className="flex items-center gap-2.5">
-              <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
-                <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
-                <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
-                Cresco&nbsp;test
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <StatChip type="streak" value={user?.streak_days ?? 0} size="md" />
-              <StatChip type="lives"  value={user?.lives ?? 0}       size="md" />
-              <StatChip type="gems"   value={user?.gems ?? 0}        size="md" />
-              <StatChip type="xp"     value={user?.exp ?? 0}         size="md" />
-            </div>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
-          <h1 className="hello">Привіт, {user?.nickname ?? user?.email ?? "друже"}!</h1>
-          <p className="streakline">
-            {user?.streak_days ?? 0} днів поспіль — так тримати! <FlameGlyph />
-          </p>
-
-          {showBanner ? (
-            <div className="home-banner">
-              <div className="ic">
-                <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
-                  <path d="M16 3 C16 3 8 9 8 17.5 C8 23.5 11.6 27.5 16 27.5 C20.4 27.5 24 23.5 24 17.5 C24 14 22 11 22 11 C22 14 19 15.5 19 12 C19 7 16 3 16 3Z" fill="#fff" />
-                  <path d="M16 12 C16 12 12 15.5 12 20 C12 23 13.8 25 16 25 C18.2 25 20 23 20 20 C20 17.5 18 16 18 16 C18 18 16 18.5 16 16 C16 14 16 12 16 12Z" fill="#ffd98a" />
-                </svg>
-              </div>
-              <div className="tx">
-                <b>{streakStatus === "broken" ? "Серію втрачено" : "Продовжуй серію сьогодні!"}</b>
-                <span>
-                  {streakStatus === "broken"
-                    ? `Твоя серія з ${user?.streak_days ?? 0} днів скинулась — почни нову`
-                    : "Один урок — і твоя серія живе далі"}
-                </span>
-              </div>
-              <button type="button" className="x" onClick={() => setBannerDismissed(true)} aria-label="Закрити">✕</button>
-            </div>
-          ) : null}
-
-          <div className="quick-actions">
-            {QUICK_LINKS.map(({ href, cls, label, icon }) => {
-              const badge = href === "/quests" && questsDone > 0 ? String(questsDone) : null;
-              return (
-                <button key={href} type="button" className={`qa ${cls}`} onClick={() => router.push(href)}>
-                  {badge ? <span className="qa-badge">{badge}</span> : null}
-                  <span className="qa-ic">{icon}</span>
-                  <span className="qa-name">{label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <h2 className="sec-title">
-            Курси <small>{SUBJECTS.length} регіонів світу</small>
-          </h2>
-          <p className="sec-sub">
-            Кожен предмет — окрема магічна земля. Обирай регіон і вирушай у подорож до НМТ.
-          </p>
-
-          <div className="courses">
-            {SUBJECTS.map((s) => {
-              const progress = s.active ? mathProgress : 0;
-              const inner = (
-                <>
-                  <div className="scene">{SCENES[s.key]}</div>
-                  <div className="emblem">{EMBLEMS[s.key]}</div>
-                  <div>
-                    <h3>
-                      {s.title}
-                      {!s.active ? <span className="lvl-badge">Скоро</span> : null}
-                    </h3>
-                    <p className="desc">{s.desc}</p>
-                    <div className="prog">
-                      <div className="row"><span>Прогрес</span><span>{progress}%</span></div>
-                      <div className="track"><div className="fill" style={{ width: `${Math.max(progress, 6)}%` }} /></div>
-                    </div>
-                    <span className="go">
-                      {s.active ? (progress > 0 ? "Продовжити" : "Розпочати") : "Скоро"} <span>→</span>
-                    </span>
-                  </div>
-                </>
-              );
-
-              return s.active ? (
-                <button key={s.key} type="button" className={`course c-${s.key}`} onClick={() => router.push("/courses/mathematics")}>
-                  {inner}
-                </button>
-              ) : (
-                <div key={s.key} className={`course c-${s.key}`} style={{ cursor: "default" }} aria-disabled>
-                  {inner}
-                </div>
-              );
-            })}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  /* ═══════════════ LIGHT — original design (unchanged) ═══════════════ */
-  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <AppHeader user={user} />
-
-      {showBanner && (
-        <div
-          className={
-            streakStatus === "broken"
-              ? "border-b border-wrong/20 bg-wrong-light px-4 py-3"
-              : "border-b border-reward/20 bg-reward-light px-4 py-3"
-          }
-        >
-          <div className="mx-auto flex max-w-app items-center gap-3">
-            <span className="shrink-0">
-              {streakStatus === "broken" ? (
-                <HeartCrack className="h-6 w-6 text-wrong-dark" />
-              ) : (
-                <AlertTriangle className="h-6 w-6 text-reward-dark" />
-              )}
+    <div className="relative min-h-screen text-text-primary">
+      <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
+        <div className="flex items-center justify-between px-[clamp(16px,4vw,40px)] py-3">
+          <div className="flex items-center gap-2.5">
+            <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
+              <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
+              <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
+              Cresco&nbsp;test
             </span>
-            <div className="min-w-0 flex-1">
-              <p
-                className={
-                  "font-display text-sm font-700 " +
-                  (streakStatus === "broken" ? "text-wrong-dark" : "text-reward-dark")
-                }
-              >
-                {streakStatus === "broken" ? "Серія перервана" : "Не пропустіть серію!"}
-              </p>
-              <p
-                className={
-                  "font-body text-xs " +
-                  (streakStatus === "broken" ? "text-wrong-dark/80" : "text-reward-dark/80")
-                }
-              >
-                {streakStatus === "broken"
-                  ? `Ваша серія з ${user.streak_days} днів скинута. Починайте нову!`
-                  : "Пройдіть урок сьогодні, щоб зберегти серію"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setBannerDismissed(true)}
-              className={
-                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors " +
-                (streakStatus === "broken"
-                  ? "text-wrong hover:bg-wrong/10"
-                  : "text-reward-dark hover:bg-reward/20")
-              }
-              aria-label="Закрити"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <StatChip type="streak" value={user?.streak_days ?? 0} size="md" />
+            <StatChip type="lives"  value={user?.lives ?? 0}       size="md" />
+            <StatChip type="gems"   value={user?.gems ?? 0}        size="md" />
+            <StatChip type="xp"     value={user?.exp ?? 0}         size="md" />
           </div>
         </div>
-      )}
+      </header>
 
-      <main className="mx-auto max-w-app space-y-6 px-4 py-6">
-        <div>
-          <h1 className="text-glow font-display text-2xl font-800 text-primary-dark">
-            Привіт, {user.nickname ?? user.email}! <span className="animate-wave">👋</span>
-          </h1>
-          <p className="mt-1 inline-flex items-center gap-1.5 font-body text-base text-text-secondary">
-            {user.streak_days} днів поспіль — так тримати!
-            <Flame className="h-4 w-4 text-reward" />
-          </p>
-        </div>
+      <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
+        <h1 className="hello">Привіт, {user?.nickname ?? user?.email ?? "друже"}!</h1>
+        <p className="streakline">
+          {user?.streak_days ?? 0} днів поспіль — так тримати! <FlameGlyph />
+        </p>
 
-        <div className="stagger grid grid-cols-4 gap-2">
-          {[
-            { href: "/quests", Icon: Target, label: "Завдання" },
-            { href: "/shop", Icon: ShoppingBag, label: "Крамниця" },
-            { href: "/friends", Icon: Users, label: "Друзі" },
-            { href: "/pvp", Icon: Swords, label: "Дуелі" },
-          ].map(({ href, Icon, label }) => (
-            <button
-              key={href}
-              type="button"
-              onClick={() => router.push(href)}
-              className="glass lift flex flex-col items-center gap-1.5 rounded-2xl py-3 active:scale-[0.97]"
-            >
-              <Icon className="h-6 w-6 text-primary" />
-              <span className="font-display text-xs font-700 text-text-primary">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {activeCourse && (
-          <button
-            type="button"
-            onClick={() => router.push(`/courses/${activeCourse.slug}`)}
-            className="w-full overflow-hidden rounded-xl bg-primary p-4 text-left text-white shadow-button transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                {getSubjectIcon(activeCourse.subject)}
+        {showBanner ? (
+          <div className="home-banner">
+            <div className="ic">
+              <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+                <path d="M16 3 C16 3 8 9 8 17.5 C8 23.5 11.6 27.5 16 27.5 C20.4 27.5 24 23.5 24 17.5 C24 14 22 11 22 11 C22 14 19 15.5 19 12 C19 7 16 3 16 3Z" fill="#fff" />
+                <path d="M16 12 C16 12 12 15.5 12 20 C12 23 13.8 25 16 25 C18.2 25 20 23 20 20 C20 17.5 18 16 18 16 C18 18 16 18.5 16 16 C16 14 16 12 16 12Z" fill="#ffd98a" />
+              </svg>
+            </div>
+            <div className="tx">
+              <b>{streakStatus === "broken" ? "Серію втрачено" : "Продовжуй серію сьогодні!"}</b>
+              <span>
+                {streakStatus === "broken"
+                  ? `Твоя серія з ${user?.streak_days ?? 0} днів скинулась — почни нову`
+                  : "Один урок — і твоя серія живе далі"}
               </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-xs font-600 opacity-80">Продовжити навчання</p>
-                <h3 className="truncate font-display text-base font-700">{activeCourse.title}</h3>
-              </div>
-              <span className="text-xl opacity-80">→</span>
             </div>
-            <div className="mt-3">
-              <div className="mb-1.5 flex justify-between">
-                <span className="font-display text-xs font-600 opacity-80">Прогрес</span>
-                <span className="font-display text-xs font-700">
-                  {activeCourse.user_progress?.progress_percent ?? 0}%
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/30">
-                <div
-                  className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
-                  style={{ width: `${activeCourse.user_progress?.progress_percent ?? 0}%` }}
-                />
-              </div>
-            </div>
-          </button>
-        )}
+            <button type="button" className="x" onClick={() => setBannerDismissed(true)} aria-label="Закрити">✕</button>
+          </div>
+        ) : null}
 
-        <div>
-          <h2 className="mb-4 font-display text-xl font-800 text-primary-dark">Курси</h2>
-          {courses.length === 0 ? (
-            <div className="rounded-xl border border-border bg-surface px-4 py-8 text-center">
-              <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>
-            </div>
-          ) : (
-            <div className="stagger space-y-4">
-              {courses.map((course) => {
-                const progress = course.user_progress?.progress_percent ?? 0;
-                return (
-                  <CourseCard
-                    key={course.id}
-                    id={course.slug}
-                    icon={getSubjectIcon(course.subject)}
-                    title={course.title}
-                    subject={course.subject}
-                    description={course.description}
-                    difficulty="intermediate"
-                    isEnrolled={course.user_progress !== null}
-                    progress={progress}
-                    onClick={() => router.push(`/courses/${course.slug}`)}
-                  />
-                );
-              })}
-            </div>
-          )}
+        <div className="quick-actions">
+          {QUICK_LINKS.map(({ href, cls, label, icon }) => {
+            const badge = href === "/quests" && questsDone > 0 ? String(questsDone) : null;
+            return (
+              <button key={href} type="button" className={`qa ${cls}`} onClick={() => router.push(href)}>
+                {badge ? <span className="qa-badge">{badge}</span> : null}
+                <span className="qa-ic">{icon}</span>
+                <span className="qa-name">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <h2 className="sec-title">
+          Курси <small>{SUBJECTS.length} регіонів світу</small>
+        </h2>
+        <p className="sec-sub">
+          Кожен предмет — окрема магічна земля. Обирай регіон і вирушай у подорож до НМТ.
+        </p>
+
+        <div className="courses">
+          {SUBJECTS.map((s) => {
+            const progress = s.active ? mathProgress : 0;
+            const inner = (
+              <>
+                <div className="scene">{SCENES[s.key]}</div>
+                <div className="emblem">{EMBLEMS[s.key]}</div>
+                <div>
+                  <h3>
+                    {s.title}
+                    {!s.active ? <span className="lvl-badge">Скоро</span> : null}
+                  </h3>
+                  <p className="desc">{s.desc}</p>
+                  <div className="prog">
+                    <div className="row"><span>Прогрес</span><span>{progress}%</span></div>
+                    <div className="track"><div className="fill" style={{ width: `${Math.max(progress, 6)}%` }} /></div>
+                  </div>
+                  <span className="go">
+                    {s.active ? (progress > 0 ? "Продовжити" : "Розпочати") : "Скоро"} <span>→</span>
+                  </span>
+                </div>
+              </>
+            );
+
+            return s.active ? (
+              <button key={s.key} type="button" className={`course c-${s.key}`} onClick={() => router.push("/courses/mathematics")}>
+                {inner}
+              </button>
+            ) : (
+              <div key={s.key} className={`course c-${s.key}`} style={{ cursor: "default" }} aria-disabled>
+                {inner}
+              </div>
+            );
+          })}
         </div>
       </main>
     </div>
