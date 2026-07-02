@@ -493,7 +493,7 @@ button:disabled,
 }
 
 /* ═══════════════════ Home — magical-night mockup (1:1) ═══════════════════ */
-.hello{font-family:var(--font-display);font-weight:800;font-size:clamp(38px,6vw,58px);color:#f3fdfa;line-height:1;text-shadow:0 0 30px rgba(51,214,194,.4);margin-top:8px}
+.hello{font-family:var(--font-display);font-weight:800;font-size:clamp(38px,6vw,58px);color:#f3fdfa;line-height:1.06;letter-spacing:.6px;text-shadow:0 0 30px rgba(51,214,194,.4);margin-top:8px}
 .streakline{margin-top:10px;font-size:16px;color:var(--color-text-secondary);font-weight:600;display:flex;align-items:center;gap:8px}
 
 .home-banner{display:flex;align-items:center;gap:16px;margin-top:22px;padding:18px 20px;border-radius:22px;position:relative;overflow:hidden;background:linear-gradient(120deg,rgba(74,54,20,.85),rgba(58,40,12,.85));border:1.5px solid rgba(255,180,90,.35);box-shadow:0 0 34px -10px rgba(255,140,60,.45)}

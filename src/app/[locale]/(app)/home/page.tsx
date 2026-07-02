@@ -8,6 +8,7 @@ import { StatChip } from "@/components/ui/StatChip";
 import { CourseCard } from "@/components/ui/CourseCard";
 import { useAuthStore } from "@/store/auth.store";
 import { coursesApi, type CourseListItem } from "@/lib/api/courses";
+import { questsApi } from "@/lib/api/quests";
 
 function getSubjectIcon(subject: string): React.ReactNode {
   const s = subject.toLowerCase();
@@ -28,7 +29,7 @@ const FlameGlyph = () => (
 
 const QUICK_LINKS = [
   {
-    href: "/quests", cls: "qa-tasks", label: "Завдання", badge: "2",
+    href: "/quests", cls: "qa-tasks", label: "Завдання",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#5ff0db" strokeWidth={2}>
         <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" />
@@ -37,7 +38,7 @@ const QUICK_LINKS = [
     ),
   },
   {
-    href: "/shop", cls: "qa-shop", label: "Крамниця", badge: undefined,
+    href: "/shop", cls: "qa-shop", label: "Крамниця",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#ffd27a" strokeWidth={2} strokeLinejoin="round">
         <path d="M5 8h14l-1 12H6L5 8z" /><path d="M9 8a3 3 0 0 1 6 0" strokeLinecap="round" />
@@ -45,7 +46,7 @@ const QUICK_LINKS = [
     ),
   },
   {
-    href: "/friends", cls: "qa-friends", label: "Друзі", badge: undefined,
+    href: "/friends", cls: "qa-friends", label: "Друзі",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#9b8cff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c0-3 2.5-4.6 5.5-4.6s5.5 1.6 5.5 4.6" />
@@ -54,7 +55,7 @@ const QUICK_LINKS = [
     ),
   },
   {
-    href: "/pvp", cls: "qa-duels", label: "Дуелі", badge: undefined,
+    href: "/pvp", cls: "qa-duels", label: "Дуелі",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#ff8a52" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M14.5 3.5 21 3l-.5 6.5-9 9" /><path d="M3 16l5 5" />
@@ -158,6 +159,7 @@ export default function HomePage() {
   const { user, fetchMe } = useAuthStore();
 
   const [courses, setCourses] = useState<CourseListItem[]>([]);
+  const [questsDone, setQuestsDone] = useState(0);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -167,6 +169,10 @@ export default function HomePage() {
     setMounted(true);
     fetchMe().catch(() => {});
     coursesApi.list().then(setCourses).catch(() => {});
+    // Badge = daily quests finished but not yet claimed.
+    questsApi.list()
+      .then((list) => setQuestsDone(list.filter((q) => q.status === "completed").length))
+      .catch(() => {});
   }, [fetchMe]);
 
   const mathProgress = useMemo(() => {
@@ -202,27 +208,25 @@ export default function HomePage() {
   if (isDark) {
     return (
       <div className="relative min-h-screen text-text-primary">
-        {user ? (
-          <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-            <div className="mx-auto flex max-w-[820px] items-center justify-between px-4 py-3 md:px-6">
-              <div className="flex items-center gap-2.5">
-                <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
-                  <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
-                  <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
-                  Cresco&nbsp;test
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <StatChip type="streak" value={user.streak_days} size="sm" />
-                <StatChip type="lives"  value={user.lives}       size="sm" />
-                <StatChip type="gems"   value={user.gems}        size="sm" />
-                <StatChip type="xp"     value={user.exp}         size="sm" />
-              </div>
+        <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
+          <div className="flex items-center justify-between px-[clamp(16px,4vw,40px)] py-3">
+            <div className="flex items-center gap-2.5">
+              <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
+                <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
+                <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
+                Cresco&nbsp;test
+              </span>
             </div>
-          </header>
-        ) : null}
+            <div className="flex items-center gap-1.5">
+              <StatChip type="streak" value={user?.streak_days ?? 0} size="md" />
+              <StatChip type="lives"  value={user?.lives ?? 0}       size="md" />
+              <StatChip type="gems"   value={user?.gems ?? 0}        size="md" />
+              <StatChip type="xp"     value={user?.exp ?? 0}         size="md" />
+            </div>
+          </div>
+        </header>
 
         <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
           <h1 className="hello">Привіт, {user?.nickname ?? user?.email ?? "друже"}!</h1>
@@ -251,13 +255,16 @@ export default function HomePage() {
           ) : null}
 
           <div className="quick-actions">
-            {QUICK_LINKS.map(({ href, cls, label, icon, badge }) => (
-              <button key={href} type="button" className={`qa ${cls}`} onClick={() => router.push(href)}>
-                {badge ? <span className="qa-badge">{badge}</span> : null}
-                <span className="qa-ic">{icon}</span>
-                <span className="qa-name">{label}</span>
-              </button>
-            ))}
+            {QUICK_LINKS.map(({ href, cls, label, icon }) => {
+              const badge = href === "/quests" && questsDone > 0 ? String(questsDone) : null;
+              return (
+                <button key={href} type="button" className={`qa ${cls}`} onClick={() => router.push(href)}>
+                  {badge ? <span className="qa-badge">{badge}</span> : null}
+                  <span className="qa-ic">{icon}</span>
+                  <span className="qa-name">{label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <h2 className="sec-title">
