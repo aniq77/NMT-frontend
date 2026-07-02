@@ -146,11 +146,15 @@ export default function HomePage() {
   const { user, fetchMe } = useAuthStore();
 
   const [courses, setCourses] = useState<CourseListItem[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     fetchMe().catch(() => {});
-    coursesApi.list().then(setCourses).catch(() => {});
+    coursesApi.list()
+      .then(setCourses)
+      .catch(() => {})
+      .finally(() => setLoadingCourses(false));
   }, [fetchMe]);
 
   const streakStatus = useMemo<StreakStatus>(() => {
@@ -236,7 +240,9 @@ export default function HomePage() {
           })}
           {courses.length === 0 ? (
             <div className="glass rounded-[26px] px-4 py-8 text-center">
-              <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>
+              <p className="font-body text-sm text-text-secondary">
+                {loadingCourses ? "Завантаження курсів..." : "Курси зʼявляться зовсім скоро ✨"}
+              </p>
             </div>
           ) : null}
         </div>
