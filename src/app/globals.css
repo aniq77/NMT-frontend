@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Comfortaa:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -94,6 +95,9 @@
 
 /* ─── Dark mode overrides (magical night) ─────────────────────── */
 [data-theme="dark"] {
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Comfortaa", system-ui, sans-serif;
+
   --color-primary:       #33d6c2;
   --color-primary-light: rgba(51, 214, 194, 0.16);
   --color-primary-mid:   #2aa79a;
@@ -257,6 +261,26 @@ button:disabled,
 }
 [data-theme="dark"] .text-glow {
   text-shadow: 0 0 30px rgba(51, 214, 194, 0.4);
+}
+
+@keyframes darkAuroraOne {
+  0%, 100% { transform: translateX(-6%) scaleY(1); }
+  50% { transform: translateX(6%) scaleY(1.15); }
+}
+
+@keyframes darkAuroraTwo {
+  0%, 100% { transform: translateX(5%); }
+  50% { transform: translateX(-5%); }
+}
+
+@keyframes darkCloudLeft {
+  from { transform: translateX(-12vw); }
+  to { transform: translateX(118vw); }
+}
+
+@keyframes darkCloudRight {
+  from { transform: translateX(12vw); }
+  to { transform: translateX(-130vw); }
 }
 
 /* Gradient primary button surface with sweeping sheen */
