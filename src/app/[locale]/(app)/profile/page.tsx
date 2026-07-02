@@ -10,7 +10,6 @@ import {
   Flame,
   Gem,
   Globe,
-  Heart,
   Mail,
   Pencil,
   Smartphone,
@@ -328,7 +327,6 @@ export default function ProfilePage() {
 
         {/* Stats */}
         <SectionCard title="Статистика">
-          <InfoRow icon={<Heart        className="h-5 w-5 text-wrong"          />} label="Серця"               value={`${user.lives}/5`} />
           <InfoRow icon={<Flame        className="h-5 w-5 text-reward-dark"    />} label="Максимальна серія"   value={`${user.best_streak_days} днів`} />
           <InfoRow icon={<Zap          className="h-5 w-5 text-reward"         />} label="Всього XP"           value={`${user.exp.toLocaleString("uk")} XP`} />
           <InfoRow icon={<Calendar     className="h-5 w-5 text-text-secondary" />} label="Приєднався"          value={formatDate(user.date_joined)} />
