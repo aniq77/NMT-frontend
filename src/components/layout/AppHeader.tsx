@@ -1,4 +1,5 @@
 "use client";
+import { GraduationCap } from "lucide-react";
 import { StatChip } from "@/components/ui/StatChip";
 import type { User } from "@/types/auth";
 
@@ -7,15 +8,12 @@ type HeaderUser = Pick<User, "streak_days" | "lives" | "gems" | "exp">;
 export function AppHeader({ user }: { user: HeaderUser }) {
   return (
     <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-      <div className="mx-auto flex max-w-[820px] items-center justify-between px-4 py-3 md:px-6">
-        <div className="flex items-center gap-2.5">
-          <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
-            <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
-            <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
-            Cresco&nbsp;test
-          </span>
+      <div className="mx-auto flex max-w-app items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[image:var(--grad-primary)] text-white shadow-button">
+            <GraduationCap className="h-5 w-5" />
+          </div>
+          <span className="font-display text-base font-800 text-primary-dark">NMT</span>
         </div>
         <div className="flex items-center gap-1.5">
           <StatChip type="streak" value={user.streak_days} size="sm" />

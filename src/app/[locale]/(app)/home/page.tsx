@@ -1,14 +1,25 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { useTheme } from "next-themes";
+import { AlertTriangle, BookOpen, Flame, Hash, HeartCrack, ShoppingBag, Swords, Target, Triangle, Users, X } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { DarkThemeBackdrop } from "@/components/theme/DarkThemeShell";
+import { StatChip } from "@/components/ui/StatChip";
+import { CourseCard } from "@/components/ui/CourseCard";
 import { useAuthStore } from "@/store/auth.store";
 import { coursesApi, type CourseListItem } from "@/lib/api/courses";
 
+function getSubjectIcon(subject: string): React.ReactNode {
+  const s = subject.toLowerCase();
+  if (s.includes("алгебр") || s.includes("математ")) return <Hash className="h-8 w-8 text-white" />;
+  if (s.includes("геометр")) return <Triangle className="h-8 w-8 text-white" />;
+  return <BookOpen className="h-8 w-8 text-white" />;
+}
+
 type StreakStatus = "broken" | "at-risk" | null;
 
-const Flame = () => (
+/* ── Dark ("magical night") theme assets — used only when theme === dark ── */
+const FlameGlyph = () => (
   <svg viewBox="0 0 18 18" fill="none" width="17" height="17">
     <path d="M9 1.5 C9 1.5 4.5 5 4.5 9.8 C4.5 13.2 6.6 15.5 9 15.5 C11.4 15.5 13.5 13.2 13.5 9.8 C13.5 8 12.5 6.5 12.5 6.5 C12.5 8 11 8.8 11 7 C11 4.5 9 1.5 9 1.5Z" fill="#ff7a3c" />
     <path d="M9 6.5 C9 6.5 6.8 8.5 6.8 11 C6.8 12.8 7.8 14 9 14 C10.2 14 11.2 12.8 11.2 11 C11.2 9.5 10 8.8 10 8.8 C10 9.8 9 10 9 8.8 C9 7.5 9 6.5 9 6.5Z" fill="#ffc93c" />
@@ -55,7 +66,6 @@ const QUICK_LINKS = [
 
 type StyleKey = "math" | "ukr" | "hist" | "bio" | "phys";
 
-// Home shows every region (like the mockup); only Математика is playable for now.
 const SUBJECTS: { key: StyleKey; title: string; desc: string; active: boolean }[] = [
   { key: "math", title: "Математика", desc: "Підготовка до НМТ з математики — серед сузір’їв формул та геометрії зір.", active: true },
   { key: "ukr", title: "Українська мова", desc: "Правопис, граматика та стилістика — все для впевненої грамотності.", active: false },
@@ -144,12 +154,17 @@ const SCENES: Record<StyleKey, React.ReactNode> = {
 
 export default function HomePage() {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const { user, fetchMe } = useAuthStore();
 
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // next-themes is client-only; read the theme after mount to avoid hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
     fetchMe().catch(() => {});
     coursesApi.list().then(setCourses).catch(() => {});
   }, [fetchMe]);
@@ -160,6 +175,13 @@ export default function HomePage() {
     );
     return math?.user_progress?.progress_percent ?? 0;
   }, [courses]);
+
+  const activeCourse = courses.find(
+    (c) =>
+      c.user_progress !== null &&
+      (c.user_progress.progress_percent ?? 0) > 0 &&
+      (c.user_progress.progress_percent ?? 0) < 100,
+  );
 
   const streakStatus = useMemo<StreakStatus>(() => {
     if (!user || !user.last_activity_date) return null;
@@ -174,16 +196,38 @@ export default function HomePage() {
   }, [user]);
 
   const showBanner = !bannerDismissed && streakStatus !== null;
+  const isDark = mounted && resolvedTheme === "dark";
 
-  return (
-    <div data-theme="dark" className="relative min-h-screen text-text-primary">
-      <DarkThemeBackdrop />
-      <div className="relative z-10">
-        {user ? <AppHeader user={user} /> : null}
+  /* ═══════════════ DARK — magical-night mockup ═══════════════ */
+  if (isDark) {
+    return (
+      <div className="relative min-h-screen text-text-primary">
+        {user ? (
+          <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
+            <div className="mx-auto flex max-w-[820px] items-center justify-between px-4 py-3 md:px-6">
+              <div className="flex items-center gap-2.5">
+                <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
+                  <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
+                  <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
+                  Cresco&nbsp;test
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <StatChip type="streak" value={user.streak_days} size="sm" />
+                <StatChip type="lives"  value={user.lives}       size="sm" />
+                <StatChip type="gems"   value={user.gems}        size="sm" />
+                <StatChip type="xp"     value={user.exp}         size="sm" />
+              </div>
+            </div>
+          </header>
+        ) : null}
+
         <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
           <h1 className="hello">Привіт, {user?.nickname ?? user?.email ?? "друже"}!</h1>
           <p className="streakline">
-            {user?.streak_days ?? 0} днів поспіль — так тримати! <Flame />
+            {user?.streak_days ?? 0} днів поспіль — так тримати! <FlameGlyph />
           </p>
 
           {showBanner ? (
@@ -260,6 +304,161 @@ export default function HomePage() {
           </div>
         </main>
       </div>
+    );
+  }
+
+  /* ═══════════════ LIGHT — original design (unchanged) ═══════════════ */
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen bg-canvas">
+      <AppHeader user={user} />
+
+      {showBanner && (
+        <div
+          className={
+            streakStatus === "broken"
+              ? "border-b border-wrong/20 bg-wrong-light px-4 py-3"
+              : "border-b border-reward/20 bg-reward-light px-4 py-3"
+          }
+        >
+          <div className="mx-auto flex max-w-app items-center gap-3">
+            <span className="shrink-0">
+              {streakStatus === "broken" ? (
+                <HeartCrack className="h-6 w-6 text-wrong-dark" />
+              ) : (
+                <AlertTriangle className="h-6 w-6 text-reward-dark" />
+              )}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p
+                className={
+                  "font-display text-sm font-700 " +
+                  (streakStatus === "broken" ? "text-wrong-dark" : "text-reward-dark")
+                }
+              >
+                {streakStatus === "broken" ? "Серія перервана" : "Не пропустіть серію!"}
+              </p>
+              <p
+                className={
+                  "font-body text-xs " +
+                  (streakStatus === "broken" ? "text-wrong-dark/80" : "text-reward-dark/80")
+                }
+              >
+                {streakStatus === "broken"
+                  ? `Ваша серія з ${user.streak_days} днів скинута. Починайте нову!`
+                  : "Пройдіть урок сьогодні, щоб зберегти серію"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBannerDismissed(true)}
+              className={
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors " +
+                (streakStatus === "broken"
+                  ? "text-wrong hover:bg-wrong/10"
+                  : "text-reward-dark hover:bg-reward/20")
+              }
+              aria-label="Закрити"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto max-w-app space-y-6 px-4 py-6">
+        <div>
+          <h1 className="text-glow font-display text-2xl font-800 text-primary-dark">
+            Привіт, {user.nickname ?? user.email}! <span className="animate-wave">👋</span>
+          </h1>
+          <p className="mt-1 inline-flex items-center gap-1.5 font-body text-base text-text-secondary">
+            {user.streak_days} днів поспіль — так тримати!
+            <Flame className="h-4 w-4 text-reward" />
+          </p>
+        </div>
+
+        <div className="stagger grid grid-cols-4 gap-2">
+          {[
+            { href: "/quests", Icon: Target, label: "Завдання" },
+            { href: "/shop", Icon: ShoppingBag, label: "Крамниця" },
+            { href: "/friends", Icon: Users, label: "Друзі" },
+            { href: "/pvp", Icon: Swords, label: "Дуелі" },
+          ].map(({ href, Icon, label }) => (
+            <button
+              key={href}
+              type="button"
+              onClick={() => router.push(href)}
+              className="glass lift flex flex-col items-center gap-1.5 rounded-2xl py-3 active:scale-[0.97]"
+            >
+              <Icon className="h-6 w-6 text-primary" />
+              <span className="font-display text-xs font-700 text-text-primary">{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {activeCourse && (
+          <button
+            type="button"
+            onClick={() => router.push(`/courses/${activeCourse.slug}`)}
+            className="w-full overflow-hidden rounded-xl bg-primary p-4 text-left text-white shadow-button transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                {getSubjectIcon(activeCourse.subject)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-xs font-600 opacity-80">Продовжити навчання</p>
+                <h3 className="truncate font-display text-base font-700">{activeCourse.title}</h3>
+              </div>
+              <span className="text-xl opacity-80">→</span>
+            </div>
+            <div className="mt-3">
+              <div className="mb-1.5 flex justify-between">
+                <span className="font-display text-xs font-600 opacity-80">Прогрес</span>
+                <span className="font-display text-xs font-700">
+                  {activeCourse.user_progress?.progress_percent ?? 0}%
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/30">
+                <div
+                  className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
+                  style={{ width: `${activeCourse.user_progress?.progress_percent ?? 0}%` }}
+                />
+              </div>
+            </div>
+          </button>
+        )}
+
+        <div>
+          <h2 className="mb-4 font-display text-xl font-800 text-primary-dark">Курси</h2>
+          {courses.length === 0 ? (
+            <div className="rounded-xl border border-border bg-surface px-4 py-8 text-center">
+              <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>
+            </div>
+          ) : (
+            <div className="stagger space-y-4">
+              {courses.map((course) => {
+                const progress = course.user_progress?.progress_percent ?? 0;
+                return (
+                  <CourseCard
+                    key={course.id}
+                    id={course.slug}
+                    icon={getSubjectIcon(course.subject)}
+                    title={course.title}
+                    subject={course.subject}
+                    description={course.description}
+                    difficulty="intermediate"
+                    isEnrolled={course.user_progress !== null}
+                    progress={progress}
+                    onClick={() => router.push(`/courses/${course.slug}`)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
