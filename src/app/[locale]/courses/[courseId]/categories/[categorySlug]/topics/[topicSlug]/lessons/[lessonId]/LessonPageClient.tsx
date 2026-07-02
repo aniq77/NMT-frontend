@@ -18,7 +18,6 @@ import {
 } from "@/lib/api/lessons";
 import { MathText } from "@/components/ui/MathText";
 import { ApiError } from "@/lib/api/client";
-import { shopApi } from "@/lib/api/shop";
 import { useAuthStore } from "@/store/auth.store";
 import {
   BossBattleStage,
@@ -61,9 +60,7 @@ export default function LessonPageClient() {
   const [submitting, setSubmitting] = useState(false);
   const [answers, setAnswers] = useState<AnswerPayload[]>([]);
   const [lives, setLives] = useState(MAX_LIVES);
-  const [showLivesGate, setShowLivesGate] = useState(false);
-  const [restoringLife, setRestoringLife] = useState(false);
-  const [lifeRestoreError, setLifeRestoreError] = useState<string>("");
+  const [heartsDepleted, setHeartsDepleted] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [comboStreak, setComboStreak] = useState(0);
@@ -85,13 +82,13 @@ export default function LessonPageClient() {
   const completeCalledRef = useRef(false);
   const topicPath = `/courses/${courseId}/categories/${categorySlug}`;
 
-  useEffect(() => {
-    if (user) setLives(user.lives ?? MAX_LIVES);
-  }, [user]);
-
   const loadLesson = useCallback(() => {
     setPhase("loading");
     setLoadError("");
+    // Hearts are a per-attempt resource: every entry (including a retry) starts
+    // fresh at 5, independent of any global/persistent lives count.
+    setLives(MAX_LIVES);
+    setHeartsDepleted(false);
     Promise.all([lessonsApi.start(lessonId), lessonsApi.questions(lessonId)])
       .then(([startRes, qs]) => {
         if (!qs || qs.length === 0) {
@@ -207,8 +204,12 @@ export default function LessonPageClient() {
         finishLesson();
         return;
       }
-    } else if (lives === 0 && !isCorrect) {
-      setShowLivesGate(true);
+    } else if (lives === 0) {
+      // Out of hearts → the attempt is over. Record it (a failed pass earns
+      // nothing) and show the defeat screen; retrying re-enters and costs
+      // energy, never a global life.
+      setHeartsDepleted(true);
+      finishLesson();
       return;
     }
 
@@ -235,7 +236,7 @@ export default function LessonPageClient() {
       .then((res) => {
         setCompleteResult(res);
         setCompletionSaved(true);
-        updateUser({ level: res.level, lives: res.lives, gems: res.gems });
+        updateUser({ level: res.level, gems: res.gems });
         fetchMe().catch(() => {});
         setPhase("done");
       })
@@ -343,65 +344,33 @@ export default function LessonPageClient() {
     );
   }
 
-  // ── Lives gate ────────────────────────────────────────────────────────────────
-  if (showLivesGate) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-        <div className="mx-auto w-full max-w-app text-center">
-          <HeartCrack className="mx-auto mb-4 h-20 w-20 text-wrong" />
-          <h1 className="font-display text-2xl font-800 text-text-primary">Серця закінчились!</h1>
-          <p className="mt-2 font-body text-base text-text-secondary">
-            Зачекайте відновлення або витратьте кристали
-          </p>
-          <div className="mt-6 space-y-3">
-            <Button
-              size="lg"
-              loading={restoringLife}
-              className="w-full bg-reward text-reward-dark hover:bg-reward-dark hover:text-white"
-              onClick={async () => {
-                setLifeRestoreError("");
-                setRestoringLife(true);
-                try {
-                  const items = await shopApi.list();
-                  const item = items.find((i) => i.item_type === "life_restore");
-                  if (!item) {
-                    setLifeRestoreError("Відновлення наразі недоступне");
-                    return;
-                  }
-                  const res = await shopApi.purchase(item.id);
-                  updateUser({ gems: res.gems, lives: res.lives, energy: res.energy });
-                  setLives(res.lives);
-                  setShowLivesGate(false);
-                } catch (err) {
-                  setLifeRestoreError(
-                    err instanceof ApiError && err.status === 400
-                      ? "Недостатньо кристалів"
-                      : "Не вдалося відновити життя",
-                  );
-                } finally {
-                  setRestoringLife(false);
-                }
-              }}
-            >
-              <span className="flex items-center justify-center gap-2">
-                <Gem className="h-5 w-5" /> Відновити життя за кристали
-              </span>
-            </Button>
-            {lifeRestoreError && (
-              <p className="font-body text-sm text-wrong-dark">{lifeRestoreError}</p>
-            )}
-            <Button variant="ghost" size="lg" className="w-full" onClick={() => router.push(topicPath)}>
-              Назад до острова
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // ── Completion ────────────────────────────────────────────────────────────────
   if (phase === "done") {
     const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 100;
+
+    // Hearts ran out mid-lesson → the attempt failed. No life is lost; retrying
+    // re-enters the lesson (and spends energy) with a fresh set of 5 hearts.
+    if (heartsDepleted && !isBoss) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+          <div className="mx-auto w-full max-w-app text-center">
+            <HeartCrack className="mx-auto mb-4 h-20 w-20 text-wrong" />
+            <h1 className="font-display text-2xl font-800 text-text-primary">Серця закінчились!</h1>
+            <p className="mt-2 font-body text-base text-text-secondary">
+              Урок не зараховано. Спробуй ще раз — серця відновляться, але захід витратить енергію.
+            </p>
+            <div className="mt-8 space-y-3">
+              <Button size="lg" className="w-full" onClick={restartBattle}>
+                Спробувати ще раз
+              </Button>
+              <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
+                ← Назад до острова
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     if (!completionSaved) {
       return (

@@ -3,7 +3,7 @@ import { GraduationCap } from "lucide-react";
 import { StatChip } from "@/components/ui/StatChip";
 import type { User } from "@/types/auth";
 
-type HeaderUser = Pick<User, "streak_days" | "lives" | "gems" | "exp">;
+type HeaderUser = Pick<User, "streak_days" | "gems" | "exp">;
 
 export function AppHeader({ user }: { user: HeaderUser }) {
   return (
@@ -17,7 +17,6 @@ export function AppHeader({ user }: { user: HeaderUser }) {
         </div>
         <div className="flex items-center gap-1.5">
           <StatChip type="streak" value={user.streak_days} size="sm" />
-          <StatChip type="lives"  value={user.lives}       size="sm" />
           <StatChip type="gems"   value={user.gems}        size="sm" />
           <StatChip type="xp"     value={user.exp}         size="sm" />
         </div>

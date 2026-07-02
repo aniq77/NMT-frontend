@@ -194,7 +194,6 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-1.5">
             <StatChip type="streak" value={user?.streak_days ?? 0} size="md" />
-            <StatChip type="lives"  value={user?.lives ?? 0}       size="md" />
             <StatChip type="gems"   value={user?.gems ?? 0}        size="md" />
             <StatChip type="xp"     value={user?.exp ?? 0}         size="md" />
           </div>

@@ -53,17 +53,26 @@ export default function ShopPage() {
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [inventoryResult, setInventoryResult] = useState<InventoryUseResponse | null>(null);
 
+  // Hearts are a per-attempt resource, not a persistent consumable — the
+  // "restore a life" item is retired, so hide it from the store and inventory.
   const fetchItems = useCallback(() => {
     shopApi
       .list()
-      .then((items) => setState({ status: "ready", items }))
+      .then((items) =>
+        setState({ status: "ready", items: items.filter((i) => i.item_type !== "life_restore") }),
+      )
       .catch(() => setState({ status: "error" }));
   }, []);
 
   const fetchInventory = useCallback(() => {
     shopApi
       .inventory()
-      .then((items) => setInventoryState({ status: "ready", items }))
+      .then((items) =>
+        setInventoryState({
+          status: "ready",
+          items: items.filter((i) => i.item.item_type !== "life_restore"),
+        }),
+      )
       .catch(() => setInventoryState({ status: "error" }));
   }, []);
 
