@@ -208,27 +208,25 @@ export default function HomePage() {
   if (isDark) {
     return (
       <div className="relative min-h-screen text-text-primary">
-        {user ? (
-          <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-            <div className="flex items-center justify-between px-[clamp(16px,4vw,40px)] py-3">
-              <div className="flex items-center gap-2.5">
-                <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
-                  <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
-                  <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
-                  Cresco&nbsp;test
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <StatChip type="streak" value={user.streak_days} size="sm" />
-                <StatChip type="lives"  value={user.lives}       size="sm" />
-                <StatChip type="gems"   value={user.gems}        size="sm" />
-                <StatChip type="xp"     value={user.exp}         size="sm" />
-              </div>
+        <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
+          <div className="flex items-center justify-between px-[clamp(16px,4vw,40px)] py-3">
+            <div className="flex items-center gap-2.5">
+              <svg viewBox="0 0 48 48" fill="none" className="h-[38px] w-[38px] drop-shadow-[0_0_10px_rgba(51,214,194,0.6)]">
+                <path d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z" fill="#33d6c2" stroke="#0f7a70" strokeWidth="1.4" />
+                <path d="M16 26l5 5 11-13" stroke="#06221f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="hidden font-display text-xl font-800 tracking-[0.5px] text-primary-dark [text-shadow:0_0_16px_rgba(51,214,194,0.5)] sm:inline">
+                Cresco&nbsp;test
+              </span>
             </div>
-          </header>
-        ) : null}
+            <div className="flex items-center gap-1.5">
+              <StatChip type="streak" value={user?.streak_days ?? 0} size="sm" />
+              <StatChip type="lives"  value={user?.lives ?? 0}       size="sm" />
+              <StatChip type="gems"   value={user?.gems ?? 0}        size="sm" />
+              <StatChip type="xp"     value={user?.exp ?? 0}         size="sm" />
+            </div>
+          </div>
+        </header>
 
         <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6 md:px-6">
           <h1 className="hello">Привіт, {user?.nickname ?? user?.email ?? "друже"}!</h1>
