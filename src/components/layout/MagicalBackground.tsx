@@ -28,17 +28,6 @@ const SHOOTING = [
   { top: "8%", left: "50%", dur: 8, delay: 11 },
 ];
 
-// Drifting "knowledge" glyphs for the light theme.
-const WORDS = [
-  { t: "x²", top: "16%", dur: 64, dir: "swayX", color: "rgba(54,100,150,.5)" },
-  { t: "π", top: "30%", dur: 82, dir: "swayXr", color: "rgba(28,90,82,.5)" },
-  { t: "√2", top: "44%", dur: 72, dir: "swayX", color: "rgba(130,80,36,.45)" },
-  { t: "Київ", top: "22%", dur: 92, dir: "swayXr", color: "rgba(130,80,36,.42)" },
-  { t: "ДНК", top: "54%", dur: 78, dir: "swayX", color: "rgba(28,90,82,.45)" },
-  { t: "H₂O", top: "38%", dur: 96, dir: "swayXr", color: "rgba(54,100,150,.42)" },
-  { t: "∫", top: "62%", dur: 70, dir: "swayX", color: "rgba(54,100,150,.5)" },
-];
-
 export function MagicalBackground() {
   return (
     <div className="bg-decor pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
@@ -96,26 +85,6 @@ export function MagicalBackground() {
               animation: c.anim,
             }}
           />
-        ))}
-        {/* drifting knowledge glyphs */}
-        {WORDS.map((w, i) => (
-          <span
-            key={`word-${i}`}
-            className="absolute font-display font-700"
-            style={{
-              top: w.top,
-              left: 0,
-              fontSize: 26 + (i % 3) * 6,
-              color: w.color,
-              textShadow: "0 1px 8px rgba(255,255,255,.9)",
-              whiteSpace: "nowrap",
-              animation: `${w.dir} ${w.dur}s linear ${i * -8}s infinite`,
-            }}
-          >
-            <span style={{ display: "inline-block", animation: `floaty ${5 + (i % 3)}s ease-in-out infinite` }}>
-              {w.t}
-            </span>
-          </span>
         ))}
       </div>
 
