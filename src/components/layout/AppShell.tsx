@@ -20,11 +20,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isGameApp = GAME_APP_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   if (!isGameApp) {
+    // Render Tailwind pages OUTSIDE `.game-app`: its universal reset
+    // (`.game-app * { margin:0; padding:0 }`) would otherwise override Tailwind
+    // utilities like `mx-auto`/`px-*` and break centering + spacing. The dock
+    // keeps a minimal `.game-app` ancestor only so its scoped styles apply.
     return (
-      <div className="game-app" style={{ minHeight: "100dvh" }}>
-        {children}
-        <BottomNav />
-      </div>
+      <>
+        <div className="pb-24">{children}</div>
+        <div className="game-app">
+          <BottomNav />
+        </div>
+      </>
     );
   }
 
