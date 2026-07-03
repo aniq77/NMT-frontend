@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "@/lib/navigation";
 import { useAuthStore } from "@/store/auth.store";
 
 type StreakStatus = "broken" | "at-risk" | null;
@@ -67,23 +68,23 @@ export default function HomePage() {
 
       {/* QUICK ACTIONS */}
       <div className="quick-actions">
-        <button className="qa qa-tasks">
+        <Link href="/quests" className="qa qa-tasks">
           {availableRewards > 0 && <span className="qa-badge">{availableRewards}</span>}
           <span className="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="var(--teal-bright)" strokeWidth="2"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill="var(--teal-bright)" stroke="none" /></svg></span>
           <span className="qa-name">Завдання</span>
-        </button>
-        <button className="qa qa-shop">
+        </Link>
+        <Link href="/shop" className="qa qa-shop">
           <span className="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinejoin="round"><path d="M5 8h14l-1 12H6L5 8z" /><path d="M9 8a3 3 0 0 1 6 0" strokeLinecap="round" /></svg></span>
           <span className="qa-name">Крамниця</span>
-        </button>
-        <button className="qa qa-friends">
+        </Link>
+        <Link href="/friends" className="qa qa-friends">
           <span className="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c0-3 2.5-4.6 5.5-4.6s5.5 1.6 5.5 4.6" /><path d="M16 5.5a3 3 0 0 1 0 5.6M17.5 14.6c2.3.5 3.5 2 3.5 4.4" /></svg></span>
           <span className="qa-name">Друзі</span>
-        </button>
-        <button className="qa qa-duels">
+        </Link>
+        <Link href="/pvp" className="qa qa-duels">
           <span className="qa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ember)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 3.5 21 3l-.5 6.5-9 9" /><path d="M3 16l5 5" /><path d="M9.5 3.5 3 3l.5 6.5 9 9" /><path d="M21 16l-5 5" /></svg></span>
           <span className="qa-name">Дуелі</span>
-        </button>
+        </Link>
       </div>
 
       <h2 className="sec-title">Курси <small>5 регіонів світу</small></h2>
