@@ -9,14 +9,14 @@ const LETTERS = ["A", "B", "C", "D", "E"];
 
 const STATE_STYLES: Record<AnswerState, { wrapper: string; badge: string; text: string }> = {
   default: {
-    wrapper: "border-border bg-surface hover:border-primary-mid hover:bg-primary-light/30 active:scale-[0.99]",
-    badge:   "bg-border text-text-secondary",
+    wrapper: "glass-soft hover:-translate-y-px hover:brightness-[1.03] active:scale-[0.99]",
+    badge:   "bg-[var(--color-violet)]/15 text-[var(--color-violet)]",
     text:    "text-text-primary",
   },
   selected: {
-    wrapper: "border-primary bg-primary-light",
-    badge:   "bg-primary text-white",
-    text:    "text-primary-dark",
+    wrapper: "border-[var(--color-violet)] bg-[var(--color-violet)]/12",
+    badge:   "bg-[var(--color-violet)] text-white",
+    text:    "text-text-primary",
   },
   correct: {
     wrapper: "border-correct bg-correct-light",

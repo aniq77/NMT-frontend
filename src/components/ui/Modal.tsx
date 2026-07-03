@@ -32,12 +32,12 @@ export function Modal({ open, onClose, title, children, size = "md" }: ModalProp
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-md"
         onClick={onClose}
       />
       <div
         className={cn(
-          "relative max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-surface p-6 shadow-modal sm:rounded-2xl",
+          "glass relative max-h-[90vh] w-full overflow-y-auto rounded-t-3xl p-6 shadow-modal sm:rounded-3xl",
           SIZE_CLASSES[size],
         )}
       >

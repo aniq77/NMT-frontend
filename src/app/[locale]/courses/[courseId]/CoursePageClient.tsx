@@ -1,94 +1,62 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Lock, MapPin } from "lucide-react";
 import { Link, useRouter } from "@/lib/navigation";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { coursesApi, type CategorySummary, type CourseDetail } from "@/lib/api/courses";
-import { cn } from "@/lib/utils";
+import {
+  coursesApi,
+  SUBJECT_META,
+  SUBJECT_ORDER,
+  type CategorySummary,
+  type CourseDetail,
+  type Subject,
+} from "@/lib/api/courses";
 
-type LockedCategory = {
-  slug: string;
-  title: string;
-  description: string;
-};
+function isIslandCompleted(cat: CategorySummary): boolean {
+  return cat.topics_count > 0 && cat.completed_topics >= cat.topics_count;
+}
 
-const LOCKED_CATEGORIES: Record<string, LockedCategory[]> = {
-  mathematics: [
-    {
-      slug: "geometry",
-      title: "Геометрія",
-      description: "Планіметрія, стереометрія, тіла обертання",
-    },
-  ],
-};
-
-function CategoryCard({
-  category,
+function SubjectCard({
+  subject,
+  islands,
   courseSlug,
 }: {
-  category: CategorySummary;
+  subject: Subject;
+  islands: CategorySummary[];
   courseSlug: string;
 }) {
   const router = useRouter();
-  const progress =
-    category.topics_count > 0
-      ? Math.round((category.completed_topics / category.topics_count) * 100)
-      : 0;
+  const meta = SUBJECT_META[subject];
+  const completed = islands.filter(isIslandCompleted).length;
+  const progress = islands.length > 0 ? Math.round((completed / islands.length) * 100) : 0;
 
   return (
     <button
       type="button"
-      onClick={() => router.push(`/courses/${courseSlug}/categories/${category.slug}`)}
+      onClick={() => router.push(`/courses/${courseSlug}/subjects/${subject}`)}
       className="w-full rounded-xl border border-border bg-surface p-4 text-left shadow-card transition-all duration-200 hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-light">
-          <MapPin className="h-6 w-6 text-primary" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-light text-2xl">
+          {meta.emoji}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-display text-base font-700 text-text-primary">{category.title}</h3>
+          <h3 className="font-display text-base font-700 text-text-primary">{meta.title}</h3>
           <p className="mt-0.5 font-body text-sm text-text-secondary">
-            {category.completed_topics} / {category.topics_count} острів
-            {category.topics_count !== 1 ? "ів" : ""}
+            {completed} / {islands.length} {islands.length === 1 ? "острів" : "островів"}
           </p>
         </div>
         <span className="text-text-secondary">→</span>
       </div>
 
-      {category.topics_count > 0 && (
-        <div className="mt-3">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="font-display text-xs font-600 text-text-secondary">Прогрес</span>
-            <span className="font-display text-xs font-700 text-primary">{progress}%</span>
-          </div>
-          <ProgressBar
-            value={progress}
-            size="sm"
-            color={progress === 100 ? "correct" : "primary"}
-          />
+      <div className="mt-3">
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="font-display text-xs font-600 text-text-secondary">Прогрес</span>
+          <span className="font-display text-xs font-700 text-primary">{progress}%</span>
         </div>
-      )}
-    </button>
-  );
-}
-
-function LockedCategoryCard({ category }: { category: LockedCategory }) {
-  return (
-    <div className={cn("w-full rounded-xl border border-border bg-surface p-4 opacity-50")}>
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface-alt">
-          <Lock className="h-6 w-6 text-text-secondary" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-base font-700 text-text-primary">{category.title}</h3>
-          <p className="mt-0.5 font-body text-sm text-text-secondary">{category.description}</p>
-        </div>
-        <span className="rounded-lg bg-surface-alt px-2 py-1 font-display text-xs font-600 text-text-secondary">
-          Незабаром
-        </span>
+        <ProgressBar value={progress} size="sm" color={progress === 100 ? "correct" : "primary"} />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -107,7 +75,15 @@ export default function CoursePageClient() {
       .finally(() => setLoading(false));
   }, [courseId]);
 
-  const lockedCategories = LOCKED_CATEGORIES[courseId] ?? [];
+  // Group islands (categories) by subject, preserving the canonical subject order.
+  const bySubject = (course?.categories ?? []).reduce<Record<string, CategorySummary[]>>(
+    (acc, cat) => {
+      (acc[cat.subject] ??= []).push(cat);
+      return acc;
+    },
+    {},
+  );
+  const subjects = SUBJECT_ORDER.filter((s) => (bySubject[s]?.length ?? 0) > 0);
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -136,16 +112,18 @@ export default function CoursePageClient() {
 
         {!loading && course && (
           <>
-            {course.subject && (
-              <p className="mb-6 font-body text-sm text-text-secondary">{course.subject}</p>
-            )}
+            <p className="mb-6 font-body text-sm text-text-secondary">
+              Оберіть розділ, щоб почати проходити острови
+            </p>
 
             <div className="space-y-3">
-              {course.categories.map((cat) => (
-                <CategoryCard key={cat.slug} category={cat} courseSlug={courseId} />
-              ))}
-              {lockedCategories.map((cat) => (
-                <LockedCategoryCard key={cat.slug} category={cat} />
+              {subjects.map((subject) => (
+                <SubjectCard
+                  key={subject}
+                  subject={subject}
+                  islands={bySubject[subject]}
+                  courseSlug={courseId}
+                />
               ))}
             </div>
           </>

@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Star } from "lucide-react";
+import { Clock } from "lucide-react";
 import { Link, useRouter } from "@/lib/navigation";
 import { LessonNode } from "@/components/ui/LessonNode";
-import { Button } from "@/components/ui/Button";
 import { coursesApi, type LessonSummary, type TopicDetail } from "@/lib/api/courses";
 
 type NodeStatus = "golden" | "completed" | "current" | "available" | "locked";
@@ -13,8 +12,13 @@ type NodeType = "standard" | "challenge" | "checkpoint";
 const GOLD_COMPLETIONS = 3;
 
 function getLessonStatus(lesson: LessonSummary, lessons: LessonSummary[]): NodeStatus {
-  if (lesson.completion_count >= GOLD_COMPLETIONS) return "golden";
-  if (lesson.is_completed) return "completed";
+  // A boss golds on a single clear (no 3-pass mastery grind / "1/3" badge).
+  if (lesson.is_boss) {
+    if (lesson.is_completed || lesson.completion_count >= 1) return "golden";
+  } else {
+    if (lesson.completion_count >= GOLD_COMPLETIONS) return "golden";
+    if (lesson.is_completed) return "completed";
+  }
   const firstUncompleted = lessons.findIndex((l) => !l.is_completed);
   const idx = lessons.indexOf(lesson);
   if (idx === firstUncompleted) return "current";
@@ -45,6 +49,12 @@ export default function TopicPageClient() {
   }, [courseId, categorySlug, topicSlug]);
 
   const lessons = topic?.lessons ?? [];
+  const isComing = topic?.is_coming_soon ?? false;
+
+  const goToLesson = (lessonId: string) =>
+    router.push(
+      `/courses/${courseId}/categories/${categorySlug}/topics/${topicSlug}/lessons/${lessonId}`,
+    );
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -56,23 +66,16 @@ export default function TopicPageClient() {
           >
             <span className="text-lg leading-none">←</span>
           </Link>
-          <div className="min-w-0 flex-1">
-            <h1 className="font-display text-base font-700 text-text-primary">
-              {topic?.title ?? "Острів"}
-            </h1>
-            {topic && topic.required_completions > 0 && (
-              <p className="font-body text-xs text-text-secondary">
-                {topic.completion_count} / {topic.required_completions} проходжень
-                {topic.is_gold && (
-                  <Star className="ml-1 inline h-3 w-3 fill-reward text-reward" />
-                )}
-              </p>
-            )}
-          </div>
+          <h1 className="font-display text-base font-700 text-text-primary">
+            {topic?.title ?? "Острів"}
+          </h1>
+          {isComing && (
+            <p className="font-body text-xs text-text-secondary">Скоро з'явиться</p>
+          )}
         </div>
       </header>
 
-      <main className="mx-auto max-w-app px-4 py-6">
+      <main className="mx-auto max-w-app px-4 py-6 pb-24">
         {loading && (
           <div className="flex flex-col items-center gap-6 pt-4">
             {[1, 2, 3].map((i) => (
@@ -82,57 +85,28 @@ export default function TopicPageClient() {
         )}
 
         {!loading && topic && (
-          <div className="relative flex flex-col items-center">
-            {lessons.map((lesson, idx) => {
-              const status = getLessonStatus(lesson, lessons);
-              const type = getLessonType(lesson);
-              const isActive = status === "current" || status === "golden";
-              const isClickable = status !== "locked";
+          <>
+            {isComing && (
+              <div className="mb-6 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-surface p-5 text-center">
+                <Clock className="h-8 w-8 text-text-secondary" />
+                <p className="font-display text-sm font-700 text-text-secondary">
+                  Цей острів ще в розробці
+                </p>
+                <p className="font-body text-xs text-text-secondary">
+                  Уроки будуть доступні найближчим часом
+                </p>
+              </div>
+            )}
 
-              return (
-                <div key={lesson.id} className="flex flex-col items-center">
-                  {idx > 0 && <div className="h-6 w-0.5 bg-border" />}
+            <div className="flex flex-col items-center">
+              {lessons.map((lesson, idx) => {
+                const status: NodeStatus = isComing ? "locked" : getLessonStatus(lesson, lessons);
+                const type = getLessonType(lesson);
+                const isClickable = !isComing && status !== "locked";
 
-                  {isActive ? (
-                    <div className="flex flex-col items-center">
-                      <LessonNode
-                        status={status}
-                        type={type}
-                        lessonNumber={idx + 1}
-                        title={lesson.title}
-                        xp={lesson.exp_reward}
-                        completionCount={lesson.completion_count}
-                      />
-                      <div className="mt-3 w-52 rounded-xl border border-border bg-surface p-3 text-center shadow-modal">
-                        <p className="font-display text-sm font-700 text-text-primary">
-                          {lesson.title}
-                        </p>
-                        {status === "golden" ? (
-                          <p className="mt-0.5 font-display text-xs font-600 text-reward">
-                            {lesson.completion_count} / {GOLD_COMPLETIONS} ★
-                          </p>
-                        ) : (
-                          <p className="mt-0.5 font-display text-xs font-600 text-reward">
-                            +{lesson.exp_reward} XP
-                          </p>
-                        )}
-                        <Button
-                          size="sm"
-                          className="mt-2 w-full"
-                          onClick={() =>
-                            router.push(
-                              `/courses/${courseId}/categories/${categorySlug}/topics/${topicSlug}/lessons/${lesson.id}`,
-                            )
-                          }
-                        >
-                          <span className="flex items-center justify-center gap-1.5">
-                            {status === "golden" ? "Пройти ще раз" : "Почати урок"}{" "}
-                            <Star className="h-3.5 w-3.5" />
-                          </span>
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
+                return (
+                  <div key={lesson.id} className="flex flex-col items-center">
+                    {idx > 0 && <div className="h-6 w-0.5 bg-border" />}
                     <LessonNode
                       status={status}
                       type={type}
@@ -140,20 +114,13 @@ export default function TopicPageClient() {
                       title={lesson.title}
                       xp={lesson.exp_reward}
                       completionCount={lesson.completion_count}
-                      onClick={
-                        isClickable
-                          ? () =>
-                              router.push(
-                                `/courses/${courseId}/categories/${categorySlug}/topics/${topicSlug}/lessons/${lesson.id}`,
-                              )
-                          : undefined
-                      }
+                      onClick={isClickable ? () => goToLesson(lesson.id) : undefined}
                     />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </main>
     </div>

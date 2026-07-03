@@ -18,13 +18,62 @@ export type CourseListItem = {
   user_progress: UserCourseProgress | null;
 };
 
+export type Subject = "algebra" | "geometry" | "final";
+
+export const SUBJECT_ORDER: Subject[] = ["algebra", "geometry", "final"];
+
+export const SUBJECT_META: Record<Subject, { title: string; description: string; emoji: string }> = {
+  algebra: { title: "Алгебра і початки аналізу", description: "Числа, вирази, рівняння, функції, аналіз", emoji: "🔢" },
+  geometry: { title: "Геометрія", description: "Планіметрія, стереометрія, координати і вектори", emoji: "📐" },
+  final: { title: "Підсумкові", description: "Змішані острови за весь курс НМТ", emoji: "🏁" },
+};
+
+export type Block =
+  | "foundations"
+  | "algebra"
+  | "functions"
+  | "trigonometry"
+  | "analysis"
+  | "applied"
+  | "geometry"
+  | "endgame";
+
+// Pedagogical section headers shown above the islands within a subject.
+// Order matches the backend Category.order_index sequence.
+export const BLOCK_ORDER: Block[] = [
+  "foundations",
+  "algebra",
+  "functions",
+  "trigonometry",
+  "analysis",
+  "applied",
+  "geometry",
+  "endgame",
+];
+
+export const BLOCK_META: Record<Block, { title: string; emoji: string }> = {
+  foundations: { title: "Основи математики", emoji: "🧱" },
+  algebra: { title: "Алгебра", emoji: "➗" },
+  functions: { title: "Функції", emoji: "📈" },
+  trigonometry: { title: "Тригонометрія", emoji: "📐" },
+  analysis: { title: "Аналіз", emoji: "♾️" },
+  applied: { title: "Прикладна математика", emoji: "🎲" },
+  geometry: { title: "Геометрія", emoji: "📏" },
+  endgame: { title: "Ендгейм", emoji: "🏁" },
+};
+
 export type CategorySummary = {
   id: string;
   slug: string;
   title: string;
+  subject: Subject;
+  // "" for legacy rows that predate the block grouping.
+  block: Block | "";
   order_index: number;
   topics_count: number;
   completed_topics: number;
+  is_unlocked: boolean;
+  is_coming_soon: boolean;
 };
 
 export type CourseDetail = {
@@ -47,6 +96,7 @@ export type TopicSummary = {
   completion_count: number;
   is_gold: boolean;
   is_unlocked: boolean;
+  is_coming_soon: boolean;
 };
 
 export type CategoryDetail = {
@@ -79,6 +129,7 @@ export type TopicDetail = {
   completion_count: number;
   is_gold: boolean;
   is_unlocked: boolean;
+  is_coming_soon: boolean;
   lessons: LessonSummary[];
 };
 
