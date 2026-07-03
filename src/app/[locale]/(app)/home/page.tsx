@@ -87,8 +87,9 @@ export default function HomePage() {
             const enrolled = course.user_progress !== null;
             const { cls, emblem } = subjectVisual(course.subject);
             // Only Математика is functional for now — it links to the existing
-            // (old-design) course page on production. All other subjects are
-            // decorative: they render but navigate nowhere.
+            // (old-design) course page via a same-origin relative path, so it
+            // works identically on localhost, Preview and Production. All other
+            // subjects are decorative: they render but navigate nowhere.
             const isMath = course.slug === "mathematics";
             return (
               <article
@@ -97,8 +98,7 @@ export default function HomePage() {
                 onClick={
                   isMath
                     ? () => {
-                        window.location.href =
-                          "https://mathquest-frontend-eight.vercel.app/en/courses/mathematics";
+                        window.location.href = "/en/courses/mathematics";
                       }
                     : undefined
                 }
