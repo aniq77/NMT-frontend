@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
 import { fontBody, fontDisplay, fontMono } from "@/lib/fonts";
+import { MagicalBackground } from "@/components/layout/MagicalBackground";
+import { Toaster } from "@/components/ui/Toaster";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,7 +36,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
       className={`${fontDisplay.variable} ${fontBody.variable} ${fontMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <MagicalBackground />
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

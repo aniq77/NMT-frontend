@@ -72,13 +72,20 @@ export function LoginForm() {
         inputMode="email"
         error={errors.email?.message}
       />
-      <Input
-        {...register("password")}
-        label={t("fields.password")}
-        type="password"
-        autoComplete="current-password"
-        error={errors.password?.message}
-      />
+      <div>
+        <Input
+          {...register("password")}
+          label={t("fields.password")}
+          type="password"
+          autoComplete="current-password"
+          error={errors.password?.message}
+        />
+        <div className="mt-1.5 flex justify-end">
+          <Link href="/forgot-password" className="font-display text-xs font-600 text-primary hover:underline">
+            Забули пароль?
+          </Link>
+        </div>
+      </div>
 
       <Button type="submit" loading={isSubmitting} className="mt-2 w-full">
         {t("login.submit")}

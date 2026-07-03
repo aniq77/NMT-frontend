@@ -3,12 +3,30 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { TempThemeToggle } from "@/components/ui/TempThemeToggle";
+import { SkinIcon, hasSkinIcon } from "@/components/ui/SkinIcon";
+import { achievementsApi } from "@/lib/api/achievements";
 import type { User } from "@/types/auth";
+import type { Achievement, AchievementTier } from "@/types/achievements";
 
 const PROVIDER_LABEL: Record<User["auth_provider"], string> = {
   email: "Пошта",
   google: "Google",
   phone: "Телефон",
+};
+
+// Map the backend achievement tier onto the game-app medallion rarity styles.
+const TIER_RARITY: Record<AchievementTier, string> = {
+  bronze: "r-common",
+  silver: "r-rare",
+  gold: "r-epic",
+  platinum: "r-legend",
+};
+
+const TIER_ICON: Record<AchievementTier, string> = {
+  bronze: "🥉",
+  silver: "🥈",
+  gold: "🥇",
+  platinum: "💎",
 };
 
 function formatDate(iso: string): string {
@@ -20,9 +38,16 @@ export default function ProfilePage() {
   const { user, fetchMe, restoreStreak, logout } = useAuthStore();
   const [isRestoring, setIsRestoring] = useState(false);
   const [streakError, setStreakError] = useState("");
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
 
   useEffect(() => {
     fetchMe().catch(() => {});
+    achievementsApi
+      .list()
+      .then(setAchievements)
+      .catch(() => {})
+      .finally(() => setAchievementsLoading(false));
   }, [fetchMe]);
 
   async function handleLogout() {
@@ -47,6 +72,9 @@ export default function ProfilePage() {
   const expPercent = Math.round((user.exp / Math.max(user.exp_to_next_level, 1)) * 100);
   const canRestoreStreak = user.lost_streak_days > 0 && user.gems >= 50;
   const initial = (user.nickname ?? user.email).charAt(0).toUpperCase();
+  const skin = user.equipped_skin;
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+  const sortedAchievements = [...achievements].sort((a, b) => Number(b.unlocked) - Number(a.unlocked));
 
   return (
     <section className="view active">
@@ -55,7 +83,10 @@ export default function ProfilePage() {
         <div className="glass pbanner">
           {/* TEMP: tiny theme switch reusing main's next-themes system */}
           <TempThemeToggle />
-          <div className="pav">{initial}<span className="lv">{user.level}</span></div>
+          <div className="pav" style={skin?.gradient ? { background: skin.gradient } : undefined}>
+            {skin && hasSkinIcon(skin.code) ? <SkinIcon code={skin.code} className="h-14 w-14" /> : initial}
+            <span className="lv">{user.level}</span>
+          </div>
           <div className="pb-mid">
             <h2>@{user.nickname ?? user.email}</h2>
             <div className="mail">{user.email}</div>
@@ -75,22 +106,46 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ACHIEVEMENTS — статичні, доки їх немає в базі */}
+        {/* ACHIEVEMENTS — real data from the API, rendered in game-app medal style */}
         <div className="glass block">
-          <div className="bt-row"><div className="bt">Досягнення</div><div className="bt-count">4 / 12 зібрано</div></div>
-          <div className="ach-grid">
-            <div className="medal r-common"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><path d="M24 6 L28 18 L41 18 L31 26 L35 38 L24 30 L13 38 L17 26 L7 18 L20 18 Z" fill="#f3c25a" stroke="#c9952a" strokeWidth="1.2" /></svg></div><div className="mname">Перший крок</div><div className="mval">Отримано</div></div>
-            <div className="medal r-rare"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%">
-              <path d="M24 6 C24 6 12 14 12 26 C12 33 17 39 24 39 C31 39 36 33 36 26 C36 22 34 18 34 18 C34 23 29 25 29 19 C29 11 24 6 24 6Z" fill="#ff8a4c" stroke="#e8602c" strokeWidth="1" strokeLinejoin="round" />
-              <path d="M24 18 C24 18 19 24 19 30 C19 33.5 21 36 24 36 C27 36 29 33.5 29 30 C29 27 27 25 27 25 C27 27.5 24 28.5 24 26 C24 23 24 18 24 18Z" fill="#ffd23c" />
-            </svg></div><div className="mname">Серія 2 дні</div><div className="mval">Отримано</div></div>
-            <div className="medal r-common"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><rect x="10" y="14" width="10" height="22" rx="2" fill="#6fa8dc" /><rect x="22" y="10" width="10" height="26" rx="2" fill="#4a7fc1" /><rect x="34" y="16" width="8" height="20" rx="2" fill="#89c4e8" /></svg></div><div className="mname">Книжковий хробак</div><div className="mval">Отримано</div></div>
-            <div className="medal r-epic"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><circle cx="24" cy="24" r="18" stroke="#4a7fc1" strokeWidth="2" fill="rgba(208,232,248,.2)" /><path d="M24 12 L27 22 L24 20 L21 22 Z" fill="#e8794a" /><path d="M24 36 L21 26 L24 28 L27 26 Z" fill="#4a7fc1" /><circle cx="24" cy="24" r="2.5" fill="#fff" stroke="#4a7fc1" strokeWidth="1" /></svg></div><div className="mname">Дослідник</div><div className="mval">Отримано</div></div>
-            <div className="medal locked r-rare"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><path d="M28 6 L14 26 L22 26 L18 44 L36 20 L27 20 Z" fill="#ffe08a" /></svg><span className="lockb">🔐</span></div><div className="mname">500 XP</div><div className="mprog"><i style={{ width: "30%" }} /></div></div>
-            <div className="medal locked r-epic"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><path d="M14 10 L34 10 L34 26 C34 32 29 36 24 36 C19 36 14 32 14 26 Z" fill="#f3c25a" /><rect x="20" y="36" width="8" height="5" fill="#e8ab30" /><rect x="14" y="41" width="20" height="4" rx="2" fill="#c9952a" /></svg><span className="lockb">🔐</span></div><div className="mname">Чемпіон тижня</div><div className="mprog"><i style={{ width: "45%" }} /></div></div>
-            <div className="medal locked r-rare"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><ellipse cx="24" cy="26" rx="12" ry="14" fill="#8b6f47" /><circle cx="20" cy="22" r="4" fill="#fff" /><circle cx="28" cy="22" r="4" fill="#fff" /><circle cx="20" cy="23" r="2.5" fill="#2c1a0e" /><circle cx="28" cy="23" r="2.5" fill="#2c1a0e" /></svg><span className="lockb">🔐</span></div><div className="mname">Нічна сова</div><div className="mprog"><i style={{ width: "20%" }} /></div></div>
-            <div className="medal locked r-legend"><div className="disc"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><ellipse cx="24" cy="28" rx="12" ry="14" fill="#5a9e6f" /><circle cx="20" cy="22" r="3.5" fill="#fff" /><circle cx="28" cy="22" r="3.5" fill="#fff" /><circle cx="20" cy="23" r="2" fill="#1a3a28" /><circle cx="28" cy="23" r="2" fill="#1a3a28" /></svg><span className="lockb">🔐</span></div><div className="mname">Легенда НМТ</div><div className="mprog"><i style={{ width: "8%" }} /></div></div>
+          <div className="bt-row">
+            <div className="bt">Досягнення</div>
+            {!achievementsLoading && achievements.length > 0 && (
+              <div className="bt-count">{unlockedCount} / {achievements.length} зібрано</div>
+            )}
           </div>
+          {achievementsLoading ? (
+            <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Завантаження досягнень…</p>
+          ) : achievements.length === 0 ? (
+            <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Ще немає досягнень 🌙</p>
+          ) : (
+            <div className="ach-grid">
+              {sortedAchievements.map((ach) => {
+                const progress =
+                  ach.condition_value > 0
+                    ? Math.min(100, Math.round((ach.user_progress / ach.condition_value) * 100))
+                    : 0;
+                return (
+                  <div
+                    key={ach.id}
+                    className={`medal ${TIER_RARITY[ach.tier]}${ach.unlocked ? "" : " locked"}`}
+                    title={ach.description}
+                  >
+                    <div className="disc">
+                      {TIER_ICON[ach.tier]}
+                      {!ach.unlocked && <span className="lockb">🔐</span>}
+                    </div>
+                    <div className="mname">{ach.title}</div>
+                    {ach.unlocked ? (
+                      <div className="mval">Отримано</div>
+                    ) : (
+                      <div className="mprog"><i style={{ width: `${progress}%` }} /></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* RESTORE STREAK */}
