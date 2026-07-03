@@ -1,25 +1,22 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { AlertTriangle, BookOpen, Flame, Hash, HeartCrack, Triangle, X } from "lucide-react";
-import { useRouter } from "@/lib/navigation";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { CourseCard } from "@/components/ui/CourseCard";
+import { useRouter, Link } from "@/lib/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { coursesApi, type CourseListItem } from "@/lib/api/courses";
-
-function getSubjectIcon(subject: string): React.ReactNode {
-  const s = subject.toLowerCase();
-  if (s.includes("алгебр") || s.includes("математ")) return <Hash className="h-8 w-8 text-primary" />;
-  if (s.includes("геометр")) return <Triangle className="h-8 w-8 text-primary" />;
-  return <BookOpen className="h-8 w-8 text-primary" />;
-}
+import { subjectVisual } from "@/components/journey/courseVisuals";
 
 type StreakStatus = "broken" | "at-risk" | null;
+
+const QUICK_ACTIONS = [
+  { href: "/journey#tasks", name: "Завдання", cls: "qa-tasks", badge: "2", icon: <svg viewBox="0 0 24 24" fill="none" stroke="var(--teal-bright)" strokeWidth="2"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill="var(--teal-bright)" stroke="none" /></svg> },
+  { href: "/journey#shop", name: "Крамниця", cls: "qa-shop", icon: <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinejoin="round"><path d="M5 8h14l-1 12H6L5 8z" /><path d="M9 8a3 3 0 0 1 6 0" strokeLinecap="round" /></svg> },
+  { href: "/journey#friends", name: "Друзі", cls: "qa-friends", icon: <svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c0-3 2.5-4.6 5.5-4.6s5.5 1.6 5.5 4.6" /><path d="M16 5.5a3 3 0 0 1 0 5.6M17.5 14.6c2.3.5 3.5 2 3.5 4.4" /></svg> },
+  { href: "/journey#duels", name: "Дуелі", cls: "qa-duels", icon: <svg viewBox="0 0 24 24" fill="none" stroke="var(--ember)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 3.5 21 3l-.5 6.5-9 9" /><path d="M3 16l5 5" /><path d="M9.5 3.5 3 3l.5 6.5 9 9" /><path d="M21 16l-5 5" /></svg> },
+];
 
 export default function HomePage() {
   const router = useRouter();
   const { user, fetchMe } = useAuthStore();
-
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
@@ -40,147 +37,76 @@ export default function HomePage() {
     return null;
   }, [user]);
 
-  const activeCourse = courses.find(
-    (c) =>
-      c.user_progress !== null &&
-      (c.user_progress.progress_percent ?? 0) > 0 &&
-      (c.user_progress.progress_percent ?? 0) < 100,
-  );
-
   const showBanner = !bannerDismissed && streakStatus !== null;
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <AppHeader user={user} />
+    <section className="view active">
+      <h1 className="hello">Привіт, {user.nickname ?? user.email}!</h1>
+      <p className="streakline">
+        {streakStatus === "broken"
+          ? `Серію з ${user.streak_days} днів перервано — почни нову!`
+          : `${user.streak_days} днів поспіль — так тримати!`}{" "}
+        <span style={{ display: "inline-block", verticalAlign: -3 }}>
+          <svg viewBox="0 0 18 18" fill="none" width="17" height="17"><path d="M9 1.5 C9 1.5 4.5 5 4.5 9.8 C4.5 13.2 6.6 15.5 9 15.5 C11.4 15.5 13.5 13.2 13.5 9.8 C13.5 8 12.5 6.5 12.5 6.5 C12.5 8 11 8.8 11 7 C11 4.5 9 1.5 9 1.5Z" fill="#ff7a3c" /><path d="M9 6.5 C9 6.5 6.8 8.5 6.8 11 C6.8 12.8 7.8 14 9 14 C10.2 14 11.2 12.8 11.2 11 C11.2 9.5 10 8.8 10 8.8 C10 9.8 9 10 9 8.8 C9 7.5 9 6.5 9 6.5Z" fill="#ffc93c" /></svg>
+        </span>
+      </p>
 
       {showBanner && (
-        <div
-          className={
-            streakStatus === "broken"
-              ? "border-b border-wrong/20 bg-wrong-light px-4 py-3"
-              : "border-b border-reward/20 bg-reward-light px-4 py-3"
-          }
-        >
-          <div className="mx-auto flex max-w-app items-center gap-3">
-            <span className="shrink-0">
-              {streakStatus === "broken" ? (
-                <HeartCrack className="h-6 w-6 text-wrong-dark" />
-              ) : (
-                <AlertTriangle className="h-6 w-6 text-reward-dark" />
-              )}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p
-                className={
-                  "font-display text-sm font-700 " +
-                  (streakStatus === "broken" ? "text-wrong-dark" : "text-reward-dark")
-                }
-              >
-                {streakStatus === "broken" ? "Серія перервана" : "Не пропустіть серію!"}
-              </p>
-              <p
-                className={
-                  "font-body text-xs " +
-                  (streakStatus === "broken" ? "text-wrong-dark/80" : "text-reward-dark/80")
-                }
-              >
-                {streakStatus === "broken"
-                  ? `Ваша серія з ${user.streak_days} днів скинута. Починайте нову!`
-                  : "Пройдіть урок сьогодні, щоб зберегти серію"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setBannerDismissed(true)}
-              className={
-                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors " +
-                (streakStatus === "broken"
-                  ? "text-wrong hover:bg-wrong/10"
-                  : "text-reward-dark hover:bg-reward/20")
-              }
-              aria-label="Закрити"
-            >
-              <X className="h-4 w-4" />
-            </button>
+        <div className="banner">
+          <div className="ic">
+            <svg viewBox="0 0 32 32" fill="none" width="100%" height="100%"><path d="M16 3 C16 3 8 9 8 17.5 C8 23.5 11.6 27.5 16 27.5 C20.4 27.5 24 23.5 24 17.5 C24 14 22 11 22 11 C22 14 19 15.5 19 12 C19 7 16 3 16 3Z" fill="#fff" /><path d="M16 12 C16 12 12 15.5 12 20 C12 23 13.8 25 16 25 C18.2 25 20 23 20 20 C20 17.5 18 16 18 16 C18 18 16 18.5 16 16 C16 14 16 12 16 12Z" fill="#ffd98a" /></svg>
           </div>
+          <div className="tx">
+            <b>{streakStatus === "broken" ? "Серію перервано" : "Продовжуй серію сьогодні!"}</b>
+            <span>Один урок — і твоя серія живе далі</span>
+          </div>
+          <button className="x" onClick={() => setBannerDismissed(true)}>✕</button>
         </div>
       )}
 
-      <main className="mx-auto max-w-app space-y-6 px-4 py-6">
-        <div>
-          <h1 className="font-display text-xl font-800 text-text-primary">
-            Привіт, {user.nickname ?? user.email}!
-          </h1>
-          <p className="mt-1 inline-flex items-center gap-1.5 font-body text-base text-text-secondary">
-            {user.streak_days} днів поспіль — так тримати!
-            <Flame className="h-4 w-4 text-reward" />
-          </p>
-        </div>
+      <div className="quick-actions">
+        {QUICK_ACTIONS.map((qa) => (
+          <Link key={qa.href} href={qa.href} className={`qa ${qa.cls}`}>
+            {qa.badge && <span className="qa-badge">{qa.badge}</span>}
+            <span className="qa-ic">{qa.icon}</span>
+            <span className="qa-name">{qa.name}</span>
+          </Link>
+        ))}
+      </div>
 
-        {activeCourse && (
-          <button
-            type="button"
-            onClick={() => router.push(`/courses/${activeCourse.slug}`)}
-            className="w-full overflow-hidden rounded-xl bg-primary p-4 text-left text-white shadow-button transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                {getSubjectIcon(activeCourse.subject)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-xs font-600 opacity-80">Продовжити навчання</p>
-                <h3 className="truncate font-display text-base font-700">{activeCourse.title}</h3>
-              </div>
-              <span className="text-xl opacity-80">→</span>
-            </div>
-            <div className="mt-3">
-              <div className="mb-1.5 flex justify-between">
-                <span className="font-display text-xs font-600 opacity-80">Прогрес</span>
-                <span className="font-display text-xs font-700">
-                  {activeCourse.user_progress?.progress_percent ?? 0}%
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/30">
-                <div
-                  className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
-                  style={{ width: `${activeCourse.user_progress?.progress_percent ?? 0}%` }}
-                />
-              </div>
-            </div>
-          </button>
+      <h2 className="sec-title">Курси <small>{courses.length} регіонів світу</small></h2>
+      <p className="sec-sub">Кожен предмет — окрема магічна земля. Обирай регіон і вирушай у подорож до НМТ.</p>
+
+      <div className="courses">
+        {courses.length === 0 ? (
+          <p className="sec-sub" style={{ textAlign: "center" }}>Завантаження курсів…</p>
+        ) : (
+          courses.map((course) => {
+            const progress = course.user_progress?.progress_percent ?? 0;
+            const enrolled = course.user_progress !== null;
+            const { cls, emblem } = subjectVisual(course.subject);
+            return (
+              <article key={course.id} className={`course ${cls}`} onClick={() => router.push(`/courses/${course.slug}`)}>
+                <div className="emblem">{emblem}</div>
+                <div>
+                  <h3>
+                    {course.title}
+                    <span className="lvl-badge">{course.is_active ? "Відкрито" : "Скоро"}</span>
+                  </h3>
+                  <p className="desc">{course.description}</p>
+                  <div className="prog">
+                    <div className="row"><span>Прогрес</span><span>{progress}%</span></div>
+                    <div className="track"><div className="fill" style={{ width: `${Math.max(progress, 2)}%` }} /></div>
+                  </div>
+                  <button className="go">{enrolled && progress > 0 ? "Продовжити" : "Розпочати"} <span>→</span></button>
+                </div>
+              </article>
+            );
+          })
         )}
-
-        <div>
-          <h2 className="mb-4 font-display text-lg font-700 text-text-primary">Курси</h2>
-          {courses.length === 0 ? (
-            <div className="rounded-xl border border-border bg-surface px-4 py-8 text-center">
-              <p className="font-body text-sm text-text-secondary">Завантаження курсів...</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {courses.map((course) => {
-                const progress = course.user_progress?.progress_percent ?? 0;
-                return (
-                  <CourseCard
-                    key={course.id}
-                    id={course.slug}
-                    icon={getSubjectIcon(course.subject)}
-                    title={course.title}
-                    subject={course.subject}
-                    description={course.description}
-                    difficulty="intermediate"
-                    isEnrolled={course.user_progress !== null}
-                    progress={progress}
-                    onClick={() => router.push(`/courses/${course.slug}`)}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+      </div>
+    </section>
   );
 }
