@@ -1,199 +1,42 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/navigation";
-import {
-  Calendar,
-  CalendarDays,
-  Check,
-  ChevronRight,
-  Crown,
-  Flame,
-  Gem,
-  Globe,
-  Mail,
-  Pencil,
-  Smartphone,
-  Star,
-  Trophy,
-  X,
-  Zap,
-} from "lucide-react";
-import { Avatar } from "@/components/ui/Avatar";
-import { SkinIcon, hasSkinIcon } from "@/components/ui/SkinIcon";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { Tag } from "@/components/ui/Tag";
-import { Button } from "@/components/ui/Button";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuthStore } from "@/store/auth.store";
-import { toast } from "@/store/toast.store";
+import { TempThemeToggle } from "@/components/ui/TempThemeToggle";
+import { SkinIcon, hasSkinIcon } from "@/components/ui/SkinIcon";
 import { achievementsApi } from "@/lib/api/achievements";
 import type { User } from "@/types/auth";
 import type { Achievement, AchievementTier } from "@/types/achievements";
 
-// ---------------------------------------------------------------------------
-// Lookup tables
-// ---------------------------------------------------------------------------
-
-const AUTH_PROVIDER_LABELS: Record<User["auth_provider"], { label: string; icon: React.ReactNode }> = {
-  email:  { label: "Пошта",   icon: <Mail       className="h-5 w-5 text-text-secondary" /> },
-  google: { label: "Google",  icon: <Globe      className="h-5 w-5 text-text-secondary" /> },
-  phone:  { label: "Телефон", icon: <Smartphone className="h-5 w-5 text-text-secondary" /> },
+const PROVIDER_LABEL: Record<User["auth_provider"], string> = {
+  email: "Пошта",
+  google: "Google",
+  phone: "Телефон",
 };
 
-const TIER_DOT: Record<AchievementTier, string> = {
-  platinum: "bg-violet-500",
-  gold:     "bg-reward",
-  silver:   "bg-slate-400",
-  bronze:   "bg-orange-500",
+// Map the backend achievement tier onto the game-app medallion rarity styles.
+const TIER_RARITY: Record<AchievementTier, string> = {
+  bronze: "r-common",
+  silver: "r-rare",
+  gold: "r-epic",
+  platinum: "r-legend",
 };
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+const TIER_ICON: Record<AchievementTier, string> = {
+  bronze: "🥉",
+  silver: "🥈",
+  gold: "🥇",
+  platinum: "💎",
+};
 
 function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("uk-UA", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(iso));
+  return new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
 }
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="glass overflow-hidden rounded-2xl">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="font-display text-sm font-700 uppercase tracking-widest text-primary">
-          {title}
-        </h2>
-      </div>
-      <div className="divide-y divide-border">{children}</div>
-    </div>
-  );
-}
-
-function InfoRow({
-  icon,
-  label,
-  value,
-  verified,
-}: {
-  icon?: React.ReactNode;
-  label: string;
-  value: string;
-  verified?: boolean | null;
-}) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3.5">
-      {icon && <span className="shrink-0">{icon}</span>}
-      <div className="min-w-0 flex-1">
-        <p className="font-display text-xs font-600 text-text-secondary">{label}</p>
-        <p className="mt-0.5 truncate font-body text-sm text-text-primary">{value}</p>
-      </div>
-      {verified !== undefined && verified !== null && (
-        <Tag
-          size="xs"
-          variant={verified ? "correct" : "wrong"}
-          icon={verified ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-        >
-          {verified ? "Підтверджено" : "Не підтверджено"}
-        </Tag>
-      )}
-    </div>
-  );
-}
-
-function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
-  return (
-    <div className="glass-soft flex flex-col items-center gap-1 rounded-2xl px-3 py-3 text-center">
-      {icon}
-      <span className="font-display text-md font-700 text-text-primary tabular-nums">{value}</span>
-      <span className="font-display text-xs font-600 text-text-secondary">{label}</span>
-    </div>
-  );
-}
-
-function UnlockedAchievementsSection({
-  achievements,
-  loading,
-  onViewAll,
-}: {
-  achievements: Achievement[];
-  loading: boolean;
-  onViewAll: () => void;
-}) {
-  const unlocked = achievements.filter((a) => a.unlocked);
-
-  return (
-    <div className="glass overflow-hidden rounded-2xl">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="font-display text-sm font-700 uppercase tracking-widest text-primary">Досягнення</h2>
-        {!loading && (
-          <span className="font-display text-xs font-600 text-text-secondary tabular-nums">
-            {unlocked.length}/{achievements.length}
-          </span>
-        )}
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div className="divide-y divide-border">
-          {[1, 2].map((i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-border" />
-              <div className="h-3 w-1/2 animate-pulse rounded bg-border" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Empty */}
-      {!loading && unlocked.length === 0 && (
-        <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
-          <Trophy className="h-7 w-7 text-text-secondary/40" />
-          <p className="font-body text-sm text-text-secondary">Ще немає нагород</p>
-          <p className="font-body text-xs text-text-secondary/70">Завершіть урок, щоб отримати першу</p>
-        </div>
-      )}
-
-      {/* Unlocked list */}
-      {!loading && unlocked.length > 0 && (
-        <div className="divide-y divide-border">
-          {unlocked.map((ach) => (
-            <div key={ach.id} className="flex items-center gap-3 px-4 py-3">
-              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${TIER_DOT[ach.tier]}`} />
-              <p className="flex-1 font-display text-sm font-600 text-text-primary">{ach.title}</p>
-              <Check className="h-4 w-4 shrink-0 text-correct" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Footer link */}
-      {!loading && (
-        <button
-          onClick={onViewAll}
-          className="flex w-full items-center justify-center gap-1.5 border-t border-border px-4 py-3 font-display text-sm font-600 text-primary hover:bg-primary/5 transition-colors"
-        >
-          Всі досягнення <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, fetchMe, restoreStreak, logout } = useAuthStore();
-  const [isRestoringStreak, setIsRestoringStreak] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [streakError, setStreakError] = useState("");
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
@@ -213,177 +56,170 @@ export default function ProfilePage() {
   }
 
   async function handleRestoreStreak() {
-    setIsRestoringStreak(true);
+    setIsRestoring(true);
     setStreakError("");
     try {
       await restoreStreak();
-      toast.success("Серію відновлено! 🔥");
     } catch {
-      setStreakError("Не вдалося відновити серію. Спробуйте ще раз.");
-      toast.error("Не вдалося відновити серію");
+      setStreakError("Не вдалося відновити серію. Спробуй ще раз.");
     } finally {
-      setIsRestoringStreak(false);
+      setIsRestoring(false);
     }
   }
 
   if (!user) return null;
 
-  const expPercent = Math.round((user.exp / user.exp_to_next_level) * 100);
-  const provider = AUTH_PROVIDER_LABELS[user.auth_provider];
+  const expPercent = Math.round((user.exp / Math.max(user.exp_to_next_level, 1)) * 100);
   const canRestoreStreak = user.lost_streak_days > 0 && user.gems >= 50;
+  const initial = (user.nickname ?? user.email).charAt(0).toUpperCase();
+  const skin = user.equipped_skin;
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+  const sortedAchievements = [...achievements].sort((a, b) => Number(b.unlocked) - Number(a.unlocked));
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-app items-center px-4 py-3">
-          <h1 className="font-display text-base font-800 text-primary-dark">Профіль</h1>
-        </div>
-      </header>
-
-      <main className="stagger mx-auto max-w-app space-y-4 px-4 py-6">
-
-        {/* Hero */}
-        <div className="glass flex flex-col items-center gap-3 rounded-2xl py-6">
-          <button
-            onClick={() => router.push("/avatar")}
-            className="relative transition-transform hover:scale-[1.04] active:scale-[0.97]"
-            aria-label="Змінити аватар"
-          >
-            <Avatar
-              name={user.nickname ?? undefined}
-              level={user.level}
-              size="lg"
-              gradient={user.equipped_skin?.gradient}
-              icon={
-                user.equipped_skin && hasSkinIcon(user.equipped_skin.code)
-                  ? <SkinIcon code={user.equipped_skin.code} className="h-8 w-8" />
-                  : undefined
-              }
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-canvas bg-primary shadow-soft">
-              <Pencil className="h-2.5 w-2.5 text-white" />
-            </span>
-          </button>
-          <div className="text-center">
-            <h2 className="font-display text-lg font-700 text-text-primary">@{user.nickname ?? user.email}</h2>
-            <p className="mt-0.5 font-body text-sm text-text-secondary">{user.email}</p>
+    <section className="view active">
+      <div className="profile-wrap">
+        {/* IDENTITY BANNER */}
+        <div className="glass pbanner">
+          {/* TEMP: tiny theme switch reusing main's next-themes system */}
+          <TempThemeToggle />
+          <div className="pav" style={skin?.gradient ? { background: skin.gradient } : undefined}>
+            {skin && hasSkinIcon(skin.code) ? <SkinIcon code={skin.code} className="h-14 w-14" /> : initial}
+            <span className="lv">{user.level}</span>
           </div>
-          <Tag variant="primary" icon={<Star className="h-3.5 w-3.5" />}>Рівень {user.level}</Tag>
-
-          <div className="mt-1 w-full px-6">
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="font-display text-xs font-600 text-text-secondary">XP до рівня {user.level + 1}</span>
-              <span className="font-display text-xs font-700 text-primary tabular-nums">
-                {user.exp.toLocaleString("uk")} / {user.exp_to_next_level.toLocaleString("uk")}
-              </span>
-            </div>
-            <ProgressBar value={expPercent} size="md" color="reward" />
-          </div>
-        </div>
-
-        {/* Stats grid */}
-        <div className="grid grid-cols-3 gap-3">
-          <StatBox icon={<Flame  className="h-7 w-7 text-reward"       />} label="Серія"    value={`${user.streak_days}д`} />
-          <StatBox icon={<Gem    className="h-7 w-7 text-primary-dark" />} label="Кристали" value={user.gems} />
-          <StatBox icon={<Trophy className="h-7 w-7 text-reward-dark"  />} label="Нагороди" value={user.unlocked_achievement_count} />
-        </div>
-
-        {/* Restore streak */}
-        {canRestoreStreak && (
-          <div className="rounded-2xl border border-reward/40 bg-reward-light p-4 shadow-soft">
-            <div className="flex items-start gap-3">
-              <Flame className="mt-0.5 h-5 w-5 shrink-0 text-reward-dark" />
-              <div className="flex-1">
-                <p className="font-display text-sm font-700 text-reward-dark">
-                  Відновити серію {user.lost_streak_days} днів?
-                </p>
-                <p className="mt-0.5 font-body text-xs text-reward-dark/80">
-                  Коштує 50 кристалів. У вас є {user.gems}.
-                </p>
-                {streakError && (
-                  <p className="mt-1 font-body text-xs text-wrong-dark">{streakError}</p>
-                )}
+          <div className="pb-mid">
+            <h2>@{user.nickname ?? user.email}</h2>
+            <div className="mail">{user.email}</div>
+            <div className="lvl-chip">✦ Рівень {user.level} · Шукач</div>
+            <div className="pxp">
+              <div className="row">
+                <span>XP до рівня {user.level + 1}</span>
+                <span>{user.exp.toLocaleString("uk")} / {user.exp_to_next_level.toLocaleString("uk")}</span>
               </div>
+              <div className="track"><div className="fill" style={{ width: `${expPercent}%` }} /></div>
             </div>
-            <Button
-              size="sm"
-              className="mt-3 w-full"
-              loading={isRestoringStreak}
-              onClick={handleRestoreStreak}
-            >
-              <span className="flex items-center justify-center gap-1.5">
-                <Gem className="h-3.5 w-3.5" /> Відновити за 50 кристалів
-              </span>
-            </Button>
+          </div>
+          <div className="pb-stats">
+            <div className="qstat s-fire"><div className="qi"><svg viewBox="0 0 32 32" fill="none" width="20" height="20"><path d="M16 3 C16 3 9 9 9 17 C9 22 12 26 16 26 C20 26 23 22 23 17 C23 15 22 13 22 13 C22 16 19 17 19 14 C19 9 16 3 16 3Z" fill="#ff8a4c" stroke="#e8602c" strokeWidth=".8" strokeLinejoin="round" /><path d="M16 12 C16 12 13 16 13 20 C13 22.5 14.5 24 16 24 C17.5 24 19 22.5 19 20 C19 18 17.5 17 17.5 17 C17.5 18.5 16 19 16 17.5 C16 16 16 12 16 12Z" fill="#ffd23c" /></svg></div><div className="qt"><b>{user.streak_days}</b><span>днів поспіль</span></div></div>
+            <div className="qstat s-gem"><div className="qi"><svg viewBox="0 0 28 28" fill="none" width="20" height="20"><path d="M8 6 L20 6 L24 11 L14 23 L4 11 Z" fill="#4cc4d6" stroke="#1f8fa6" strokeWidth="1" /><path d="M4 11 L24 11" stroke="#1f8fa6" strokeWidth=".8" /><path d="M8 6 L11 11 M20 6 L17 11 M14 23 L14 11" stroke="#fff" strokeWidth=".8" opacity=".5" /></svg></div><div className="qt"><b>{user.gems}</b><span>Кристали</span></div></div>
+            <div className="qstat s-energy"><div className="qi">⚡</div><div className="qt"><b>{user.energy}</b><span>Енергія</span></div></div>
+          </div>
+        </div>
+
+        {/* ACHIEVEMENTS — real data from the API, rendered in game-app medal style */}
+        <div className="glass block">
+          <div className="bt-row">
+            <div className="bt">Досягнення</div>
+            {!achievementsLoading && achievements.length > 0 && (
+              <div className="bt-count">{unlockedCount} / {achievements.length} зібрано</div>
+            )}
+          </div>
+          {achievementsLoading ? (
+            <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Завантаження досягнень…</p>
+          ) : achievements.length === 0 ? (
+            <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Ще немає досягнень 🌙</p>
+          ) : (
+            <div className="ach-grid">
+              {sortedAchievements.map((ach) => {
+                const progress =
+                  ach.condition_value > 0
+                    ? Math.min(100, Math.round((ach.user_progress / ach.condition_value) * 100))
+                    : 0;
+                return (
+                  <div
+                    key={ach.id}
+                    className={`medal ${TIER_RARITY[ach.tier]}${ach.unlocked ? "" : " locked"}`}
+                    title={ach.description}
+                  >
+                    <div className="disc">
+                      {TIER_ICON[ach.tier]}
+                      {!ach.unlocked && <span className="lockb">🔐</span>}
+                    </div>
+                    <div className="mname">{ach.title}</div>
+                    {ach.unlocked ? (
+                      <div className="mval">Отримано</div>
+                    ) : (
+                      <div className="mprog"><i style={{ width: `${progress}%` }} /></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* RESTORE STREAK */}
+        {canRestoreStreak && (
+          <div className="glass block">
+            <div className="bt-row"><div className="bt">Відновити серію {user.lost_streak_days} днів?</div></div>
+            <p className="sec-sub" style={{ margin: "0 0 12px" }}>Коштує 50 кристалів. У тебе {user.gems}.</p>
+            {streakError && <p style={{ color: "#ff9ab0", fontSize: 12, marginBottom: 10 }}>{streakError}</p>}
+            <button className="q-claim" style={{ width: "100%" }} disabled={isRestoring} onClick={handleRestoreStreak}>
+              {isRestoring ? "Відновлення…" : "💎 Відновити за 50 кристалів"}
+            </button>
           </div>
         )}
 
-        {/* Achievements */}
-        <UnlockedAchievementsSection
-          achievements={achievements}
-          loading={achievementsLoading}
-          onViewAll={() => router.push("/achievements")}
-        />
-
-        {/* Stats */}
-        <SectionCard title="Статистика">
-          <InfoRow icon={<Flame        className="h-5 w-5 text-reward-dark"    />} label="Максимальна серія"   value={`${user.best_streak_days} днів`} />
-          <InfoRow icon={<Zap          className="h-5 w-5 text-reward"         />} label="Всього XP"           value={`${user.exp.toLocaleString("uk")} XP`} />
-          <InfoRow icon={<Calendar     className="h-5 w-5 text-text-secondary" />} label="Приєднався"          value={formatDate(user.date_joined)} />
-          {user.last_activity_date && (
-            <InfoRow icon={<CalendarDays className="h-5 w-5 text-text-secondary" />} label="Остання активність" value={formatDate(user.last_activity_date)} />
-          )}
-        </SectionCard>
-
-        {/* Account */}
-        <SectionCard title="Акаунт">
-          <InfoRow
-            icon={<Mail className="h-5 w-5 text-text-secondary" />}
-            label="Email"
-            value={user.email}
-            verified={user.is_email_verified}
-          />
-          <InfoRow
-            icon={provider.icon}
-            label="Метод входу"
-            value={provider.label}
-          />
-        </SectionCard>
-
-        {/* Subscription */}
-        <button
-          type="button"
-          onClick={() => router.push("/subscription")}
-          className="glass ring-glow lift flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[image:var(--grad-reward)] shadow-button">
-            <Crown className="h-5 w-5 text-[#5a3a00]" />
+        {/* STATS + ACCOUNT */}
+        <div className="two">
+          <div className="glass block">
+            <div className="bt-row"><div className="bt">Статистика</div></div>
+            <div className="tiles grid2">
+              <div className="tile g"><div className="ti">🏆</div><div className="tb"><small>Макс. серія</small><b>{user.best_streak_days} дн.</b></div></div>
+              <div className="tile"><div className="ti">⚡</div><div className="tb"><small>Всього XP</small><b>{user.exp.toLocaleString("uk")} XP</b></div></div>
+              <div className="tile v"><div className="ti">📅</div><div className="tb"><small>З нами з</small><b>{formatDate(user.date_joined)}</b></div></div>
+              {user.last_activity_date && (
+                <div className="tile"><div className="ti">🧭</div><div className="tb"><small>Активність</small><b>{formatDate(user.last_activity_date)}</b></div></div>
+              )}
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="font-display text-sm font-700 text-text-primary">Premium підписка</p>
-            <p className="font-body text-xs text-text-secondary">Розблокуй усі функції — 99 ₴ / місяць</p>
+          <div className="glass block">
+            <div className="bt-row"><div className="bt">Акаунт</div></div>
+            <div className="tiles">
+              <div className="tile"><div className="ti">✉️</div><div className="tb"><small>Email</small><b>{user.email}</b></div>{user.is_email_verified && <span className="tag">✓</span>}</div>
+              <div className="tile g"><div className="ti">🔑</div><div className="tb"><small>Метод входу</small><b>{PROVIDER_LABEL[user.auth_provider]}</b></div></div>
+              <div className="tile v"><div className="ti">🌐</div><div className="tb"><small>Мова інтерфейсу</small><b>Українська</b></div></div>
+              <div className="tile r"><div className="ti">🔔</div><div className="tb"><small>Сповіщення</small><b>Увімкнено</b></div></div>
+            </div>
           </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-text-secondary" />
-        </button>
-
-        {/* Appearance */}
-        <div className="glass flex items-center justify-between rounded-2xl px-4 py-3.5">
-          <p className="font-display text-sm font-700 text-text-primary">Тема</p>
-          <ThemeToggle />
         </div>
 
-        {/* Logout */}
-        <div className="pb-4 pt-2">
-          <Button
-            variant="ghost"
-            size="lg"
-            className="w-full text-wrong hover:bg-wrong-light"
-            onClick={handleLogout}
-          >
-            Вийти з акаунту
-          </Button>
+        {/* PREMIUM */}
+        <div className="royal">
+          <div className="rinner">
+            <span className="r-ribbon">АКЦІЯ −40%</span>
+            <div className="r-sheen" />
+            <span className="r-spark" style={{ width: 5, height: 5, top: 22, left: "74%" }} />
+            <span className="r-spark" style={{ width: 4, height: 4, top: 118, left: "30%", animationDelay: "2s" }} />
+            <span className="r-spark" style={{ width: 3, height: 3, top: 176, left: "66%", animationDelay: "1s" }} />
+            <div className="r-head">
+              <div className="r-crown" style={{ width: 48, height: 38 }}>
+                <svg viewBox="0 0 56 44" fill="none" width="100%" height="100%"><path d="M6 36 L8 16 L18 26 L28 8 L38 26 L48 16 L50 36 Z" fill="#f3c25a" stroke="#c9952a" strokeWidth="1.5" strokeLinejoin="round" /><rect x="6" y="36" width="44" height="7" rx="3.5" fill="#e8ab30" /><circle cx="8" cy="16" r="3.5" fill="#fff9d0" /><circle cx="28" cy="8" r="3.5" fill="#fff9d0" /><circle cx="48" cy="16" r="3.5" fill="#fff9d0" /></svg>
+              </div>
+              <div><div className="r-eye">NMT Premium</div><h3>Royal Pass</h3></div>
+            </div>
+            <div className="stickers">
+              <span className="st"><span className="ic">❤️</span> Безліміт сердець</span>
+              <span className="st"><span className="ic">⚡</span> ×2 XP</span>
+              <span className="st"><span className="ic">🗺️</span> Усі 5 регіонів</span>
+              <span className="st"><span className="ic">💎</span> +500 / міс</span>
+              <span className="st"><span className="ic">🚫</span> Без реклами</span>
+              <span className="st"><span className="ic">🎯</span> AI-розбір</span>
+            </div>
+            <div className="r-footer">
+              <div className="pricebox">
+                <span className="now">99 ₴<small>/міс</small></span>
+                <span className="old">165 ₴</span>
+                <span className="save">−40%</span>
+              </div>
+              <button className="r-go" onClick={() => router.push("/subscription")}><span className="gs" /> Розблокувати →</button>
+            </div>
+            <div className="r-note">🎁 <b>7 днів безкоштовно</b> · скасуй будь-коли</div>
+          </div>
         </div>
-      </main>
-    </div>
+
+        <button className="logout" onClick={handleLogout}>Вийти з акаунту</button>
+      </div>
+    </section>
   );
 }
