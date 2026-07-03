@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { TempThemeToggle } from "@/components/ui/TempThemeToggle";
 import type { User } from "@/types/auth";
 
 const PROVIDER_LABEL: Record<User["auth_provider"], string> = {
@@ -52,6 +53,8 @@ export default function ProfilePage() {
       <div className="profile-wrap">
         {/* IDENTITY BANNER */}
         <div className="glass pbanner">
+          {/* TEMP: tiny theme switch reusing main's next-themes system */}
+          <TempThemeToggle />
           <div className="pav">{initial}<span className="lv">{user.level}</span></div>
           <div className="pb-mid">
             <h2>@{user.nickname ?? user.email}</h2>
