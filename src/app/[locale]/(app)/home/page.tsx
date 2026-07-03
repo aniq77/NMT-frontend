@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useRouter, Link } from "@/lib/navigation";
+import { Link } from "@/lib/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { coursesApi, type CourseListItem } from "@/lib/api/courses";
 import { subjectVisual } from "@/components/journey/courseVisuals";
@@ -15,7 +15,6 @@ const QUICK_ACTIONS = [
 ];
 
 export default function HomePage() {
-  const router = useRouter();
   const { user, fetchMe } = useAuthStore();
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -87,8 +86,23 @@ export default function HomePage() {
             const progress = course.user_progress?.progress_percent ?? 0;
             const enrolled = course.user_progress !== null;
             const { cls, emblem } = subjectVisual(course.subject);
+            // Only Математика is functional for now — it links to the existing
+            // (old-design) course page on production. All other subjects are
+            // decorative: they render but navigate nowhere.
+            const isMath = course.slug === "mathematics";
             return (
-              <article key={course.id} className={`course ${cls}`} onClick={() => router.push(`/courses/${course.slug}`)}>
+              <article
+                key={course.id}
+                className={`course ${cls}`}
+                onClick={
+                  isMath
+                    ? () => {
+                        window.location.href =
+                          "https://mathquest-frontend-eight.vercel.app/en/courses/mathematics";
+                      }
+                    : undefined
+                }
+              >
                 <div className="emblem">{emblem}</div>
                 <div>
                   <h3>
