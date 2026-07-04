@@ -192,6 +192,14 @@ export default function ProfilePage() {
       .finally(() => setAchievementsLoading(false));
   }, [fetchMe]);
 
+  // The profile is entirely the signed-in user's own data, so it can't degrade
+  // to a public view. Send unauthenticated visitors to login instead of
+  // rendering a blank page. (Persist rehydrates synchronously, so a signed-in
+  // user already has `user` on first client render and is never redirected.)
+  useEffect(() => {
+    if (!user) router.replace("/login");
+  }, [user, router]);
+
   async function handleLogout() {
     await logout();
     router.push("/login");
@@ -209,6 +217,7 @@ export default function ProfilePage() {
     }
   }
 
+  // Redirecting to /login (see effect above); render nothing this frame.
   if (!user) return null;
 
   const expPercent = Math.round((user.exp / Math.max(user.exp_to_next_level, 1)) * 100);
