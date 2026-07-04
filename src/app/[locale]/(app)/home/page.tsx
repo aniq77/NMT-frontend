@@ -33,25 +33,30 @@ export default function HomePage() {
   // never a constant number. Wire this to the rewards API when it exists.
   const availableRewards = 0;
 
-  if (!user) return null;
+  // Home's core (quick actions + course cards) is static, so it renders with or
+  // without a session; only the greeting/streak line are user-specific and fall
+  // back gracefully when there is no authenticated user yet.
+  const greetingName = user?.nickname ?? user?.email ?? null;
 
   // Only Математика is functional for now. Same-origin relative path so it
   // resolves identically on localhost, Preview and Production.
   const openMathematics = () => {
-    window.location.href = "/en/courses/mathematics";
+    window.location.href = "/courses/mathematics";
   };
 
   return (
     <section className="view active home-view">
-      <h1 className="hello">Привіт, {user.nickname ?? user.email}!</h1>
-      <p className="streakline">
-        {streakStatus === "broken"
-          ? `Серію з ${user.streak_days} днів перервано — почни нову!`
-          : `${user.streak_days} днів поспіль — так тримати!`}{" "}
-        <span style={{ display: "inline-block", verticalAlign: -3 }}>
-          <svg viewBox="0 0 18 18" fill="none" width="17" height="17"><path d="M9 1.5 C9 1.5 4.5 5 4.5 9.8 C4.5 13.2 6.6 15.5 9 15.5 C11.4 15.5 13.5 13.2 13.5 9.8 C13.5 8 12.5 6.5 12.5 6.5 C12.5 8 11 8.8 11 7 C11 4.5 9 1.5 9 1.5Z" fill="#ff7a3c" /><path d="M9 6.5 C9 6.5 6.8 8.5 6.8 11 C6.8 12.8 7.8 14 9 14 C10.2 14 11.2 12.8 11.2 11 C11.2 9.5 10 8.8 10 8.8 C10 9.8 9 10 9 8.8 C9 7.5 9 6.5 9 6.5Z" fill="#ffc93c" /></svg>
-        </span>
-      </p>
+      <h1 className="hello">Привіт{greetingName ? `, ${greetingName}` : ""}!</h1>
+      {user && (
+        <p className="streakline">
+          {streakStatus === "broken"
+            ? `Серію з ${user.streak_days} днів перервано — почни нову!`
+            : `${user.streak_days} днів поспіль — так тримати!`}{" "}
+          <span style={{ display: "inline-block", verticalAlign: -3 }}>
+            <svg viewBox="0 0 18 18" fill="none" width="17" height="17"><path d="M9 1.5 C9 1.5 4.5 5 4.5 9.8 C4.5 13.2 6.6 15.5 9 15.5 C11.4 15.5 13.5 13.2 13.5 9.8 C13.5 8 12.5 6.5 12.5 6.5 C12.5 8 11 8.8 11 7 C11 4.5 9 1.5 9 1.5Z" fill="#ff7a3c" /><path d="M9 6.5 C9 6.5 6.8 8.5 6.8 11 C6.8 12.8 7.8 14 9 14 C10.2 14 11.2 12.8 11.2 11 C11.2 9.5 10 8.8 10 8.8 C10 9.8 9 10 9 8.8 C9 7.5 9 6.5 9 6.5Z" fill="#ffc93c" /></svg>
+          </span>
+        </p>
+      )}
 
       {showBanner && (
         <div className="banner">
