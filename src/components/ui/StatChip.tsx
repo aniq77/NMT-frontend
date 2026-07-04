@@ -1,7 +1,7 @@
 import { Flame, Gem, Heart, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type StatType = "xp" | "gems" | "lives" | "streak";
+type StatType = "xp" | "gems" | "lives" | "energy" | "streak";
 
 type IconComp = React.ComponentType<{ className?: string }>;
 
@@ -9,6 +9,7 @@ const STAT_CONFIG: Record<StatType, { Icon: IconComp; text: string; bg: string }
   xp:     { Icon: Zap,   text: "text-reward-dark", bg: "bg-reward-light" },
   gems:   { Icon: Gem,   text: "text-primary-dark", bg: "bg-primary-light" },
   lives:  { Icon: Heart, text: "text-wrong-dark",   bg: "bg-wrong-light" },
+  energy: { Icon: Zap,   text: "text-wrong-dark",   bg: "bg-wrong-light" },
   streak: { Icon: Flame, text: "text-reward-dark",  bg: "bg-reward-light" },
 };
 
