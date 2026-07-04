@@ -1,0 +1,122 @@
+<svg id="bossArt" viewBox="0 0 340 440" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gStone" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#3a3363"/><stop offset=".45" stop-color="#211b45"/><stop offset="1" stop-color="#0c0920"/>
+    </linearGradient>
+    <linearGradient id="gStoneDk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241d47"/><stop offset="1" stop-color="#0a0819"/>
+    </linearGradient>
+    <linearGradient id="gStoneLt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4b4278"/><stop offset="1" stop-color="#221c46"/>
+    </linearGradient>
+    <radialGradient id="gCore" cx="50%" cy="45%" r="60%">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".25" stop-color="#7dffe8"/>
+      <stop offset=".65" stop-color="#2bb9d6"/><stop offset="1" stop-color="#123a86"/>
+    </radialGradient>
+    <radialGradient id="gCoreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="rgba(95,240,219,.85)"/><stop offset=".5" stop-color="rgba(95,240,219,.28)"/><stop offset="1" stop-color="rgba(95,240,219,0)"/>
+    </radialGradient>
+    <radialGradient id="gEye" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#f6ffff"/><stop offset=".4" stop-color="#7dffe8"/><stop offset="1" stop-color="#1f8f86"/>
+    </radialGradient>
+    <linearGradient id="gCrystal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bfe9ff"/><stop offset=".5" stop-color="#5ff0db"/><stop offset="1" stop-color="#1f7fae"/>
+    </linearGradient>
+    <linearGradient id="gCrystalV" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dcc9ff"/><stop offset="1" stop-color="#6b4fd0"/>
+    </linearGradient>
+    <linearGradient id="gRune" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe6a8"/><stop offset="1" stop-color="#e0a44a"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="2.2"/></filter>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="176" cy="416" rx="120" ry="20" fill="#04030c" opacity=".55" filter="url(#soft)"/>
+
+  <!-- floating rune halo shards behind -->
+  <g opacity=".9">
+    <path d="M40 150 l14 6 -6 15 -15 -6z" fill="url(#gCrystalV)" opacity=".7"/>
+    <path d="M300 120 l16 8 -7 16 -16 -7z" fill="url(#gCrystal)" opacity=".7"/>
+    <path d="M312 210 l13 5 -5 13 -13 -5z" fill="url(#gCrystalV)" opacity=".6"/>
+  </g>
+
+  <!-- ===== legs ===== -->
+  <path d="M120 300 C104 340 100 384 108 410 L150 410 C150 372 150 336 150 306 Z" fill="url(#gStoneDk)" stroke="#07050f" stroke-width="3"/>
+  <path d="M232 300 C250 340 254 384 244 410 L200 410 C200 372 202 336 204 306 Z" fill="url(#gStoneDk)" stroke="#07050f" stroke-width="3"/>
+  <!-- feet claws -->
+  <g fill="url(#gStoneLt)" stroke="#07050f" stroke-width="2.5">
+    <path d="M100 408 l52 0 4 20 -16 -6 -8 8 -8 -8 -16 6z"/>
+    <path d="M198 408 l52 0 -4 20 -16 -6 -8 8 -8 -8 -16 6z"/>
+  </g>
+  <g stroke="url(#gRune)" stroke-width="2" opacity=".8"><path d="M118 340 l16 0 M206 340 l16 0"/></g>
+
+  <!-- ===== torso ===== -->
+  <path d="M112 168 C96 200 96 268 120 300 C150 320 202 320 232 300 C258 266 256 198 240 168
+           C214 150 138 150 112 168 Z" fill="url(#gStone)" stroke="#07050f" stroke-width="3.5"/>
+  <!-- chest plates / muscle carving -->
+  <path d="M132 196 C150 186 202 186 220 196 C216 214 200 222 176 222 C152 222 136 214 132 196 Z" fill="url(#gStoneLt)" opacity=".8"/>
+  <path d="M120 250 q56 22 112 0" stroke="#07050f" stroke-width="3" fill="none" opacity=".7"/>
+  <path d="M128 274 q48 18 96 0" stroke="#07050f" stroke-width="2.5" fill="none" opacity=".6"/>
+
+  <!-- glowing rune cracks on torso -->
+  <g stroke="url(#gRune)" stroke-width="2.6" fill="none" stroke-linecap="round">
+    <path d="M126 214 l14 10 -6 14 12 8"/>
+    <path d="M228 210 l-14 12 8 12 -12 10"/>
+    <path d="M176 236 l0 22"/>
+  </g>
+
+  <!-- chest crystal core -->
+  <circle cx="176" cy="238" r="42" fill="url(#gCoreGlow)"/>
+  <g class="boss-core">
+    <path d="M176 206 l20 22 -20 40 -20 -40z" fill="url(#gCore)" stroke="#0a2b4a" stroke-width="2"/>
+    <path d="M176 206 l20 22 -20 12 -20 -12z" fill="#eafffb" opacity=".7"/>
+  </g>
+
+  <!-- ===== shoulders (huge) ===== -->
+  <path d="M112 176 C84 168 60 182 58 214 C56 242 78 258 104 250 C118 220 116 194 112 176 Z" fill="url(#gStoneLt)" stroke="#07050f" stroke-width="3.5"/>
+  <path d="M240 176 C268 168 292 182 294 214 C296 242 274 258 248 250 C234 220 236 194 240 176 Z" fill="url(#gStoneLt)" stroke="#07050f" stroke-width="3.5"/>
+  <!-- shoulder crystal clusters -->
+  <g stroke="#07050f" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M70 176 l-14 -34 22 20 4 -30 12 34z" fill="url(#gCrystalV)"/>
+    <path d="M92 168 l4 -30 14 26z" fill="url(#gCrystal)"/>
+    <path d="M262 168 l-4 -30 -14 26z" fill="url(#gCrystal)"/>
+    <path d="M282 176 l14 -34 -22 20 -4 -30 -12 34z" fill="url(#gCrystalV)"/>
+  </g>
+
+  <!-- ===== arms ===== -->
+  <path d="M78 236 C58 262 54 306 66 336 C82 344 100 340 106 322 C98 292 96 262 100 244 Z" fill="url(#gStoneDk)" stroke="#07050f" stroke-width="3"/>
+  <path d="M274 236 C294 262 298 306 286 336 C270 344 252 340 246 322 C254 292 256 262 252 244 Z" fill="url(#gStoneDk)" stroke="#07050f" stroke-width="3"/>
+  <!-- fists / claws -->
+  <g fill="url(#gStoneLt)" stroke="#07050f" stroke-width="2.5">
+    <path d="M56 330 c-8 8 -8 26 4 34 l40 4 c8 -14 4 -30 -8 -38 z"/>
+    <path d="M284 330 c8 8 8 26 -4 34 l-40 4 c-8 -14 -4 -30 8 -38 z"/>
+  </g>
+  <g stroke="url(#gCrystal)" stroke-width="3" stroke-linecap="round">
+    <path d="M60 366 l-4 10 M74 372 l-2 12 M88 372 l2 12"/>
+    <path d="M280 366 l4 10 M266 372 l2 12 M252 372 l-2 12"/>
+  </g>
+
+  <!-- ===== head ===== -->
+  <path d="M142 138 C138 108 158 90 176 90 C194 90 214 108 210 138 C204 158 192 168 176 168 C160 168 148 158 142 138 Z" fill="url(#gStone)" stroke="#07050f" stroke-width="3.5"/>
+  <!-- brow ridge -->
+  <path d="M146 122 C158 112 194 112 206 122" stroke="#07050f" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- horns (great curved) -->
+  <path d="M150 100 C132 78 108 68 92 66 C112 76 128 92 146 112 Z" fill="url(#gStoneLt)" stroke="#07050f" stroke-width="2.5"/>
+  <path d="M202 100 C220 78 244 68 260 66 C240 76 224 92 206 112 Z" fill="url(#gStoneLt)" stroke="#07050f" stroke-width="2.5"/>
+  <path d="M150 100 l-10 -14 M202 100 l10 -14" stroke="url(#gRune)" stroke-width="2" opacity=".7"/>
+  <!-- glowing eyes -->
+  <g class="boss-eyes">
+    <ellipse cx="162" cy="132" rx="10" ry="7" fill="url(#gEye)"/>
+    <ellipse cx="190" cy="132" rx="10" ry="7" fill="url(#gEye)"/>
+    <ellipse cx="162" cy="133" rx="3" ry="4.5" fill="#062a26"/>
+    <ellipse cx="190" cy="133" rx="3" ry="4.5" fill="#062a26"/>
+  </g>
+  <!-- fanged jaw -->
+  <path d="M156 150 C166 160 186 160 196 150 C188 158 164 158 156 150 Z" fill="#060410"/>
+  <g fill="#e8eef0" stroke="#07050f" stroke-width=".8">
+    <path d="M162 151 l3 8 3 -7z"/><path d="M184 151 l3 7 3 -8z"/><path d="M173 152 l3 8 3 -7z"/>
+  </g>
+  <!-- rune crown mark on forehead -->
+  <path d="M176 104 l4 8 8 .5 -6 5 2 8 -8 -5 -8 5 2 -8 -6 -5 8 -.5z" fill="url(#gRune)" opacity=".95"/>
+</svg>
