@@ -8,6 +8,9 @@ node_modules/
 out/
 build/
 
+# Vercel
+.vercel/
+
 # Env files
 .env
 .env.local
