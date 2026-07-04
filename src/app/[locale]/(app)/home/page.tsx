@@ -42,7 +42,7 @@ export default function HomePage() {
   };
 
   return (
-    <section className="view active">
+    <section className="view active home-view">
       <h1 className="hello">Привіт, {user.nickname ?? user.email}!</h1>
       <p className="streakline">
         {streakStatus === "broken"
