@@ -91,3 +91,131 @@
   background: rgba(20, 60, 70, 0.1);
   color: var(--ink);
 }
+
+/* ==========================================================================
+   PROFILE — full 1:1 light match with nmt-app-fixed (2).html.
+   Values are the mockup's LIGHT palette (not the game-app night tokens).
+   Scoped to `.profile-wrap` so Home/Leaderboard light styling is untouched;
+   `[data-theme="light"] .game-app .profile-wrap …` outranks base + generic
+   light rules, so it wins without !important.
+   ========================================================================== */
+
+/* Etalon light palette — cascades to every profile descendant */
+[data-theme="light"] .game-app .profile-wrap {
+  --teal:#1f9e92; --teal-deep:#0f5c54; --teal-dark:#0a3b38;
+  --green:#4fbf83; --leaf-deep:#1f7a55; --mint:#bff2d8;
+  --water:#4cc4d6; --water-deep:#1f8fa6;
+  --gold:#f3c25a; --sun:#ffd98a; --sun-warm:#ffb15c; --ember:#e8794a;
+  --violet:#7d6fd1; --rose:#ef9aa8;
+  --ink:#0f3b39; --ink-soft:#3a615e;
+  --glass:rgba(255,255,255,.62);
+  --glass-line:rgba(255,255,255,.85);
+  --shadow:0 22px 50px -22px rgba(10,59,56,.5);
+}
+
+/* Banner ambient glows — warm gold top-left, teal bottom-right (HTML l.240-243) */
+[data-theme="light"] .game-app .profile-wrap .pbanner::before{background:radial-gradient(closest-side,rgba(255,217,138,.4),transparent)}
+[data-theme="light"] .game-app .profile-wrap .pbanner::after{background:radial-gradient(closest-side,rgba(31,158,146,.16),transparent)}
+
+/* Avatar (HTML l.244-247) */
+[data-theme="light"] .game-app .profile-wrap .pav{
+  background:radial-gradient(circle at 35% 30%,var(--mint),var(--teal));
+  border:3px solid #fff;box-shadow:var(--shadow);color:#fff}
+[data-theme="light"] .game-app .profile-wrap .pav .lv{
+  color:#5a3a00;border:3px solid #fff;box-shadow:0 8px 14px -6px rgba(243,194,90,.9)}
+
+/* Identity text (HTML l.249, 251-252) */
+[data-theme="light"] .game-app .profile-wrap .pb-mid h2{color:var(--teal-deep)}
+[data-theme="light"] .game-app .profile-wrap .lvl-chip{
+  color:#5a3a00;background:linear-gradient(135deg,#ffe7a8,var(--gold));box-shadow:0 8px 18px -8px rgba(243,194,90,.8)}
+
+/* XP bar (HTML l.255-256) */
+[data-theme="light"] .game-app .profile-wrap .pxp .track{background:rgba(15,92,84,.12)}
+[data-theme="light"] .game-app .profile-wrap .pxp .fill{box-shadow:0 0 12px rgba(243,194,90,.6)}
+
+/* Banner stat chips (HTML l.259-263) */
+[data-theme="light"] .game-app .profile-wrap .qstat{
+  gap:8px;padding:10px 12px;background:rgba(255,255,255,.55);border:1.5px solid var(--glass-line);overflow:hidden}
+[data-theme="light"] .game-app .profile-wrap .qstat.s-fire .qi{background:rgba(232,121,74,.16)}
+[data-theme="light"] .game-app .profile-wrap .qstat.s-gem .qi{background:rgba(76,196,214,.16)}
+[data-theme="light"] .game-app .profile-wrap .qstat.s-heart .qi{background:rgba(227,93,114,.14)}
+[data-theme="light"] .game-app .profile-wrap .qstat.s-energy .qi{background:rgba(243,194,90,.2)}
+[data-theme="light"] .game-app .profile-wrap .qstat .qt b{color:var(--teal-deep)}
+
+/* Section headers (HTML l.269-270) */
+[data-theme="light"] .game-app .profile-wrap .block .bt{color:var(--teal)}
+[data-theme="light"] .game-app .profile-wrap .bt-count{
+  color:#a9772e;background:rgba(243,194,90,.2);border:1px solid rgba(243,194,90,.45)}
+
+/* Achievement medallions (HTML l.275-295) */
+[data-theme="light"] .game-app .profile-wrap .disc{background:radial-gradient(circle at 38% 30%,#ffffff,#e9f4f0)}
+[data-theme="light"] .game-app .profile-wrap .r-common .disc::before{background:linear-gradient(135deg,#5fe0cf,#1f9e92)}
+[data-theme="light"] .game-app .profile-wrap .r-common .disc{box-shadow:0 10px 22px -8px rgba(31,158,146,.7)}
+[data-theme="light"] .game-app .profile-wrap .r-rare .disc::before{background:linear-gradient(135deg,#9fc0ff,#5b6fd6)}
+[data-theme="light"] .game-app .profile-wrap .r-rare .disc{box-shadow:0 10px 22px -8px rgba(124,150,255,.7)}
+[data-theme="light"] .game-app .profile-wrap .r-epic .disc::before{background:linear-gradient(135deg,#c79bff,#7d6fd1)}
+[data-theme="light"] .game-app .profile-wrap .r-epic .disc{box-shadow:0 10px 24px -7px rgba(125,111,209,.8)}
+[data-theme="light"] .game-app .profile-wrap .r-legend .disc::before{background:conic-gradient(from 0deg,#f3c25a,#ef9aa8,#7d6fd1,#1f9e92,#f3c25a)}
+[data-theme="light"] .game-app .profile-wrap .r-legend .disc{box-shadow:0 10px 26px -6px rgba(243,194,90,.85)}
+[data-theme="light"] .game-app .profile-wrap .medal.locked .disc{filter:grayscale(.85);opacity:.75;box-shadow:none}
+[data-theme="light"] .game-app .profile-wrap .medal.locked .disc::before{background:#cfded9}
+[data-theme="light"] .game-app .profile-wrap .medal.locked .lockb{background:rgba(255,255,255,.45);color:var(--teal-deep)}
+[data-theme="light"] .game-app .profile-wrap .medal.locked .mname{color:var(--ink-soft)}
+[data-theme="light"] .game-app .profile-wrap .mprog{background:rgba(15,92,84,.14)}
+
+/* Stats / account tiles (HTML l.301-312) */
+[data-theme="light"] .game-app .profile-wrap .tile{background:rgba(255,255,255,.5);border:1.5px solid rgba(15,92,84,.08)}
+[data-theme="light"] .game-app .profile-wrap .tile:hover{background:rgba(255,255,255,.8)}
+[data-theme="light"] .game-app .profile-wrap .tile .ti{background:rgba(31,158,146,.12)}
+[data-theme="light"] .game-app .profile-wrap .tile.g .ti{background:rgba(243,194,90,.2)}
+[data-theme="light"] .game-app .profile-wrap .tile.v .ti{background:rgba(125,111,209,.16)}
+[data-theme="light"] .game-app .profile-wrap .tile.r .ti{background:rgba(227,93,114,.14)}
+[data-theme="light"] .game-app .profile-wrap .tile .tag{font-size:9px;padding:3px 7px;background:#d8f3e0;color:var(--leaf-deep)}
+[data-theme="light"] .game-app .profile-wrap .tiles.grid2 .tile{justify-content:center}
+[data-theme="light"] .game-app .profile-wrap .tiles.grid2 .tile .tb{flex:0 1 auto;text-align:left}
+
+/* Royal Pass — honey-gold light card (HTML l.328-372) */
+[data-theme="light"] .game-app .profile-wrap .royal{
+  background:linear-gradient(140deg,#e7b85a,#caa23f 45%,#a87f2e);
+  box-shadow:0 26px 54px -22px rgba(140,95,25,.55),0 0 46px -14px rgba(243,194,90,.6)}
+[data-theme="light"] .game-app .profile-wrap .royal .rinner{
+  background:linear-gradient(155deg,#fff1c6,#ffe096 52%,#f7cf7c)}
+[data-theme="light"] .game-app .profile-wrap .royal .rinner::before{background:
+  radial-gradient(220px 150px at 16% -10%,rgba(255,255,255,.55),transparent 70%),
+  radial-gradient(220px 190px at 110% 120%,rgba(255,180,80,.4),transparent 70%)}
+[data-theme="light"] .game-app .profile-wrap .r-sheen{background:linear-gradient(105deg,transparent,rgba(255,255,255,.7),transparent)}
+[data-theme="light"] .game-app .profile-wrap .r-ribbon{
+  color:#fff;background:linear-gradient(135deg,#ff9a5c,#e8794a);font-weight:800;box-shadow:0 4px 12px -4px rgba(140,60,30,.5)}
+[data-theme="light"] .game-app .profile-wrap .r-spark{background:#fff;box-shadow:0 0 8px 2px rgba(255,255,255,.95)}
+[data-theme="light"] .game-app .profile-wrap .r-crown{
+  background:radial-gradient(circle at 38% 30%,#fffaf0,#f3d488 65%,#c89331);
+  box-shadow:0 8px 20px -4px rgba(140,95,25,.7),inset 0 2px 0 rgba(255,255,255,.85)}
+[data-theme="light"] .game-app .profile-wrap .r-head .r-eye{color:#8a5a1e}
+[data-theme="light"] .game-app .profile-wrap .r-head h3{
+  background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#6b4416;
+  filter:none;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+[data-theme="light"] .game-app .profile-wrap .st{
+  color:#7a4a16;background:linear-gradient(135deg,#ffffff,rgba(255,255,255,.82));
+  border:1px solid rgba(176,120,40,.4);box-shadow:0 6px 14px -10px rgba(140,95,25,.7),inset 0 1px 0 rgba(255,255,255,.9)}
+[data-theme="light"] .game-app .profile-wrap .r-footer{border-top:1px solid rgba(176,120,40,.32)}
+[data-theme="light"] .game-app .profile-wrap .pricebox .now{color:#5a3a00;text-shadow:0 1px 0 rgba(255,255,255,.4)}
+[data-theme="light"] .game-app .profile-wrap .pricebox .now small{color:#8a6a3a}
+[data-theme="light"] .game-app .profile-wrap .pricebox .old{color:#a8895a}
+[data-theme="light"] .game-app .profile-wrap .pricebox .save{
+  color:#fff;font-weight:800;background:linear-gradient(135deg,#3fae74,#1f7a55);box-shadow:0 6px 14px -6px rgba(31,122,85,.8)}
+[data-theme="light"] .game-app .profile-wrap .r-go{
+  color:#fff;background:linear-gradient(135deg,var(--teal),var(--leaf-deep));
+  box-shadow:0 14px 30px -12px rgba(15,92,84,.85),inset 0 1px 0 rgba(255,255,255,.3)}
+[data-theme="light"] .game-app .profile-wrap .r-note{color:#8a6a3a}
+[data-theme="light"] .game-app .profile-wrap .r-note b{color:#1f7a55}
+
+/* Logout (HTML l.374) */
+[data-theme="light"] .game-app .profile-wrap .logout{color:#d8694f}
+
+/* Canvas — warm daytime sky, scoped to the profile view only (HTML l.11, 35-39) */
+[data-theme="light"] .game-app:has(.profile-wrap){background:#cdeef6}
+[data-theme="light"] .game-app:has(.profile-wrap) .sky{
+  background:
+    radial-gradient(1100px 640px at 82% -10%, rgba(255,236,180,.85), transparent 60%),
+    radial-gradient(820px 560px at 10% 4%, rgba(180,242,216,.65), transparent 55%),
+    linear-gradient(180deg,#cdeef6 0%, #d9f4ea 44%, #eafbf2 100%)}
