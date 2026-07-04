@@ -1,11 +1,8 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useParams } from "next/navigation";
-import { Gem, HeartCrack, Lock, PartyPopper, RefreshCw, Skull, Swords, Trophy, Zap } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
-import { LessonHeader } from "@/components/layout/LessonHeader";
-import { AnswerOption } from "@/components/ui/AnswerOption";
-import { FeedbackPanel } from "@/components/ui/FeedbackPanel";
+import { GameScreen } from "@/components/layout/GameScreen";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import {
@@ -39,6 +36,68 @@ function shuffleOptions(options: QuestionOption[]): ShuffledOption[] {
 
 type Phase = "loading" | "energy_gate" | "locked" | "load_error" | "quiz" | "completing" | "done";
 
+function HeartIcon() {
+  return (
+    <svg viewBox="0 0 22 22" fill="none" width="22" height="22">
+      <path
+        d="M11 18.5 C11 18.5 3 13 3 7.5 C3 4.8 5 3 7.5 3 C9.2 3 10.3 4 11 5.2 C11.7 4 12.8 3 14.5 3 C17 3 19 4.8 19 7.5 C19 13 11 18.5 11 18.5Z"
+        fill="#e35d72"
+      />
+      <path d="M7 6.5 C7 5.5 8 4.8 9.2 5.5" stroke="#f5a0b0" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Full-screen themed state / result card on the night background. */
+function StateScreen({
+  fail = false,
+  icon,
+  title,
+  sub,
+  children,
+}: {
+  fail?: boolean;
+  icon: ReactNode;
+  title: string;
+  sub?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <GameScreen dock={false}>
+      <div className="result-overlay show">
+        <div className={`result-card${fail ? " fail" : ""}`}>
+          {icon && <div className="result-icon">{icon}</div>}
+          <div className="result-title">{title}</div>
+          {sub && <div className="result-sub">{sub}</div>}
+          {children}
+        </div>
+      </div>
+    </GameScreen>
+  );
+}
+
+const SuccessIcon = (
+  <svg viewBox="0 0 88 88" fill="none" width="88" height="88">
+    <circle cx="44" cy="44" r="40" fill="none" stroke="#f3c25a" strokeWidth="3" strokeDasharray="6 4" opacity=".5" />
+    <circle cx="44" cy="44" r="30" fill="none" stroke="#f3c25a" strokeWidth="2" opacity=".3" />
+    <path d="M44 14 L48 28 L62 28 L51 36 L55 50 L44 42 L33 50 L37 36 L26 28 L40 28Z" fill="#f3c25a" stroke="#c9952a" strokeWidth="1" />
+  </svg>
+);
+
+const FailIcon = (
+  <svg viewBox="0 0 88 88" fill="none" width="88" height="88">
+    <path d="M44 72 C44 72 14 52 14 30 C14 18 22 12 32 12 C38 12 42 16 44 20 C46 16 50 12 56 12 C66 12 74 18 74 30 C74 52 44 72 44 72Z" fill="none" stroke="#e35d72" strokeWidth="2.5" />
+    <line x1="34" y1="30" x2="54" y2="50" stroke="#e35d72" strokeWidth="3" strokeLinecap="round" />
+    <line x1="54" y1="30" x2="34" y2="50" stroke="#e35d72" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+const XpBolt = (
+  <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+    <path d="M11 2L3 12h5l-1 6 8-10h-5z" fill="#c9952a" />
+  </svg>
+);
+
 export default function LessonPageClient() {
   const params = useParams<{
     courseId: string;
@@ -46,7 +105,7 @@ export default function LessonPageClient() {
     topicSlug: string;
     lessonId: string;
   }>();
-  const { courseId, categorySlug, topicSlug, lessonId } = params;
+  const { courseId, categorySlug, lessonId } = params;
   const router = useRouter();
   const { user, updateUser, fetchMe } = useAuthStore();
 
@@ -63,8 +122,6 @@ export default function LessonPageClient() {
   const [heartsDepleted, setHeartsDepleted] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
-  const [comboStreak, setComboStreak] = useState(0);
-  const [maxCombo, setMaxCombo] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
   const [completeResult, setCompleteResult] = useState<CompleteLessonResult | null>(null);
   const [completionSaved, setCompletionSaved] = useState(false);
@@ -133,6 +190,7 @@ export default function LessonPageClient() {
   }, [lessonId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadLesson();
   }, [loadLesson]);
 
@@ -159,11 +217,6 @@ export default function LessonPageClient() {
       if (res.is_correct) {
         setCorrectCount((p) => p + 1);
         setXpEarned((p) => p + (questions.length > 0 ? Math.round(50 / questions.length) : 0));
-        setComboStreak((p) => {
-          const next = p + 1;
-          setMaxCombo((prev) => Math.max(prev, next));
-          return next;
-        });
         if (isBoss) {
           // Hero hits the boss. Crit on every COMBO_FOR_CRIT-th correct in a
           // row (+1 dmg), then the combo resets.
@@ -175,7 +228,6 @@ export default function LessonPageClient() {
           setBattleTurn((t) => ({ key: (t?.key ?? 0) + 1, attacker: "hero", crit }));
         }
       } else {
-        setComboStreak(0);
         if (isBoss) {
           // Boss hits the hero. Battle HP is separate from global lives.
           setHeroHp((p) => Math.max(0, p - 1));
@@ -261,8 +313,6 @@ export default function LessonPageClient() {
     setResult(null);
     setAnswers([]);
     setCorrectCount(0);
-    setComboStreak(0);
-    setMaxCombo(0);
     setXpEarned(0);
     setCompleteResult(null);
     setCompletionSaved(false);
@@ -271,76 +321,71 @@ export default function LessonPageClient() {
   }
 
   // ── Loading ───────────────────────────────────────────────────────────────────
-  if (phase === "loading") {
+  if (phase === "loading" || phase === "completing") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
-      </div>
+      <GameScreen dock={false}>
+        <div className="result-overlay show">
+          <div className="result-card">
+            <div className="result-title">Завантаження…</div>
+          </div>
+        </div>
+      </GameScreen>
     );
   }
 
   // ── Energy gate ───────────────────────────────────────────────────────────────
   if (phase === "energy_gate") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-        <div className="mx-auto w-full max-w-app text-center">
-          <Zap className="mx-auto mb-4 h-20 w-20 text-reward" />
-          <h1 className="font-display text-2xl font-800 text-text-primary">Немає енергії!</h1>
-          <p className="mt-2 font-body text-base text-text-secondary">
+      <StateScreen
+        fail
+        icon={<span style={{ fontSize: 64 }}>⚡</span>}
+        title="Немає енергії!"
+        sub={
+          <>
             Зачекайте відновлення енергії або поверніться пізніше
-          </p>
-          {user && (
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-reward-light px-5 py-2">
-              <Zap className="h-4 w-4 text-reward-dark" />
-              <span className="font-display text-sm font-700 text-reward-dark">
-                Енергія: {user.energy}
-              </span>
-            </div>
-          )}
-          <Button variant="ghost" size="lg" className="mt-8 w-full" onClick={() => router.push(topicPath)}>
-            ← Назад до острова
-          </Button>
-        </div>
-      </div>
+            {user ? ` · Енергія: ${user.energy}` : ""}
+          </>
+        }
+      >
+        <button className="result-link" onClick={() => router.push(topicPath)}>
+          ← Назад до острова
+        </button>
+      </StateScreen>
     );
   }
 
   // ── Locked ────────────────────────────────────────────────────────────────────
   if (phase === "locked") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-        <div className="mx-auto w-full max-w-app text-center">
-          <Lock className="mx-auto mb-4 h-20 w-20 text-text-secondary" />
-          <h1 className="font-display text-2xl font-800 text-text-primary">Урок ще закритий</h1>
-          <p className="mt-2 font-body text-base text-text-secondary">
-            Спочатку пройди попередню тему хоча б один раз, щоб відкрити цей урок.
-          </p>
-          <Button size="lg" className="mt-8 w-full" onClick={() => router.push(topicPath)}>
-            ← Назад до острова
-          </Button>
-        </div>
-      </div>
+      <StateScreen
+        icon={<span style={{ fontSize: 64 }}>🔒</span>}
+        title="Урок ще закритий"
+        sub="Спочатку пройди попередню тему хоча б один раз, щоб відкрити цей урок."
+      >
+        <button className="result-btn" onClick={() => router.push(topicPath)}>
+          ← Назад до острова
+        </button>
+      </StateScreen>
     );
   }
 
   // ── Load error ────────────────────────────────────────────────────────────────
   if (phase === "load_error") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-        <div className="mx-auto w-full max-w-app text-center">
-          <RefreshCw className="mx-auto mb-4 h-20 w-20 text-wrong" />
-          <h1 className="font-display text-2xl font-800 text-text-primary">Не вдалося завантажити урок</h1>
-          <p className="mt-2 font-body text-base text-text-secondary">{loadError}</p>
-          <div className="mt-8 space-y-3">
-            <Button size="lg" className="w-full" onClick={loadLesson}>
-              Спробувати ще раз
-            </Button>
-            <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
-              ← Назад до острова
-            </Button>
-          </div>
-        </div>
-      </div>
+      <StateScreen
+        fail
+        icon={FailIcon}
+        title="Не вдалося завантажити урок"
+        sub={loadError}
+      >
+        <button className="result-btn" onClick={loadLesson}>
+          Спробувати ще раз
+        </button>
+        <br />
+        <button className="result-link" onClick={() => router.push(topicPath)}>
+          ← Назад до острова
+        </button>
+      </StateScreen>
     );
   }
 
@@ -352,45 +397,39 @@ export default function LessonPageClient() {
     // re-enters the lesson (and spends energy) with a fresh set of 5 hearts.
     if (heartsDepleted && !isBoss) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-          <div className="mx-auto w-full max-w-app text-center">
-            <HeartCrack className="mx-auto mb-4 h-20 w-20 text-wrong" />
-            <h1 className="font-display text-2xl font-800 text-text-primary">Серця закінчились!</h1>
-            <p className="mt-2 font-body text-base text-text-secondary">
-              Урок не зараховано. Спробуй ще раз — серця відновляться, але захід витратить енергію.
-            </p>
-            <div className="mt-8 space-y-3">
-              <Button size="lg" className="w-full" onClick={restartBattle}>
-                Спробувати ще раз
-              </Button>
-              <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
-                ← Назад до острова
-              </Button>
-            </div>
-          </div>
-        </div>
+        <StateScreen
+          fail
+          icon={FailIcon}
+          title="Серця закінчились!"
+          sub="Урок не зараховано. Спробуй ще раз — серця відновляться, але захід витратить енергію."
+        >
+          <button className="result-btn" onClick={restartBattle}>
+            Спробувати ще раз
+          </button>
+          <br />
+          <button className="result-link" onClick={() => router.push(topicPath)}>
+            ← Назад до острова
+          </button>
+        </StateScreen>
       );
     }
 
     if (!completionSaved) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-          <div className="mx-auto w-full max-w-app text-center">
-            <HeartCrack className="mx-auto mb-4 h-20 w-20 text-wrong" />
-            <h1 className="font-display text-xl font-800 text-text-primary">Не вдалося зберегти</h1>
-            <p className="mt-2 font-body text-base text-text-secondary">
-              Прогрес не збережено через проблему з мережею. Спробуйте ще раз.
-            </p>
-            <div className="mt-8 space-y-3">
-              <Button size="lg" className="w-full" onClick={retryFinishLesson}>
-                Спробувати ще раз
-              </Button>
-              <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
-                Вийти без збереження
-              </Button>
-            </div>
-          </div>
-        </div>
+        <StateScreen
+          fail
+          icon={FailIcon}
+          title="Не вдалося зберегти"
+          sub="Прогрес не збережено через проблему з мережею. Спробуйте ще раз."
+        >
+          <button className="result-btn" onClick={retryFinishLesson}>
+            Спробувати ще раз
+          </button>
+          <br />
+          <button className="result-link" onClick={() => router.push(topicPath)}>
+            Вийти без збереження
+          </button>
+        </StateScreen>
       );
     }
 
@@ -400,128 +439,75 @@ export default function LessonPageClient() {
 
       if (outcome === "lose") {
         return (
-          <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-            <div className="mx-auto w-full max-w-app text-center">
-              <Skull className="mx-auto mb-6 h-20 w-20 text-wrong" />
-              <h1 className="font-display text-2xl font-800 text-text-primary">Тебе переможено</h1>
-              <p className="mt-2 font-body text-base text-text-secondary">
-                {bossName} виявився сильнішим. Ти втратив одне життя — збери сили й спробуй ще раз.
-              </p>
-              <div className="mt-8 space-y-3">
-                <Button size="lg" className="w-full" onClick={restartBattle}>
-                  ⚔️ Битися знову
-                </Button>
-                <Button variant="ghost" size="md" className="w-full" onClick={() => router.push(topicPath)}>
-                  ← Назад до острова
-                </Button>
-              </div>
-            </div>
-          </div>
+          <StateScreen
+            fail
+            icon={FailIcon}
+            title="Тебе переможено"
+            sub={`${bossName} виявився сильнішим. Збери сили й спробуй ще раз.`}
+          >
+            <button className="result-btn gold" onClick={restartBattle}>
+              ⚔️ Битися знову
+            </button>
+            <br />
+            <button className="result-link" onClick={() => router.push(topicPath)}>
+              ← Назад до острова
+            </button>
+          </StateScreen>
         );
       }
 
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-          <div className="mx-auto w-full max-w-app text-center">
-            <Swords className="mx-auto mb-6 h-20 w-20 text-primary" />
-            <h1 className="font-display text-2xl font-800 text-text-primary">Боса переможено!</h1>
-            <p className="mt-2 font-body text-base text-text-secondary">{bossName} повалено ⚔️</p>
-
-            <div className="mx-auto mt-6 flex w-fit items-center gap-4 rounded-full bg-reward-light px-6 py-3">
-              <span className="flex items-center gap-1.5 font-display text-lg font-700 text-reward-dark">
-                <Zap className="h-5 w-5" /> +{completeResult?.exp ?? xpEarned} XP
-              </span>
-              {(completeResult?.gems ?? 0) > 0 && (
-                <span className="flex items-center gap-1.5 font-display text-lg font-700 text-reward-dark">
-                  <Gem className="h-5 w-5" /> {completeResult?.gems}
-                </span>
-              )}
-            </div>
-
-            {completeResult?.is_gold && (
-              <p className="mt-3 font-display text-sm font-700 text-reward">★ Боса пройдено — острів засяяв золотом!</p>
-            )}
-
-            {(completeResult?.unlocked_achievements ?? []).length > 0 && (
-              <div className="mt-5 space-y-2">
-                {completeResult!.unlocked_achievements.map((a) => (
-                  <div
-                    key={a.code}
-                    className="flex items-center gap-3 rounded-xl border border-reward/30 bg-reward-light px-4 py-2.5"
-                  >
-                    <Trophy className="h-5 w-5 shrink-0 text-reward-dark" />
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="font-display text-sm font-700 text-reward-dark">{a.title}</p>
-                      <p className="font-display text-xs font-600 text-reward-dark/70">{a.tier}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-8 space-y-3">
-              <Button size="lg" className="w-full" onClick={() => router.push(topicPath)}>
-                Продовжити
-              </Button>
-              <Button variant="ghost" size="md" className="w-full" onClick={() => router.push("/home")}>
-                На головну
-              </Button>
-            </div>
+        <StateScreen
+          icon={SuccessIcon}
+          title="Боса переможено!"
+          sub={`${bossName} повалено ⚔️`}
+        >
+          <div className="result-xp" style={{ background: "rgba(243,194,90,.16)", color: "#f3c25a" }}>
+            {XpBolt} +{completeResult?.exp ?? xpEarned} XP
+            {(completeResult?.gems ?? 0) > 0 ? ` · 💎 ${completeResult?.gems}` : ""}
           </div>
-        </div>
+          <br />
+          {completeResult?.is_gold && (
+            <div className="result-sub" style={{ color: "#f3c25a" }}>
+              ★ Боса пройдено — острів засяяв золотом!
+            </div>
+          )}
+          <button className="result-btn" onClick={() => router.push(topicPath)}>
+            Продовжити
+          </button>
+          <br />
+          <button className="result-link" onClick={() => router.push("/home")}>
+            На головну
+          </button>
+        </StateScreen>
       );
     }
 
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
-        <div className="mx-auto w-full max-w-app text-center">
-          <PartyPopper className="mx-auto mb-6 h-20 w-20 text-primary" />
-          <h1 className="font-display text-xl font-800 text-text-primary">Урок завершено!</h1>
-          <p className="mt-2 font-body text-base text-text-secondary">
+      <StateScreen
+        icon={SuccessIcon}
+        title="Урок завершено!"
+        sub={
+          <>
             Правильних відповідей: {correctCount} / {questions.length} ({score}%)
-          </p>
-
-          <div className="mx-auto mt-6 flex w-fit items-center gap-2 rounded-full bg-reward-light px-6 py-3">
-            <Zap className="h-5 w-5 text-reward-dark" />
-            <span className="font-display text-lg font-700 text-reward-dark">
-              +{completeResult?.exp ?? xpEarned} XP
-            </span>
-          </div>
-
-          {completeResult?.exp_boost_active && (
-            <p className="mt-2 font-display text-xs font-600 text-reward">⚡ Множник XP активний!</p>
-          )}
-
-          {(completeResult?.unlocked_achievements ?? []).length > 0 && (
-            <div className="mt-5 space-y-2">
-              <p className="font-display text-xs font-600 uppercase tracking-widest text-text-secondary">
-                Нові досягнення
-              </p>
-              {completeResult!.unlocked_achievements.map((a) => (
-                <div
-                  key={a.code}
-                  className="flex items-center gap-3 rounded-xl border border-reward/30 bg-reward-light px-4 py-2.5"
-                >
-                  <Trophy className="h-5 w-5 shrink-0 text-reward-dark" />
-                  <div className="min-w-0 flex-1 text-left">
-                    <p className="font-display text-sm font-700 text-reward-dark">{a.title}</p>
-                    <p className="font-display text-xs font-600 text-reward-dark/70">{a.tier}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-8 space-y-3">
-            <Button size="lg" className="w-full" onClick={() => router.push(topicPath)}>
-              Продовжити
-            </Button>
-            <Button variant="ghost" size="md" className="w-full" onClick={() => router.push("/home")}>
-              На головну
-            </Button>
-          </div>
+          </>
+        }
+      >
+        <div className="result-xp" style={{ background: "rgba(243,194,90,.16)", color: "#f3c25a" }}>
+          {XpBolt} +{completeResult?.exp ?? xpEarned} XP
         </div>
-      </div>
+        <br />
+        {completeResult?.exp_boost_active && (
+          <div className="result-sub" style={{ color: "#f3c25a" }}>⚡ Множник XP активний!</div>
+        )}
+        <button className="result-btn" onClick={() => router.push(topicPath)}>
+          Продовжити
+        </button>
+        <br />
+        <button className="result-link" onClick={() => router.push("/home")}>
+          На головну
+        </button>
+      </StateScreen>
     );
   }
 
@@ -533,15 +519,98 @@ export default function LessonPageClient() {
     else router.push(topicPath);
   };
 
+  const qn = isBoss
+    ? `⚔️ Раунд ${currentIdx + 1}`
+    : `Запитання ${currentIdx + 1} / ${questions.length}`;
+
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
-      <LessonHeader
-        progress={progress}
-        onClose={requestQuit}
-        xpEarned={xpEarned}
-        lives={isBoss ? heroHp : lives}
-        minimal={isBoss}
-      />
+    <GameScreen dock={false}>
+      <section className="view active">
+        <div className="quiz-bar">
+          <button className="qx" onClick={requestQuit} aria-label="Вийти">
+            ✕
+          </button>
+          <div className="qtrack">
+            <div className="qf" style={{ width: `${progress}%` }} />
+          </div>
+          {!isBoss && (
+            <div className="hearts">
+              {Array.from({ length: MAX_LIVES }).map((_, i) => (
+                <span key={i} className={`h${i >= lives ? " lost" : ""}`}>
+                  <HeartIcon />
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {isBoss && currentQ && (
+          <BossBattleStage
+            bossName={bossName}
+            bossHp={bossHp}
+            heroHp={heroHp}
+            combo={battleCombo}
+            turn={battleTurn}
+          />
+        )}
+
+        {currentQ && (
+          <>
+            <div className="glass qcard">
+              <div className="qn">{qn}</div>
+              <div className="qtext">
+                <MathText text={currentQ.text} />
+              </div>
+            </div>
+
+            <div className="opts">
+              {shuffledOptions.map((option, i) => {
+                let stateCls = "";
+                if (isChecked) {
+                  if (result?.correct_option_ids.includes(option.id)) stateCls = " correct";
+                  else if (option.id === checkedId) stateCls = " wrong";
+                } else if (option.id === selectedId) {
+                  stateCls = " sel";
+                }
+                return (
+                  <button
+                    key={option.id}
+                    className={`opt${stateCls}${isChecked ? " disabled" : ""}`}
+                    disabled={isChecked}
+                    onClick={() => !isChecked && setSelectedId(option.id)}
+                  >
+                    <span className="key">{String.fromCharCode(65 + i)}</span>
+                    <span className="val">
+                      <MathText text={option.text} />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {isChecked && (
+              <div className={`feedback show ${isCorrect ? "good" : "bad"}`}>
+                {isCorrect ? "✓ Правильно!" : "✗ Не зовсім."}
+                {result?.explanation ? ` ${result.explanation}` : ""}
+              </div>
+            )}
+
+            {isChecked ? (
+              <button className="check ok" onClick={handleContinue}>
+                Далі →
+              </button>
+            ) : (
+              <button
+                className="check"
+                disabled={selectedId === null || submitting}
+                onClick={handleCheck}
+              >
+                {submitting ? "Перевіряємо…" : "Перевірити"}
+              </button>
+            )}
+          </>
+        )}
+      </section>
 
       <Modal
         open={showQuitConfirm}
@@ -567,76 +636,6 @@ export default function LessonPageClient() {
           </div>
         </div>
       </Modal>
-
-      <div className="mx-auto w-full max-w-app flex-1 space-y-4 px-4 py-5 pb-40">
-        {currentQ && (
-          <>
-            {isBoss && (
-              <BossBattleStage
-                bossName={bossName}
-                bossHp={bossHp}
-                heroHp={heroHp}
-                combo={battleCombo}
-                turn={battleTurn}
-              />
-            )}
-            <div className="rounded-xl border border-border bg-surface p-5 shadow-card">
-              <p className="font-display text-xs font-600 uppercase tracking-widest text-text-secondary">
-                {isBoss ? `⚔️ Раунд ${currentIdx + 1}` : `Запитання ${currentIdx + 1} / ${questions.length}`}
-              </p>
-              <h2 className="mt-2 font-display text-lg font-700 text-text-primary">
-                <MathText text={currentQ.text} />
-              </h2>
-            </div>
-
-            <div className="space-y-2.5">
-              {shuffledOptions.map((option, i) => {
-                let state: "default" | "selected" | "correct" | "wrong" = "default";
-                if (isChecked) {
-                  if (result?.correct_option_ids.includes(option.id)) state = "correct";
-                  else if (option.id === checkedId) state = "wrong";
-                } else if (option.id === selectedId) {
-                  state = "selected";
-                }
-                return (
-                  <AnswerOption
-                    key={option.id}
-                    index={i}
-                    content={option.text}
-                    state={state}
-                    disabled={isChecked}
-                    onClick={() => !isChecked && setSelectedId(option.id)}
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 z-30">
-        <div className="mx-auto max-w-app">
-          {isChecked ? (
-            <FeedbackPanel
-              type={isCorrect ? "correct" : "wrong"}
-              explanation={result?.explanation}
-              xpGained={isCorrect ? Math.round(50 / questions.length) : 0}
-              onContinue={handleContinue}
-            />
-          ) : (
-            <div className="border-t border-border bg-canvas/95 px-4 pb-6 pt-3 backdrop-blur-sm">
-              <Button
-                size="lg"
-                className="w-full"
-                disabled={selectedId === null || submitting}
-                onClick={handleCheck}
-              >
-                {submitting ? "Перевіряємо..." : "Перевірити"}
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    </GameScreen>
   );
 }

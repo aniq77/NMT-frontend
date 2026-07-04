@@ -15,9 +15,22 @@ import { NightSky } from "@/components/layout/NightSky";
  */
 const GAME_APP_ROUTES = ["/home", "/profile", "/leaderboard"];
 
+// Reskinned pages that render their OWN full game-app shell via <GameScreen>
+// (night background + `.app` container + `.dock`). AppShell must not wrap them,
+// or they'd get a second dock / background.
+const SELF_SHELLED_ROUTES = ["/quests", "/shop", "/friends", "/pvp"];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isGameApp = GAME_APP_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
+  const isSelfShelled = SELF_SHELLED_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + "/"),
+  );
+
+  if (isSelfShelled) {
+    // The page owns its shell (GameScreen). Render it as-is.
+    return <>{children}</>;
+  }
 
   if (!isGameApp) {
     // Render Tailwind pages OUTSIDE `.game-app`: its universal reset

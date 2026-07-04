@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { AuthField, AuthError } from "./AuthField";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/store/auth.store";
@@ -62,13 +61,9 @@ export function OtpForm() {
 
   if (step === "phone") {
     return (
-      <form onSubmit={phoneForm.handleSubmit(onSendOtp)} noValidate className="flex flex-col gap-4">
-        {formError && (
-          <p className="rounded-md bg-wrong-light px-4 py-3 font-body text-sm text-wrong-dark">
-            {formError}
-          </p>
-        )}
-        <Input
+      <form onSubmit={phoneForm.handleSubmit(onSendOtp)} noValidate>
+        {formError && <AuthError>{formError}</AuthError>}
+        <AuthField
           {...phoneForm.register("phone")}
           label={t("otp.phoneLabel")}
           type="tel"
@@ -77,28 +72,20 @@ export function OtpForm() {
           error={phoneForm.formState.errors.phone?.message}
           hint={t("otp.phoneHint")}
         />
-        <Button
-          type="submit"
-          loading={phoneForm.formState.isSubmitting}
-          className="w-full"
-        >
-          {t("otp.sendCode")}
-        </Button>
+        <button type="submit" className="auth-btn" disabled={phoneForm.formState.isSubmitting}>
+          {phoneForm.formState.isSubmitting ? "…" : t("otp.sendCode")}
+        </button>
       </form>
     );
   }
 
   return (
-    <form onSubmit={codeForm.handleSubmit(onVerifyOtp)} noValidate className="flex flex-col gap-4">
-      {formError && (
-        <p className="rounded-md bg-wrong-light px-4 py-3 font-body text-sm text-wrong-dark">
-          {formError}
-        </p>
-      )}
-      <p className="font-body text-sm text-text-secondary">
-        {t("otp.codeSentTo")} <strong className="text-text-primary">{phone}</strong>
-      </p>
-      <Input
+    <form onSubmit={codeForm.handleSubmit(onVerifyOtp)} noValidate>
+      {formError && <AuthError>{formError}</AuthError>}
+      <div className="auth-sub" style={{ marginBottom: 16 }}>
+        {t("otp.codeSentTo")} <strong style={{ color: "var(--teal-bright)" }}>{phone}</strong>
+      </div>
+      <AuthField
         {...codeForm.register("code")}
         label={t("otp.codeLabel")}
         type="text"
@@ -107,16 +94,19 @@ export function OtpForm() {
         autoComplete="one-time-code"
         error={codeForm.formState.errors.code?.message}
       />
-      <Button type="submit" loading={codeForm.formState.isSubmitting} className="w-full">
-        {t("otp.verify")}
-      </Button>
-      <button
-        type="button"
-        onClick={() => { setStep("phone"); setFormError(""); }}
-        className="font-body text-sm text-text-secondary hover:text-primary"
-      >
-        {t("otp.changePhone")}
+      <button type="submit" className="auth-btn" disabled={codeForm.formState.isSubmitting}>
+        {codeForm.formState.isSubmitting ? "…" : t("otp.verify")}
       </button>
+      <div className="auth-footer">
+        <a
+          onClick={() => {
+            setStep("phone");
+            setFormError("");
+          }}
+        >
+          {t("otp.changePhone")}
+        </a>
+      </div>
     </form>
   );
 }

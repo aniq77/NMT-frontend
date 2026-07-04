@@ -1,17 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import {
-  BookOpen,
-  CalendarDays,
-  Check,
-  Gem,
-  Gift,
-  ListChecks,
-  Target,
-  Zap,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useRouter } from "@/lib/navigation";
+import { GameScreen } from "@/components/layout/GameScreen";
 import {
   questsApi,
   type QuestGoalType,
@@ -20,33 +10,47 @@ import {
 } from "@/lib/api/quests";
 import { useAuthStore } from "@/store/auth.store";
 import { toast } from "@/store/toast.store";
-import { cn } from "@/lib/utils";
 
-type IconComp = React.ComponentType<{ className?: string }>;
-
-const GOAL_ICON: Record<QuestGoalType, IconComp> = {
-  lessons_completed: BookOpen,
-  exp_earned: Zap,
-  gems_earned: Gem,
+const GOAL_EMOJI: Record<QuestGoalType, string> = {
+  lessons_completed: "🎯",
+  exp_earned: "⚡",
+  gems_earned: "💎",
 };
 
-function RewardPills({ gems, exp }: { gems: number; exp: number }) {
+function computeCountdown(): string {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  let s = Math.max(0, Math.floor((midnight.getTime() - now.getTime()) / 1000));
+  const h = String(Math.floor(s / 3600)).padStart(2, "0");
+  s %= 3600;
+  const m = String(Math.floor(s / 60)).padStart(2, "0");
+  const sec = String(s % 60).padStart(2, "0");
+  return `${h}:${m}:${sec}`;
+}
+
+function QuestTimer() {
+  const [txt, setTxt] = useState(() => computeCountdown());
+  useEffect(() => {
+    const id = setInterval(() => setTxt(computeCountdown()), 1000);
+    return () => clearInterval(id);
+  }, []);
   return (
-    <div className="flex items-center gap-2">
-      {gems > 0 && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5">
-          <Gem className="h-3.5 w-3.5 text-primary-dark" />
-          <span className="font-display text-xs font-700 text-primary-dark">{gems}</span>
-        </span>
-      )}
-      {exp > 0 && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-reward-light px-2 py-0.5">
-          <Zap className="h-3.5 w-3.5 text-reward-dark" />
-          <span className="font-display text-xs font-700 text-reward-dark">{exp}</span>
-        </span>
-      )}
+    <div className="quest-timer">
+      <div className="qt-ic">⏳</div>
+      <div>
+        <b>Нові завдання через {txt}</b>
+        <span>Оновлюються щодня опівночі</span>
+      </div>
     </div>
   );
+}
+
+function rewardLine(exp: number, gems: number): string {
+  const parts: string[] = [];
+  if (exp > 0) parts.push(`⚡ +${exp} XP`);
+  if (gems > 0) parts.push(`💎 +${gems}`);
+  return parts.join(" · ") || "Нагорода";
 }
 
 function QuestCard({
@@ -58,73 +62,39 @@ function QuestCard({
   onClaim: (id: string) => void;
   claiming: boolean;
 }) {
-  const Icon = GOAL_ICON[quest.quest.goal_type] ?? Target;
   const target = quest.quest.target_value;
   const progress = Math.min(quest.progress, target);
+  const pct = target > 0 ? Math.round((progress / target) * 100) : 0;
   const isClaimed = quest.status === "claimed";
   const canClaim = quest.is_complete && !isClaimed;
 
   return (
-    <div
-      className={cn(
-        "rounded-2xl p-4 transition-colors",
-        isClaimed ? "border border-correct/40 bg-correct-light/40 shadow-soft" : "glass lift",
+    <div className={`quest${isClaimed || quest.is_complete ? " done" : ""}`}>
+      <div className="q-ic">{GOAL_EMOJI[quest.quest.goal_type] ?? "🎯"}</div>
+      <div className="q-body">
+        <div className="q-title">{quest.quest.title}</div>
+        <div className="q-reward-line">{rewardLine(quest.quest.reward_exp, quest.quest.reward_gems)}</div>
+        <div className="q-bar">
+          <i style={{ width: `${pct}%` }} />
+        </div>
+        <div className="q-prog">
+          {progress} / {target}
+          {isClaimed ? " · отримано" : quest.is_complete ? " · виконано" : ""}
+        </div>
+      </div>
+      {isClaimed ? (
+        <button className="q-claim" disabled>
+          ✓
+        </button>
+      ) : canClaim ? (
+        <button className="q-claim" disabled={claiming} onClick={() => onClaim(quest.id)}>
+          Забрати
+        </button>
+      ) : (
+        <button className="q-claim locked" disabled>
+          {progress} / {target}
+        </button>
       )}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-            isClaimed ? "bg-correct-light" : "bg-primary-light",
-          )}
-        >
-          {isClaimed ? (
-            <Check className="h-5 w-5 text-correct-dark" />
-          ) : (
-            <Icon className="h-5 w-5 text-primary-dark" />
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-sm font-700 text-text-primary">{quest.quest.title}</h3>
-          {quest.quest.description && (
-            <p className="mt-0.5 font-body text-xs text-text-secondary">{quest.quest.description}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="font-display text-xs font-600 text-text-secondary">Прогрес</span>
-          <span className="font-display text-xs font-700 tabular-nums text-text-primary">
-            {progress} / {target}
-          </span>
-        </div>
-        <ProgressBar
-          value={progress}
-          max={target}
-          size="sm"
-          color={quest.is_complete ? "correct" : "primary"}
-        />
-      </div>
-
-      <div className="mt-3 flex items-center justify-between">
-        <RewardPills gems={quest.quest.reward_gems} exp={quest.quest.reward_exp} />
-        {isClaimed ? (
-          <span className="font-display text-xs font-700 text-correct-dark">Отримано</span>
-        ) : (
-          <Button
-            size="sm"
-            disabled={!canClaim}
-            loading={claiming}
-            onClick={() => onClaim(quest.id)}
-            className="shrink-0"
-          >
-            <span className="flex items-center gap-1">
-              <Gift className="h-4 w-4" /> Забрати
-            </span>
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
@@ -142,108 +112,41 @@ function ChainCard({
   const currentStep = chain.steps.find((s) => s.order === chain.current_order);
   const target = chain.current_target ?? currentStep?.quest.target_value ?? 0;
   const progress = Math.min(chain.step_progress, target);
+  const pct = target > 0 ? Math.round((progress / target) * 100) : isCompleted ? 100 : 0;
   const stepReady = !isCompleted && target > 0 && chain.step_progress >= target;
 
   return (
-    <div
-      className={cn(
-        "rounded-2xl p-4 transition-colors",
-        isCompleted ? "border border-correct/40 bg-correct-light/40 shadow-soft" : "glass lift",
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-            isCompleted ? "bg-correct-light" : "bg-primary-light",
-          )}
-        >
-          {isCompleted ? (
-            <Check className="h-5 w-5 text-correct-dark" />
-          ) : (
-            <ListChecks className="h-5 w-5 text-primary-dark" />
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-sm font-700 text-text-primary">{chain.title}</h3>
-          {chain.description && (
-            <p className="mt-0.5 font-body text-xs text-text-secondary">{chain.description}</p>
-          )}
+    <div className={`quest${isCompleted || stepReady ? " done" : ""}`}>
+      <div className="q-ic">🔗</div>
+      <div className="q-body">
+        <div className="q-title">{chain.title}</div>
+        <div className="q-reward-line">
+          {isCompleted
+            ? "Ланцюжок завершено"
+            : rewardLine(currentStep?.quest.reward_exp ?? 0, currentStep?.quest.reward_gems ?? 0)}
+        </div>
+        <div className="q-bar">
+          <i style={{ width: `${pct}%` }} />
+        </div>
+        <div className="q-prog">
+          {isCompleted
+            ? `${chain.steps.length} / ${chain.steps.length} кроків`
+            : `Крок ${chain.current_order} · ${progress} / ${target}`}
         </div>
       </div>
-
-      {/* Step pips */}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {chain.steps.map((step) => {
-          const done = isCompleted || step.order < chain.current_order;
-          const active = !isCompleted && step.order === chain.current_order;
-          return (
-            <span
-              key={step.order}
-              className={cn(
-                "flex h-6 w-6 items-center justify-center rounded-full font-display text-[11px] font-700",
-                done
-                  ? "bg-correct text-white"
-                  : active
-                    ? "bg-primary text-white"
-                    : "bg-border/60 text-text-secondary",
-              )}
-            >
-              {done ? <Check className="h-3.5 w-3.5" /> : step.order}
-            </span>
-          );
-        })}
-      </div>
-
       {isCompleted ? (
-        <p className="mt-3 font-display text-xs font-700 text-correct-dark">Ланцюжок завершено</p>
+        <button className="q-claim" disabled>
+          ✓
+        </button>
+      ) : stepReady ? (
+        <button className="q-claim" disabled={claiming} onClick={() => onClaim(chain.chain_id)}>
+          Забрати
+        </button>
       ) : (
-        <>
-          <div className="mt-3">
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="font-display text-xs font-600 text-text-secondary">
-                {currentStep?.quest.title ?? `Крок ${chain.current_order}`}
-              </span>
-              <span className="font-display text-xs font-700 tabular-nums text-text-primary">
-                {progress} / {target}
-              </span>
-            </div>
-            <ProgressBar
-              value={progress}
-              max={target || 1}
-              size="sm"
-              color={stepReady ? "correct" : "primary"}
-            />
-          </div>
-
-          <div className="mt-3 flex items-center justify-between">
-            <RewardPills
-              gems={currentStep?.quest.reward_gems ?? 0}
-              exp={currentStep?.quest.reward_exp ?? 0}
-            />
-            <Button
-              size="sm"
-              disabled={!stepReady}
-              loading={claiming}
-              onClick={() => onClaim(chain.chain_id)}
-              className="shrink-0"
-            >
-              <span className="flex items-center gap-1">
-                <Gift className="h-4 w-4" /> Забрати крок
-              </span>
-            </Button>
-          </div>
-        </>
+        <button className="q-claim locked" disabled>
+          {progress} / {target}
+        </button>
       )}
-    </div>
-  );
-}
-
-function SectionHeader({ Icon, title }: { Icon: IconComp; title: string }) {
-  return (
-    <div className="flex items-center gap-2 px-1 pt-2">
-      <Icon className="h-4 w-4 text-primary" />
-      <h2 className="font-display text-sm font-800 text-text-primary">{title}</h2>
     </div>
   );
 }
@@ -260,6 +163,7 @@ type PageState =
 
 export default function QuestsPage() {
   const { updateUser } = useAuthStore();
+  const router = useRouter();
   const [state, setState] = useState<PageState>({ status: "loading" });
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
@@ -338,84 +242,89 @@ export default function QuestsPage() {
     }
   };
 
-  if (state.status === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
-      </div>
-    );
-  }
-
-  if (state.status === "error") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas px-4">
-        <p className="font-body text-text-secondary">Не вдалося завантажити завдання</p>
-        <Button onClick={reload}>Спробувати ще раз</Button>
-      </div>
-    );
-  }
-
-  const { daily, weekly, chains } = state;
-  const isEmpty = daily.length === 0 && weekly.length === 0 && chains.length === 0;
-
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-app items-center justify-between px-4 py-3">
-          <h1 className="font-display text-base font-800 text-primary-dark">Завдання</h1>
-          <Target className="h-5 w-5 text-primary" />
+    <GameScreen>
+      <section className="view active">
+        <div className="path-head">
+          <button className="back" onClick={() => router.push("/home")} aria-label="Назад">
+            ←
+          </button>
+          <div>
+            <h2>Завдання</h2>
+            <div className="ps">Щоденні квести · виконуй та отримуй нагороди</div>
+          </div>
         </div>
-      </header>
 
-      <main className="stagger mx-auto max-w-app space-y-3 px-4 py-6">
-        {isEmpty && (
-          <p className="py-12 text-center font-body text-sm text-text-secondary">
-            Наразі немає активних завдань
-          </p>
+        {state.status === "loading" && <div className="league-empty">Завантаження…</div>}
+        {state.status === "error" && (
+          <div className="league-empty">
+            Не вдалося завантажити завдання.{" "}
+            <button className="result-link" onClick={reload} style={{ textDecoration: "underline" }}>
+              Спробувати ще раз
+            </button>
+          </div>
         )}
 
-        {daily.length > 0 && (
+        {state.status === "ready" && (
           <>
-            <SectionHeader Icon={Target} title="Щоденні" />
-            {daily.map((quest) => (
-              <QuestCard
-                key={quest.id}
-                quest={quest}
-                onClaim={handleClaimQuest}
-                claiming={claimingId === quest.id}
-              />
-            ))}
+            <QuestTimer />
+
+            {state.daily.length === 0 &&
+              state.weekly.length === 0 &&
+              state.chains.length === 0 && (
+                <div className="league-empty">Наразі немає активних завдань</div>
+              )}
+
+            {state.daily.length > 0 && (
+              <>
+                <div className="shop-cat">Щоденні</div>
+                <div className="quest-list">
+                  {state.daily.map((quest) => (
+                    <QuestCard
+                      key={quest.id}
+                      quest={quest}
+                      onClaim={handleClaimQuest}
+                      claiming={claimingId === quest.id}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {state.weekly.length > 0 && (
+              <>
+                <div className="shop-cat">Щотижневі</div>
+                <div className="quest-list">
+                  {state.weekly.map((quest) => (
+                    <QuestCard
+                      key={quest.id}
+                      quest={quest}
+                      onClaim={handleClaimQuest}
+                      claiming={claimingId === quest.id}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {state.chains.length > 0 && (
+              <>
+                <div className="shop-cat">Ланцюжки</div>
+                <div className="quest-list">
+                  {state.chains.map((chain) => (
+                    <ChainCard
+                      key={chain.chain_id}
+                      chain={chain}
+                      onClaim={handleClaimChain}
+                      claiming={claimingId === chain.chain_id}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
-
-        {weekly.length > 0 && (
-          <>
-            <SectionHeader Icon={CalendarDays} title="Щотижневі" />
-            {weekly.map((quest) => (
-              <QuestCard
-                key={quest.id}
-                quest={quest}
-                onClaim={handleClaimQuest}
-                claiming={claimingId === quest.id}
-              />
-            ))}
-          </>
-        )}
-
-        {chains.length > 0 && (
-          <>
-            <SectionHeader Icon={ListChecks} title="Ланцюжки" />
-            {chains.map((chain) => (
-              <ChainCard
-                key={chain.chain_id}
-                chain={chain}
-                onClaim={handleClaimChain}
-                claiming={claimingId === chain.chain_id}
-              />
-            ))}
-          </>
-        )}
-      </main>
-    </div>
+      </section>
+    </GameScreen>
   );
 }

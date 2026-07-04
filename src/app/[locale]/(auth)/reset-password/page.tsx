@@ -5,9 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { AuthField, AuthError } from "@/components/auth/AuthField";
 import { Link } from "@/lib/navigation";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -55,16 +53,14 @@ export default function ResetPasswordPage() {
   // Success state
   if (done) {
     return (
-      <div className="flex flex-col items-center gap-4 py-4 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-correct/15">
-          <CheckCircle className="h-8 w-8 text-correct" />
+      <div style={{ textAlign: "center", padding: "8px 0" }}>
+        <div style={{ fontSize: 48, marginBottom: 10 }}>✅</div>
+        <div className="auth-title" style={{ fontSize: 20 }}>
+          Пароль змінено!
         </div>
-        <h2 className="font-display text-md font-700 text-text-primary">Пароль змінено!</h2>
-        <p className="font-body text-sm text-text-secondary">
-          Тепер можеш увійти з новим паролем.
-        </p>
-        <Link href="/login" className="mt-2 w-full">
-          <Button className="w-full">Увійти</Button>
+        <div className="auth-sub">Тепер можеш увійти з новим паролем.</div>
+        <Link href="/login" className="auth-btn" style={{ display: "block", textDecoration: "none" }}>
+          Увійти
         </Link>
       </div>
     );
@@ -73,50 +69,38 @@ export default function ResetPasswordPage() {
   // Invalid / missing token — show error without the form
   if (!token) {
     return (
-      <div className="flex flex-col items-center gap-4 py-4 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-wrong-light">
-          <XCircle className="h-8 w-8 text-wrong-dark" />
+      <div style={{ textAlign: "center", padding: "8px 0" }}>
+        <div style={{ fontSize: 48, marginBottom: 10 }}>✕</div>
+        <div className="auth-title" style={{ fontSize: 20 }}>
+          Посилання недійсне
         </div>
-        <h2 className="font-display text-md font-700 text-text-primary">Посилання недійсне</h2>
-        <p className="font-body text-sm text-text-secondary">
+        <div className="auth-sub">
           Посилання для відновлення пароля недійсне або вже використане.
-        </p>
-        <Link href="/forgot-password" className="font-display text-sm font-600 text-primary hover:underline">
-          Запросити нове посилання
-        </Link>
+        </div>
+        <div className="auth-footer">
+          <Link href="/forgot-password">Запросити нове посилання</Link>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="mb-6">
-        <h2 className="font-display text-md font-700 text-text-primary">Новий пароль</h2>
-        <p className="mt-1 font-body text-sm text-text-secondary">
-          Введіть новий пароль для свого акаунту.
-        </p>
+      <div className="auth-sub" style={{ marginBottom: 22 }}>
+        Введіть новий пароль для свого акаунту.
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-        {formError && (
-          <div className="rounded-md bg-wrong-light px-4 py-3">
-            <p className="font-body text-sm text-wrong-dark">{formError}</p>
-            {(formError.includes("expired") || formError.includes("Invalid")) && (
-              <Link href="/forgot-password" className="mt-1 block font-display text-xs font-600 text-wrong-dark underline">
-                Запросити нове посилання
-              </Link>
-            )}
-          </div>
-        )}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        {formError && <AuthError>{formError}</AuthError>}
 
-        <Input
+        <AuthField
           {...register("new_password")}
           label="Новий пароль"
           type="password"
           autoComplete="new-password"
           error={errors.new_password?.message}
         />
-        <Input
+        <AuthField
           {...register("new_password_confirm")}
           label="Підтвердіть пароль"
           type="password"
@@ -124,9 +108,13 @@ export default function ResetPasswordPage() {
           error={errors.new_password_confirm?.message}
         />
 
-        <Button type="submit" loading={isSubmitting} className="mt-2 w-full">
-          Змінити пароль
-        </Button>
+        <button type="submit" className="auth-btn" disabled={isSubmitting}>
+          {isSubmitting ? "…" : "Змінити пароль"}
+        </button>
+
+        <div className="auth-footer">
+          <Link href="/forgot-password">Запросити нове посилання</Link>
+        </div>
       </form>
     </>
   );

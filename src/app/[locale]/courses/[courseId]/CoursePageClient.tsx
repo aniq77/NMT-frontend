@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Link, useRouter } from "@/lib/navigation";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useRouter } from "@/lib/navigation";
+import { GameScreen } from "@/components/layout/GameScreen";
 import {
   coursesApi,
   SUBJECT_META,
@@ -14,6 +14,45 @@ import {
 
 function isIslandCompleted(cat: CategorySummary): boolean {
   return cat.topics_count > 0 && cat.completed_topics >= cat.topics_count;
+}
+
+/** Ukrainian plural for "острівець" (island). */
+function islandWord(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "острівець";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "острівці";
+  return "острівців";
+}
+
+function SubjectIcon({ subject }: { subject: Subject }) {
+  if (subject === "geometry") {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+        <polygon points="24,6 42,38 6,38" stroke="var(--violet)" strokeWidth="2.5" fill="none" strokeLinejoin="round" />
+        <circle cx="24" cy="28" r="10" stroke="var(--violet)" strokeWidth="2.5" fill="none" />
+      </svg>
+    );
+  }
+  if (subject === "final") {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+        <path d="M12 6 V42" stroke="var(--gold)" strokeWidth="3" strokeLinecap="round" />
+        <path d="M12 8 H36 L30 15 L36 22 H12 Z" fill="var(--gold)" opacity=".85" stroke="var(--gold)" strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  // algebra
+  return (
+    <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+      <path d="M10 15 L20 15 M12.5 15 L12 26 M17.5 15 L17.5 24 C17.5 26 19 26 20 25" stroke="var(--teal-bright)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="28" y1="16" x2="40" y2="16" stroke="var(--teal-bright)" strokeWidth="3" strokeLinecap="round" />
+      <line x1="34" y1="10" x2="34" y2="22" stroke="var(--teal-bright)" strokeWidth="3" strokeLinecap="round" />
+      <line x1="28" y1="36" x2="40" y2="36" stroke="var(--teal-bright)" strokeWidth="3" strokeLinecap="round" />
+      <line x1="10" y1="32" x2="22" y2="40" stroke="var(--teal-bright)" strokeWidth="3" strokeLinecap="round" />
+      <line x1="22" y1="32" x2="10" y2="40" stroke="var(--teal-bright)" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 function SubjectCard({
@@ -28,33 +67,32 @@ function SubjectCard({
   const router = useRouter();
   const meta = SUBJECT_META[subject];
   const completed = islands.filter(isIslandCompleted).length;
-  const progress = islands.length > 0 ? Math.round((completed / islands.length) * 100) : 0;
+  const total = islands.length;
+  const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const done = progress === 100;
+  const modifier = subject === "final" ? "subj-geometry" : `subj-${subject}`;
 
   return (
     <button
       type="button"
+      className={`subj-card ${modifier}`}
       onClick={() => router.push(`/courses/${courseSlug}/subjects/${subject}`)}
-      className="w-full rounded-xl border border-border bg-surface p-4 text-left shadow-card transition-all duration-200 hover:border-primary-mid hover:shadow-modal active:scale-[0.99]"
     >
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-light text-2xl">
-          {meta.emoji}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-base font-700 text-text-primary">{meta.title}</h3>
-          <p className="mt-0.5 font-body text-sm text-text-secondary">
-            {completed} / {islands.length} {islands.length === 1 ? "острів" : "островів"}
-          </p>
-        </div>
-        <span className="text-text-secondary">→</span>
+      <div className="subj-icon">
+        <SubjectIcon subject={subject} />
       </div>
-
-      <div className="mt-3">
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="font-display text-xs font-600 text-text-secondary">Прогрес</span>
-          <span className="font-display text-xs font-700 text-primary">{progress}%</span>
-        </div>
-        <ProgressBar value={progress} size="sm" color={progress === 100 ? "correct" : "primary"} />
+      <div className="subj-name">{meta.title}</div>
+      <div className="subj-info">
+        {total} {islandWord(total)}
+      </div>
+      <div className="subj-prog">
+        <div className="subj-prog-fill" style={{ width: `${progress}%` }} />
+      </div>
+      <div
+        className="subj-status"
+        style={{ color: done ? "var(--green)" : "var(--violet)" }}
+      >
+        {done ? "Завершено" : `${completed} / ${total} пройдено`}
       </div>
     </button>
   );
@@ -75,6 +113,8 @@ export default function CoursePageClient() {
       .finally(() => setLoading(false));
   }, [courseId]);
 
+  const router = useRouter();
+
   // Group islands (categories) by subject, preserving the canonical subject order.
   const bySubject = (course?.categories ?? []).reduce<Record<string, CategorySummary[]>>(
     (acc, cat) => {
@@ -86,49 +126,33 @@ export default function CoursePageClient() {
   const subjects = SUBJECT_ORDER.filter((s) => (bySubject[s]?.length ?? 0) > 0);
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-app items-center gap-3 px-4 py-3">
-          <Link
-            href="/home"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-alt hover:text-text-primary"
-          >
-            <span className="text-lg leading-none">←</span>
-          </Link>
-          <h1 className="font-display text-base font-700 text-text-primary">
-            {course?.title ?? "Курс"}
-          </h1>
+    <GameScreen>
+      <section className="view active">
+        <div className="path-head">
+          <button className="back" onClick={() => router.push("/home")} aria-label="Назад">
+            ←
+          </button>
+          <div>
+            <h2>{course?.title ?? "Курс"}</h2>
+            <div className="ps">Обери розділ</div>
+          </div>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-app px-4 py-6">
-        {loading && (
-          <div className="space-y-3">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-xl bg-surface-alt" />
+        {loading && <div className="league-empty">Завантаження…</div>}
+
+        {!loading && course && (
+          <div className="subj-grid">
+            {subjects.map((subject) => (
+              <SubjectCard
+                key={subject}
+                subject={subject}
+                islands={bySubject[subject]}
+                courseSlug={courseId}
+              />
             ))}
           </div>
         )}
-
-        {!loading && course && (
-          <>
-            <p className="mb-6 font-body text-sm text-text-secondary">
-              Оберіть розділ, щоб почати проходити острови
-            </p>
-
-            <div className="space-y-3">
-              {subjects.map((subject) => (
-                <SubjectCard
-                  key={subject}
-                  subject={subject}
-                  islands={bySubject[subject]}
-                  courseSlug={courseId}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </main>
-    </div>
+      </section>
+    </GameScreen>
   );
 }

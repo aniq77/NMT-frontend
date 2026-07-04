@@ -14,22 +14,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const activeTab = "flex-1 rounded py-1.5 text-center font-display text-sm font-600 bg-surface text-primary shadow-card";
-const inactiveTab = "flex-1 rounded py-1.5 text-center font-display text-sm font-600 text-text-secondary";
-
 function Tabs({ isPhone }: { isPhone: boolean }) {
   const t = useTranslations("auth");
   return (
-    <div className="mb-6">
-      <h2 className="mb-1 font-display text-md font-700 text-text-primary">{t("login.title")}</h2>
-      <div className="mt-4 flex rounded-md border border-border bg-primary-light p-1">
-        <Link href="/login" className={isPhone ? inactiveTab : activeTab}>
-          {t("login.tabEmail")}
-        </Link>
-        <Link href="/login?method=phone" className={isPhone ? activeTab : inactiveTab}>
-          {t("login.tabPhone")}
-        </Link>
-      </div>
+    <div className="auth-tabs">
+      <Link href="/login" className={`auth-tab${isPhone ? "" : " active"}`}>
+        {t("login.tabEmail")}
+      </Link>
+      <Link href="/login?method=phone" className={`auth-tab${isPhone ? " active" : ""}`}>
+        {t("login.tabPhone")}
+      </Link>
     </div>
   );
 }

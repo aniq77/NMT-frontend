@@ -1,27 +1,19 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronRight, Gem, Swords, Trophy, Users } from "lucide-react";
 import { useRouter } from "@/lib/navigation";
+import { GameScreen } from "@/components/layout/GameScreen";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { ApiError } from "@/lib/api/client";
-import { pvpApi, type BattleStatus, type BattleSummary } from "@/lib/api/pvp";
+import { pvpApi, type BattleSummary } from "@/lib/api/pvp";
 import { useAuthStore } from "@/store/auth.store";
-import { cn } from "@/lib/utils";
 
 const DIFFICULTY_LABEL: Record<string, string> = {
   easy: "Легко",
   medium: "Середньо",
   hard: "Складно",
   boss: "Бос",
-};
-
-const STATUS_META: Record<BattleStatus, { label: string; cls: string }> = {
-  waiting: { label: "Очікування", cls: "bg-reward-light text-reward-dark" },
-  active: { label: "Активний", cls: "bg-correct-light text-correct-dark" },
-  finished: { label: "Завершено", cls: "bg-surface-alt text-text-secondary" },
-  cancelled: { label: "Скасовано", cls: "bg-wrong-light text-wrong-dark" },
 };
 
 type PageState =
@@ -83,121 +75,155 @@ export default function PvPPage() {
     }
   };
 
+  const battles = state.status === "ready" ? state.battles : [];
+  const finished = battles.filter((b) => b.status === "finished");
+  const wins = finished.filter((b) => b.winner_user_id === user?.id).length;
+  const losses = finished.filter(
+    (b) => b.winner_user_id && b.winner_user_id !== user?.id,
+  ).length;
+  const winrate = wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
+  const active = battles.filter((b) => b.status === "active" || b.status === "waiting");
+
+  const opponentLetter = (b: BattleSummary) =>
+    (b.opponent_nickname ?? "С").charAt(0).toUpperCase();
+  const subline = (b: BattleSummary) =>
+    `${DIFFICULTY_LABEL[b.difficulty] ?? b.difficulty}${b.wager_gems > 0 ? ` · 💎 ${b.wager_gems}` : ""}`;
+
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-app items-center justify-between px-4 py-3">
-          <h1 className="font-display text-base font-800 text-primary-dark">Дуелі</h1>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setAcceptError(null);
-              setAcceptOpen(true);
-            }}
-          >
-            Прийняти виклик
-          </Button>
+    <GameScreen>
+      <section className="view active">
+        <div className="path-head">
+          <button className="back" onClick={() => router.push("/home")} aria-label="Назад">
+            ←
+          </button>
+          <div>
+            <h2>Дуелі</h2>
+            <div className="ps">Кидай виклик і доводь, хто кращий</div>
+          </div>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-app space-y-4 px-4 py-6">
-        <button
-          type="button"
-          onClick={() => router.push("/friends")}
-          className="flex w-full items-center gap-3 rounded-xl bg-primary p-4 text-left text-white shadow-button transition-transform hover:scale-[1.01] active:scale-[0.99]"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
-            <Users className="h-6 w-6" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-sm font-700">Викликати друга</p>
-            <p className="font-body text-xs opacity-80">Оберіть друга та надішліть виклик на дуель</p>
+        <div className="duel-hero">
+          <div className="dh-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14.5 3.5 21 3l-.5 6.5-9 9" />
+              <path d="M3 16l5 5" />
+              <path d="M9.5 3.5 3 3l.5 6.5 9 9" />
+              <path d="M21 16l-5 5" />
+            </svg>
           </div>
-          <ChevronRight className="h-5 w-5 opacity-80" />
-        </button>
-
-        {state.status === "loading" && (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
+          <h3>Знайти суперника</h3>
+          <p>5 запитань · хто швидше та точніше — той переможе</p>
+          <button className="dh-btn" onClick={() => router.push("/friends")}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m5 3 14 9-14 9z" />
+            </svg>
+            Викликати друга
+          </button>
+          <div style={{ marginTop: 10 }}>
+            <button
+              className="result-link"
+              onClick={() => {
+                setAcceptError(null);
+                setAcceptOpen(true);
+              }}
+            >
+              Прийняти виклик за кодом
+            </button>
           </div>
-        )}
+        </div>
 
+        <div className="duel-stat">
+          <div className="ds win">
+            <b>{wins}</b>
+            <span>ПЕРЕМОГ</span>
+          </div>
+          <div className="ds lose">
+            <b>{losses}</b>
+            <span>ПОРАЗОК</span>
+          </div>
+          <div className="ds">
+            <b>{winrate}%</b>
+            <span>ВІНРЕЙТ</span>
+          </div>
+        </div>
+
+        {state.status === "loading" && <div className="league-empty">Завантаження…</div>}
         {state.status === "error" && (
-          <div className="flex flex-col items-center gap-4 py-12">
-            <p className="font-body text-text-secondary">Не вдалося завантажити бої</p>
-            <Button onClick={reload}>Спробувати ще раз</Button>
+          <div className="league-empty">
+            Не вдалося завантажити бої.{" "}
+            <button className="result-link" onClick={reload} style={{ textDecoration: "underline" }}>
+              Спробувати ще раз
+            </button>
           </div>
         )}
 
         {state.status === "ready" && (
           <>
-            <h2 className="font-display text-sm font-700 uppercase tracking-widest text-text-secondary">
-              Мої бої
-            </h2>
-            {state.battles.length === 0 ? (
-              <p className="py-8 text-center font-body text-sm text-text-secondary">
-                Поки що немає боїв. Викличте друга на дуель!
-              </p>
-            ) : (
-              <div className="stagger space-y-2">
-                {state.battles.map((b) => {
-                  const meta = STATUS_META[b.status];
-                  const won = b.status === "finished" && b.winner_user_id === user?.id;
-                  const lost =
-                    b.status === "finished" && b.winner_user_id && b.winner_user_id !== user?.id;
-                  const clickable = b.status === "active" || b.status === "waiting";
-                  return (
-                    <button
-                      key={b.id}
-                      type="button"
-                      disabled={!clickable}
-                      onClick={() => clickable && router.push(`/pvp/battles/${b.id}`)}
-                      className={cn(
-                        "glass flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-all",
-                        clickable ? "hover:-translate-y-0.5" : "cursor-default",
-                      )}
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-light">
-                        <Swords className="h-5 w-5 text-primary-dark" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-display text-sm font-700 text-text-primary">
-                          проти {b.opponent_nickname ?? "суперника"}
-                        </p>
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <span className="font-body text-xs text-text-secondary">
-                            {DIFFICULTY_LABEL[b.difficulty] ?? b.difficulty}
-                          </span>
-                          {b.wager_gems > 0 && (
-                            <span className="inline-flex items-center gap-0.5 font-display text-xs font-700 text-primary-dark">
-                              <Gem className="h-3 w-3" />
-                              {b.wager_gems}
-                            </span>
-                          )}
-                        </div>
+            {active.length > 0 && (
+              <>
+                <div className="shop-cat" style={{ marginBottom: 14 }}>
+                  Активні дуелі
+                </div>
+                <div className="duel-list" style={{ marginBottom: 8 }}>
+                  {active.map((b) => (
+                    <div className="duel-row" key={b.id}>
+                      <div className="dr-av">{opponentLetter(b)}</div>
+                      <div className="dr-info">
+                        <b>{b.opponent_nickname ?? "суперник"}</b>
+                        <span>{subline(b)}</span>
                       </div>
-                      {won && (
-                        <span className="inline-flex items-center gap-1 font-display text-xs font-700 text-correct-dark">
-                          <Trophy className="h-4 w-4" /> Перемога
-                        </span>
+                      {b.status === "active" ? (
+                        <button
+                          className="dr-state turn"
+                          onClick={() => router.push(`/pvp/battles/${b.id}`)}
+                        >
+                          Ходити
+                        </button>
+                      ) : (
+                        <span className="dr-state wait">Очікування</span>
                       )}
-                      {lost && (
-                        <span className="font-display text-xs font-700 text-wrong-dark">Поразка</span>
-                      )}
-                      {!won && !lost && (
-                        <span className={cn("rounded-full px-2 py-0.5 font-display text-xs font-700", meta.cls)}>
-                          {meta.label}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {finished.length > 0 && (
+              <>
+                <div className="shop-cat" style={{ marginBottom: 14 }}>
+                  Останні результати
+                </div>
+                <div className="duel-list">
+                  {finished.map((b) => {
+                    const won = b.winner_user_id === user?.id;
+                    const lost = b.winner_user_id && b.winner_user_id !== user?.id;
+                    return (
+                      <div className="duel-row" key={b.id}>
+                        <div className="dr-av">{opponentLetter(b)}</div>
+                        <div className="dr-info">
+                          <b>{b.opponent_nickname ?? "суперник"}</b>
+                          <span>{subline(b)}</span>
+                        </div>
+                        {won ? (
+                          <span className="dr-state won">Перемога</span>
+                        ) : lost ? (
+                          <span className="dr-state lost">Поразка</span>
+                        ) : (
+                          <span className="dr-state wait">Нічия</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {battles.length === 0 && (
+              <div className="league-empty">Поки що немає боїв. Викличте друга на дуель!</div>
             )}
           </>
         )}
-      </main>
+      </section>
 
       <Modal
         open={acceptOpen}
@@ -223,6 +249,6 @@ export default function PvPPage() {
           </Button>
         </div>
       </Modal>
-    </div>
+    </GameScreen>
   );
 }

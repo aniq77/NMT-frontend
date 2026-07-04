@@ -1,23 +1,47 @@
-import { GraduationCap } from "lucide-react";
-import { useTranslations } from "next-intl";
-
-function AuthHeader() {
-  const t = useTranslations("common");
-  return (
-    <div className="mb-8 flex flex-col items-center gap-2">
-      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-white shadow-button">
-        <GraduationCap className="h-8 w-8" />
-      </div>
-      <h1 className="font-display text-lg font-800 text-text-primary">{t("appName")}</h1>
-    </div>
-  );
-}
+import { NightSky } from "@/components/layout/NightSky";
+import "../journey/game-mockup.css";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-screen max-w-app flex-col justify-center px-4 py-10">
-      <AuthHeader />
-      <div className="rounded-lg bg-surface p-6 shadow-card">{children}</div>
-    </main>
+    <div className="game-app" style={{ minHeight: "100dvh" }}>
+      <div className="sky" />
+      <div className="aurora a1" />
+      <div className="aurora a2" />
+      <NightSky />
+      <div
+        style={{
+          minHeight: "100dvh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          zIndex: 1,
+          padding: "24px 0",
+        }}
+      >
+        <div className="auth-card">
+          <div className="auth-logo">
+            <svg viewBox="0 0 48 48" fill="none">
+              <path
+                d="M24 3l5 6 8-1-1 8 6 5-6 5 1 8-8-1-5 6-5-6-8 1 1-8-6-5 6-5-1-8 8 1 5-6z"
+                fill="rgba(255,255,255,.2)"
+                stroke="rgba(255,255,255,.5)"
+                strokeWidth="1.4"
+              />
+              <path
+                d="M16 26l5 5 11-13"
+                stroke="#06221f"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div className="auth-title">NMT Journey</div>
+          <div className="auth-sub">Підготовка до НМТ — просто і цікаво</div>
+          {children}
+        </div>
+      </div>
+    </div>
   );
 }

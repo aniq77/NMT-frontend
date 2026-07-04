@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { AuthField, AuthError } from "./AuthField";
 import { GoogleButton } from "./GoogleButton";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -57,54 +56,43 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      {formError && (
-        <p className="rounded-md bg-wrong-light px-4 py-3 font-body text-sm text-wrong-dark">
-          {formError}
-        </p>
-      )}
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      {formError && <AuthError>{formError}</AuthError>}
 
-      <Input
+      <AuthField
         {...register("email")}
         label={t("fields.email")}
         type="email"
         autoComplete="email"
         inputMode="email"
+        placeholder="your@email.com"
         error={errors.email?.message}
       />
-      <div>
-        <Input
-          {...register("password")}
-          label={t("fields.password")}
-          type="password"
-          autoComplete="current-password"
-          error={errors.password?.message}
-        />
-        <div className="mt-1.5 flex justify-end">
-          <Link href="/forgot-password" className="font-display text-xs font-600 text-primary hover:underline">
-            Забули пароль?
-          </Link>
-        </div>
+      <AuthField
+        {...register("password")}
+        label={t("fields.password")}
+        type="password"
+        autoComplete="current-password"
+        placeholder="Введіть пароль"
+        error={errors.password?.message}
+      />
+      <div style={{ textAlign: "right", marginTop: -6, marginBottom: 12 }}>
+        <Link href="/forgot-password" className="auth-footer" style={{ margin: 0, fontSize: 13 }}>
+          Забули пароль?
+        </Link>
       </div>
 
-      <Button type="submit" loading={isSubmitting} className="mt-2 w-full">
-        {t("login.submit")}
-      </Button>
+      <button type="submit" className="auth-btn" disabled={isSubmitting}>
+        {isSubmitting ? "…" : t("login.submit")}
+      </button>
 
-      <div className="relative flex items-center gap-3">
-        <span className="h-px flex-1 bg-border" />
-        <span className="font-body text-sm text-text-secondary">{t("or")}</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
+      <div className="auth-divider">{t("or")}</div>
 
       <GoogleButton onError={setFormError} />
 
-      <p className="text-center font-body text-sm text-text-secondary">
-        {t("login.noAccount")}{" "}
-        <Link href="/register" className="font-600 text-primary hover:underline">
-          {t("login.registerLink")}
-        </Link>
-      </p>
+      <div className="auth-footer">
+        {t("login.noAccount")} <Link href="/register">{t("login.registerLink")}</Link>
+      </div>
     </form>
   );
 }

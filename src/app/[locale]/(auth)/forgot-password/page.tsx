@@ -4,9 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { AuthField } from "@/components/auth/AuthField";
 import { Link } from "@/lib/navigation";
 import { authApi } from "@/lib/api/auth";
 
@@ -33,49 +31,45 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="flex flex-col items-center gap-4 py-4 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-correct/15">
-          <CheckCircle className="h-8 w-8 text-correct" />
+      <div style={{ textAlign: "center", padding: "8px 0" }}>
+        <div style={{ fontSize: 48, marginBottom: 10 }}>📧</div>
+        <div className="auth-title" style={{ fontSize: 20 }}>
+          Перевірте пошту
         </div>
-        <h2 className="font-display text-md font-700 text-text-primary">Перевірте пошту</h2>
-        <p className="font-body text-sm text-text-secondary">
+        <div className="auth-sub">
           Якщо цей email зареєстрований, ми надіслали посилання для відновлення пароля.
-        </p>
-        <Link href="/login" className="mt-2 font-display text-sm font-600 text-primary hover:underline">
-          Повернутись до входу
-        </Link>
+        </div>
+        <div className="auth-footer">
+          <Link href="/login">Повернутись до входу</Link>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="mb-6">
-        <h2 className="font-display text-md font-700 text-text-primary">Відновлення пароля</h2>
-        <p className="mt-1 font-body text-sm text-text-secondary">
-          Введіть email акаунту — надішлемо посилання для скидання пароля.
-        </p>
+      <div className="auth-sub" style={{ marginBottom: 22 }}>
+        Введіть email акаунту — надішлемо посилання для скидання пароля.
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-        <Input
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <AuthField
           {...register("email")}
           label="Email"
           type="email"
           autoComplete="email"
           inputMode="email"
+          placeholder="your@email.com"
           error={errors.email?.message}
         />
 
-        <Button type="submit" loading={isSubmitting} className="w-full">
-          Надіслати посилання
-        </Button>
+        <button type="submit" className="auth-btn" disabled={isSubmitting}>
+          {isSubmitting ? "…" : "Надіслати посилання"}
+        </button>
 
-        <p className="text-center font-body text-sm text-text-secondary">
-          <Link href="/login" className="font-600 text-primary hover:underline">
-            Повернутись до входу
-          </Link>
-        </p>
+        <div className="auth-footer">
+          <Link href="/login">Повернутись до входу</Link>
+        </div>
       </form>
     </>
   );

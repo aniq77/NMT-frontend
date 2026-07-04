@@ -4,10 +4,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { AuthField, AuthError } from "./AuthField";
 import { GoogleButton } from "./GoogleButton";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -63,18 +61,13 @@ export function RegisterForm() {
 
   if (success) {
     return (
-      <div className="flex flex-col items-center gap-4 py-4 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-correct-light">
-          <Mail className="h-8 w-8 text-correct-dark" />
-        </div>
-        <h2 className="font-display text-md font-700 text-text-primary">
+      <div style={{ textAlign: "center", padding: "8px 0" }}>
+        <div style={{ fontSize: 48, marginBottom: 10 }}>📧</div>
+        <div className="auth-title" style={{ fontSize: 20 }}>
           {t("register.checkEmail")}
-        </h2>
-        <p className="font-body text-sm text-text-secondary">{t("register.verifyHint")}</p>
-        <button
-          onClick={() => router.push("/login")}
-          className="font-display text-sm font-600 text-primary hover:underline"
-        >
+        </div>
+        <div className="auth-sub">{t("register.verifyHint")}</div>
+        <button type="button" className="auth-btn" onClick={() => router.push("/login")}>
           {t("register.backToLogin")}
         </button>
       </div>
@@ -82,29 +75,26 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      {formError && (
-        <p className="rounded-md bg-wrong-light px-4 py-3 font-body text-sm text-wrong-dark">
-          {formError}
-        </p>
-      )}
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      {formError && <AuthError>{formError}</AuthError>}
 
-      <Input
+      <AuthField
         {...register("email")}
         label={t("fields.email")}
         type="email"
         autoComplete="email"
         inputMode="email"
+        placeholder="your@email.com"
         error={errors.email?.message}
       />
-      <Input
+      <AuthField
         {...register("nickname")}
         label={t("fields.nickname")}
         type="text"
         autoComplete="nickname"
         error={errors.nickname?.message}
       />
-      <Input
+      <AuthField
         {...register("password")}
         label={t("fields.password")}
         type="password"
@@ -112,7 +102,7 @@ export function RegisterForm() {
         error={errors.password?.message}
         hint={t("register.passwordHint")}
       />
-      <Input
+      <AuthField
         {...register("password_confirm")}
         label={t("fields.passwordConfirm")}
         type="password"
@@ -120,24 +110,17 @@ export function RegisterForm() {
         error={errors.password_confirm?.message}
       />
 
-      <Button type="submit" loading={isSubmitting} className="mt-2 w-full">
-        {t("register.submit")}
-      </Button>
+      <button type="submit" className="auth-btn" disabled={isSubmitting}>
+        {isSubmitting ? "…" : t("register.submit")}
+      </button>
 
-      <div className="relative flex items-center gap-3">
-        <span className="h-px flex-1 bg-border" />
-        <span className="font-body text-sm text-text-secondary">{t("or")}</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
+      <div className="auth-divider">{t("or")}</div>
 
       <GoogleButton onError={setFormError} />
 
-      <p className="text-center font-body text-sm text-text-secondary">
-        {t("register.hasAccount")}{" "}
-        <Link href="/login" className="font-600 text-primary hover:underline">
-          {t("register.loginLink")}
-        </Link>
-      </p>
+      <div className="auth-footer">
+        {t("register.hasAccount")} <Link href="/login">{t("register.loginLink")}</Link>
+      </div>
     </form>
   );
 }

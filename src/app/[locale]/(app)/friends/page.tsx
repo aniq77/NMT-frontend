@@ -1,7 +1,7 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
-import { Check, Swords, Trash2, UserPlus, X } from "lucide-react";
-import { Avatar } from "@/components/ui/Avatar";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "@/lib/navigation";
+import { GameScreen } from "@/components/layout/GameScreen";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -14,9 +14,6 @@ import {
   type Friendship,
 } from "@/lib/api/friends";
 import { toast } from "@/store/toast.store";
-import { cn } from "@/lib/utils";
-
-type Tab = "friends" | "requests";
 
 type Data = {
   friends: Friendship[];
@@ -29,14 +26,25 @@ type PageState =
   | { status: "error" }
   | { status: "ready"; data: Data };
 
-function FriendName({ user }: { user: FriendUser }) {
+function displayName(user: FriendUser): string {
   return user.nickname ?? "Гравець";
 }
 
+const AV_VARIANTS = ["", "g", "v"];
+
+function XpSvg() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13 2L3 14h7l-1 8 10-12h-7z" />
+    </svg>
+  );
+}
+
 export default function FriendsPage() {
-  const [tab, setTab] = useState<Tab>("friends");
+  const router = useRouter();
   const [state, setState] = useState<PageState>({ status: "loading" });
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   // Add-friend modal
   const [addOpen, setAddOpen] = useState(false);
@@ -98,210 +106,167 @@ export default function FriendsPage() {
     }
   };
 
-  if (state.status === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
-      </div>
-    );
-  }
+  const friendsCount = state.status === "ready" ? state.data.friends.length : 0;
+  const filteredFriends = useMemo(() => {
+    const friends = state.status === "ready" ? state.data.friends : [];
+    const q = query.trim().toLowerCase();
+    if (!q) return friends;
+    return friends.filter((f) => displayName(f.friend).toLowerCase().includes(q));
+  }, [state, query]);
 
-  if (state.status === "error") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas px-4">
-        <p className="font-body text-text-secondary">Не вдалося завантажити друзів</p>
-        <Button onClick={reload}>Спробувати ще раз</Button>
-      </div>
-    );
-  }
-
-  const { friends, incoming, outgoing } = state.data;
-  const incomingCount = incoming.length;
+  const openAdd = () => {
+    setAddError(null);
+    setAddSuccess(false);
+    setAddOpen(true);
+  };
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-app items-center justify-between px-4 py-3">
-          <h1 className="font-display text-base font-800 text-primary-dark">Друзі</h1>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setAddError(null);
-              setAddSuccess(false);
-              setAddOpen(true);
-            }}
-          >
-            <span className="flex items-center gap-1">
-              <UserPlus className="h-4 w-4" /> Додати
-            </span>
-          </Button>
+    <GameScreen>
+      <section className="view active">
+        <div className="path-head">
+          <button className="back" onClick={() => router.push("/home")} aria-label="Назад">
+            ←
+          </button>
+          <div>
+            <h2>Друзі</h2>
+            <div className="ps">Навчайтесь разом — змагайтеся за XP</div>
+          </div>
         </div>
-        <div className="mx-auto flex max-w-app">
-          {(["friends", "requests"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={cn(
-                "flex-1 border-b-2 py-2.5 font-display text-sm font-700 transition-colors",
-                tab === t
-                  ? "border-primary text-primary"
-                  : "border-transparent text-text-secondary hover:text-text-primary",
-              )}
-            >
-              {t === "friends" ? `Друзі (${friends.length})` : "Заявки"}
-              {t === "requests" && incomingCount > 0 && (
-                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-wrong px-1 text-xs font-700 text-white">
-                  {incomingCount}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </header>
 
-      <main key={tab} className="stagger mx-auto max-w-app space-y-3 px-4 py-6">
-        {tab === "friends" && (
-          <>
-            {friends.length === 0 ? (
-              <p className="py-12 text-center font-body text-sm text-text-secondary">
-                У вас ще немає друзів. Додайте друга за його ID.
-              </p>
-            ) : (
-              friends.map((f) => (
-                <div
-                  key={f.id}
-                  className="glass lift flex items-center gap-3 rounded-2xl p-3"
-                >
-                  <Avatar
-                    name={f.friend.nickname ?? "Гравець"}
-                    src={f.friend.custom_avatar_url ?? undefined}
-                    level={f.friend.level}
-                    size="md"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-display text-sm font-700 text-text-primary">
-                      <FriendName user={f.friend} />
-                    </p>
-                    <p className="font-body text-xs text-text-secondary">Рівень {f.friend.level}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => setChallengeTarget(f.friend)}
-                    className="shrink-0"
-                  >
-                    <span className="flex items-center gap-1">
-                      <Swords className="h-4 w-4" /> Дуель
-                    </span>
-                  </Button>
-                  <button
-                    type="button"
-                    aria-label="Видалити друга"
-                    disabled={busyId === f.friend.id}
-                    onClick={() => runAction(f.friend.id, () => friendsApi.remove(f.friend.id), "Друга видалено")}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-wrong-light hover:text-wrong-dark disabled:opacity-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))
-            )}
-          </>
+        <div className="fr-actions">
+          <div className="fr-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.2-3.2" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Знайти друга за іменем…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <button className="fr-invite" onClick={openAdd}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Додати
+          </button>
+        </div>
+
+        {state.status === "loading" && <div className="league-empty">Завантаження…</div>}
+        {state.status === "error" && (
+          <div className="league-empty">
+            Не вдалося завантажити друзів.{" "}
+            <button className="result-link" onClick={reload} style={{ textDecoration: "underline" }}>
+              Спробувати ще раз
+            </button>
+          </div>
         )}
 
-        {tab === "requests" && (
+        {state.status === "ready" && (
           <>
-            <section>
-              <h2 className="mb-2 font-display text-xs font-700 uppercase tracking-widest text-text-secondary">
-                Вхідні
-              </h2>
-              {incoming.length === 0 ? (
-                <p className="py-3 font-body text-sm text-text-secondary">Немає вхідних заявок</p>
-              ) : (
-                <div className="space-y-2">
-                  {incoming.map((r) => (
-                    <div
-                      key={r.id}
-                      className="glass lift flex items-center gap-3 rounded-2xl p-3"
+            <div className="shop-cat" style={{ marginTop: 4 }}>
+              Мої друзі · {friendsCount}
+            </div>
+            {filteredFriends.length === 0 ? (
+              <div className="league-empty">
+                {friendsCount === 0
+                  ? "У вас ще немає друзів. Додайте друга за його ID."
+                  : "Нікого не знайдено."}
+              </div>
+            ) : (
+              <div className="fr-list" style={{ marginBottom: 8 }}>
+                {filteredFriends.map((f, i) => (
+                  <div className="fr-row" key={f.id}>
+                    <div className={`fr-av ${AV_VARIANTS[i % AV_VARIANTS.length]}`.trim()}>
+                      {displayName(f.friend).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="fr-info">
+                      <b>{displayName(f.friend)}</b>
+                      <span>Рівень {f.friend.level}</span>
+                    </div>
+                    <div className="fr-xp">
+                      <XpSvg /> {f.friend.exp}
+                    </div>
+                    <button className="fr-add" onClick={() => setChallengeTarget(f.friend)}>
+                      Дуель
+                    </button>
+                    <button
+                      className="fr-add"
+                      style={{ background: "rgba(255,120,120,.14)", color: "#ff9ab0" }}
+                      disabled={busyId === f.friend.id}
+                      aria-label="Видалити друга"
+                      onClick={() =>
+                        runAction(f.friend.id, () => friendsApi.remove(f.friend.id), "Друга видалено")
+                      }
                     >
-                      <Avatar
-                        name={r.from_user.nickname ?? "Гравець"}
-                        src={r.from_user.custom_avatar_url ?? undefined}
-                        level={r.from_user.level}
-                        size="md"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-display text-sm font-700 text-text-primary">
-                          <FriendName user={r.from_user} />
-                        </p>
-                        <p className="font-body text-xs text-text-secondary">хоче додати вас</p>
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {state.data.incoming.length > 0 && (
+              <>
+                <div className="shop-cat">Вхідні заявки · {state.data.incoming.length}</div>
+                <div className="fr-list" style={{ marginBottom: 8 }}>
+                  {state.data.incoming.map((r) => (
+                    <div className="fr-row" key={r.id}>
+                      <div className="fr-av g">{displayName(r.from_user).charAt(0).toUpperCase()}</div>
+                      <div className="fr-info">
+                        <b>{displayName(r.from_user)}</b>
+                        <span>хоче додати вас</span>
                       </div>
                       <button
-                        type="button"
-                        aria-label="Прийняти"
+                        className="fr-add"
                         disabled={busyId === r.id}
                         onClick={() => runAction(r.id, () => friendsApi.accept(r.id), "Тепер ви друзі 🎉")}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-correct-light text-correct-dark transition-colors hover:bg-correct hover:text-white disabled:opacity-50"
                       >
-                        <Check className="h-5 w-5" />
+                        Прийняти
                       </button>
                       <button
-                        type="button"
-                        aria-label="Відхилити"
+                        className="fr-add"
+                        style={{ background: "rgba(255,120,120,.14)", color: "#ff9ab0" }}
                         disabled={busyId === r.id}
+                        aria-label="Відхилити"
                         onClick={() => runAction(r.id, () => friendsApi.decline(r.id))}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-wrong-light text-wrong-dark transition-colors hover:bg-wrong hover:text-white disabled:opacity-50"
                       >
-                        <X className="h-5 w-5" />
+                        ✕
                       </button>
                     </div>
                   ))}
                 </div>
-              )}
-            </section>
+              </>
+            )}
 
-            <section className="pt-2">
-              <h2 className="mb-2 font-display text-xs font-700 uppercase tracking-widest text-text-secondary">
-                Вихідні
-              </h2>
-              {outgoing.length === 0 ? (
-                <p className="py-3 font-body text-sm text-text-secondary">Немає вихідних заявок</p>
-              ) : (
-                <div className="space-y-2">
-                  {outgoing.map((r) => (
-                    <div
-                      key={r.id}
-                      className="glass lift flex items-center gap-3 rounded-2xl p-3"
-                    >
-                      <Avatar
-                        name={r.to_user.nickname ?? "Гравець"}
-                        src={r.to_user.custom_avatar_url ?? undefined}
-                        level={r.to_user.level}
-                        size="md"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-display text-sm font-700 text-text-primary">
-                          <FriendName user={r.to_user} />
-                        </p>
-                        <p className="font-body text-xs text-text-secondary">очікує відповіді</p>
+            {state.data.outgoing.length > 0 && (
+              <>
+                <div className="shop-cat">Вихідні заявки</div>
+                <div className="fr-list">
+                  {state.data.outgoing.map((r) => (
+                    <div className="fr-row" key={r.id}>
+                      <div className="fr-av v">{displayName(r.to_user).charAt(0).toUpperCase()}</div>
+                      <div className="fr-info">
+                        <b>{displayName(r.to_user)}</b>
+                        <span>очікує відповіді</span>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <button
+                        className="fr-add"
                         disabled={busyId === r.id}
                         onClick={() => runAction(r.id, () => friendsApi.cancel(r.id))}
                       >
                         Скасувати
-                      </Button>
+                      </button>
                     </div>
                   ))}
                 </div>
-              )}
-            </section>
+              </>
+            )}
           </>
         )}
-      </main>
+      </section>
 
       {/* Add friend modal */}
       <Modal
@@ -337,6 +302,6 @@ export default function FriendsPage() {
         target={challengeTarget}
         onClose={() => setChallengeTarget(null)}
       />
-    </div>
+    </GameScreen>
   );
 }

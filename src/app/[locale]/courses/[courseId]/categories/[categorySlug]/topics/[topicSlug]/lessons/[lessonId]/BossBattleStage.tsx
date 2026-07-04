@@ -50,6 +50,9 @@ export function BossBattleStage({ bossName, bossHp, heroHp, combo, turn }: Props
 
   useEffect(() => {
     if (!turn) return;
+    // Animation is driven by the external `turn` prop changing — a legitimate
+    // sync-external-event effect, not derived state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFx({ attacker: turn.attacker, crit: turn.crit });
     const t = setTimeout(() => setFx(null), 600);
     return () => clearTimeout(t);

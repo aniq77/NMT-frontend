@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckCircle, Loader2, X } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "@/lib/navigation";
@@ -33,22 +32,20 @@ export default function VerifyEmailPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex flex-col items-center gap-4 py-4 text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="font-body text-sm text-text-secondary">{t("verifyEmail.verifying")}</p>
+      <div style={{ textAlign: "center", padding: "8px 0" }}>
+        <div style={{ fontSize: 44, marginBottom: 10 }}>⏳</div>
+        <div className="auth-sub">{t("verifyEmail.verifying")}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-wrong-light">
-        <X className="h-8 w-8 text-wrong-dark" />
-      </div>
-      <h2 className="font-display text-md font-700 text-text-primary">
+    <div style={{ textAlign: "center", padding: "8px 0" }}>
+      <div style={{ fontSize: 48, marginBottom: 10 }}>✕</div>
+      <div className="auth-title" style={{ fontSize: 20 }}>
         {t("verifyEmail.errorTitle")}
-      </h2>
-      <p className="font-body text-sm text-text-secondary">{t("verifyEmail.errorHint")}</p>
+      </div>
+      <div className="auth-sub">{t("verifyEmail.errorHint")}</div>
     </div>
   );
 }
