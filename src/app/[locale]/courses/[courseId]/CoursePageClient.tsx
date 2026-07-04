@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/lib/navigation";
 import { GameScreen } from "@/components/layout/GameScreen";
@@ -104,14 +104,22 @@ export default function CoursePageClient() {
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setLoadError(false);
     coursesApi
       .detail(courseId)
       .then(setCourse)
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, [courseId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   const router = useRouter();
 
@@ -140,7 +148,20 @@ export default function CoursePageClient() {
 
         {loading && <div className="league-empty">Завантаження…</div>}
 
-        {!loading && course && (
+        {!loading && loadError && (
+          <div className="league-empty">
+            Не вдалося завантажити курс. Перевірте зʼєднання.{" "}
+            <button className="result-link" onClick={load} style={{ textDecoration: "underline" }}>
+              Спробувати ще раз
+            </button>
+          </div>
+        )}
+
+        {!loading && !loadError && course && subjects.length === 0 && (
+          <div className="league-empty">Розділи ще не додані</div>
+        )}
+
+        {!loading && course && subjects.length > 0 && (
           <div className="subj-grid">
             {subjects.map((subject) => (
               <SubjectCard

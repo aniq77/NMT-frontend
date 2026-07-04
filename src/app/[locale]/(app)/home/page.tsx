@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "@/lib/navigation";
+import { Link, useRouter } from "@/lib/navigation";
 import { useAuthStore } from "@/store/auth.store";
 
 type StreakStatus = "broken" | "at-risk" | null;
 
 export default function HomePage() {
   const { user, fetchMe } = useAuthStore();
+  const router = useRouter();
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
@@ -38,10 +39,11 @@ export default function HomePage() {
   // back gracefully when there is no authenticated user yet.
   const greetingName = user?.nickname ?? user?.email ?? null;
 
-  // Only Математика is functional for now. Same-origin relative path so it
-  // resolves identically on localhost, Preview and Production.
+  // Only Математика is functional for now. Use the locale-aware router so the
+  // current locale (e.g. /en) is preserved and it's a client-side transition,
+  // consistent with the rest of the course flow.
   const openMathematics = () => {
-    window.location.href = "/courses/mathematics";
+    router.push("/courses/mathematics");
   };
 
   return (
