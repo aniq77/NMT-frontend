@@ -105,8 +105,8 @@ export default function HomePage() {
             <circle cx="350" cy="40" r="22" fill="#e8f0ff" opacity=".5" />
             <g stroke="#9fd2ff" strokeWidth="1" opacity=".6" fill="none"><path d="M60 70 L120 60 L90 120 Z" /></g>
             <circle cx="60" cy="70" r="2.5" fill="#ffe08a" /><circle cx="120" cy="60" r="2.5" fill="#ffe08a" /><circle cx="90" cy="120" r="2.5" fill="#ffe08a" />
-            <text x="330" y="150" fill="#cfe4ff" opacity=".5" fontFamily="Playfair Display" fontSize="34">π</text>
-            <text x="250" y="190" fill="#cfe4ff" opacity=".4" fontFamily="Playfair Display" fontSize="26">∑</text>
+            <text x="330" y="150" fill="#cfe4ff" opacity=".5" fontFamily="Prata" fontSize="34">π</text>
+            <text x="250" y="190" fill="#cfe4ff" opacity=".4" fontFamily="Prata" fontSize="26">∑</text>
           </svg></div>
           <div className="emblem"><svg viewBox="0 0 48 48" fill="none" width="100%" height="100%"><path d="M10 15 L20 15 M12.5 15 L12 26 M17.5 15 L17.5 24 C17.5 26 19 26 20 25" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /><circle cx="33" cy="14" r="1.7" fill="#fff" /><line x1="27" y1="19" x2="39" y2="19" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" /><circle cx="33" cy="24" r="1.7" fill="#fff" /><line x1="14" y1="31" x2="14" y2="39" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" /><line x1="10" y1="35" x2="18" y2="35" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" /><line x1="29" y1="31" x2="37" y2="39" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" /><line x1="37" y1="31" x2="29" y2="39" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" /></svg></div>
           <div>

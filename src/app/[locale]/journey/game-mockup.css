@@ -1,5 +1,5 @@
 /* AUTO-GENERATED from nmt-boss-battle mockup. All selectors scoped under .game-app to isolate from the app. Do not edit by hand — regenerate. */
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prata&family=Inter:wght@400;500;600;700&display=swap');
 
 .game-app {
   --night-1:#0a1830; --night-2:#0c2a39; --night-3:#0e3a3a;
@@ -12,8 +12,8 @@
   --glass:rgba(16,40,50,.55);
   --glass-line:rgba(120,210,200,.22);
   --shadow:0 24px 60px -22px rgba(0,0,0,.7);
-  --fd:'Playfair Display',serif;
-  --fu:'Comfortaa',sans-serif;
+  --fd:'Prata',Georgia,serif;
+  --fu:'Inter',system-ui,sans-serif;
 }
 .game-app * {margin:0;padding:0;box-sizing:border-box}
 .game-app {scroll-behavior:smooth}

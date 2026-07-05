@@ -114,7 +114,7 @@ export default function UIKitPage() {
 
         {/* ── Typography ── */}
         <Section title="Типографіка">
-          <Sub label="Display — Nunito">
+          <Sub label="Display — Prata">
             <div className="space-y-3">
               <div>
                 <p className="font-display text-2xl font-800 text-text-primary">2xl · 38px · 800</p>
