@@ -156,6 +156,14 @@ const TileBell = (
     <line x1="12" y1="3" x2="12" y2="1" stroke="#c97080" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
+const TileId = (
+  <svg viewBox="0 0 24 24" fill="none" width="100%" height="100%">
+    <rect x="3" y="6" width="18" height="12" rx="2.5" fill="#a99cf0" stroke="#7d6fd1" strokeWidth="1" />
+    <circle cx="9" cy="12" r="2.5" fill="#fff" />
+    <line x1="14" y1="10.5" x2="18" y2="10.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="14" y1="13.5" x2="18" y2="13.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
 
 // royal-pass sticker icons
 const StHeart = <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 16 C10 16 3 11.5 3 6.5 C3 4 5 2.5 7.5 2.5 C8.8 2.5 9.5 3.2 10 4 C10.5 3.2 11.2 2.5 12.5 2.5 C15 2.5 17 4 17 6.5 C17 11.5 10 16 10 16Z" fill="#e35d72" /></svg>;
@@ -182,6 +190,7 @@ export default function ProfilePage() {
   const [streakError, setStreakError] = useState("");
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
+  const [idCopied, setIdCopied] = useState(false);
 
   useEffect(() => {
     fetchMe().catch(() => {});
@@ -203,6 +212,17 @@ export default function ProfilePage() {
   async function handleLogout() {
     await logout();
     router.push("/login");
+  }
+
+  async function handleCopyId() {
+    if (!user) return;
+    try {
+      await navigator.clipboard.writeText(user.id);
+      setIdCopied(true);
+      setTimeout(() => setIdCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable (e.g. non-secure context) — ignore silently.
+    }
   }
 
   async function handleRestoreStreak() {
@@ -327,6 +347,19 @@ export default function ProfilePage() {
           <div className="glass block">
             <div className="bt-row"><div className="bt">Акаунт</div></div>
             <div className="tiles">
+              <div
+                className="tile"
+                onClick={handleCopyId}
+                style={{ cursor: "pointer" }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyId(); } }}
+                title="Натисніть, щоб скопіювати"
+              >
+                <div className="ti">{TileId}</div>
+                <div className="tb"><small>Мій ID (для друзів)</small><b style={{ whiteSpace: "normal", wordBreak: "break-all", fontSize: 12, lineHeight: 1.35 }}>{user.id}</b></div>
+                <span className="tag">{idCopied ? "✓ Скопійовано" : "Копіювати"}</span>
+              </div>
               <div className="tile"><div className="ti">{TileMail}</div><div className="tb"><small>Email</small><b>{user.email}</b></div>{user.is_email_verified && <span className="tag">✓</span>}</div>
               <div className="tile g"><div className="ti">{TileLogin}</div><div className="tb"><small>Метод входу</small><b>{PROVIDER_LABEL[user.auth_provider]}</b></div></div>
               <div className="tile v"><div className="ti">{TileGlobe}</div><div className="tb"><small>Мова інтерфейсу</small><b>Українська</b></div></div>
