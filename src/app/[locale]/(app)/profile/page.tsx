@@ -190,7 +190,7 @@ export default function ProfilePage() {
   const [streakError, setStreakError] = useState("");
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
-  const [idCopied, setIdCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   useEffect(() => {
     fetchMe().catch(() => {});
@@ -214,15 +214,30 @@ export default function ProfilePage() {
     router.push("/login");
   }
 
-  async function handleCopyId() {
+  async function handleCopyCode() {
     if (!user) return;
     try {
-      await navigator.clipboard.writeText(user.id);
-      setIdCopied(true);
-      setTimeout(() => setIdCopied(false), 2000);
+      await navigator.clipboard.writeText(user.player_code || user.id);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
     } catch {
       // Clipboard API unavailable (e.g. non-secure context) — ignore silently.
     }
+  }
+
+  async function handleShareCode() {
+    if (!user) return;
+    const code = user.player_code || user.id;
+    // Native share sheet where available (mobile PWA), otherwise fall back to copy.
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ text: `Додай мене в NMT Game за кодом ${code}` });
+      } catch {
+        // User dismissed the share sheet, or share failed — nothing to do.
+      }
+      return;
+    }
+    await handleCopyCode();
   }
 
   async function handleRestoreStreak() {
@@ -349,16 +364,29 @@ export default function ProfilePage() {
             <div className="tiles">
               <div
                 className="tile"
-                onClick={handleCopyId}
+                onClick={handleCopyCode}
                 style={{ cursor: "pointer" }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyId(); } }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyCode(); } }}
                 title="Натисніть, щоб скопіювати"
               >
                 <div className="ti">{TileId}</div>
-                <div className="tb"><small>Мій ID (для друзів)</small><b style={{ whiteSpace: "normal", wordBreak: "break-all", fontSize: 12, lineHeight: 1.35 }}>{user.id}</b></div>
-                <span className="tag">{idCopied ? "✓ Скопійовано" : "Копіювати"}</span>
+                <div className="tb">
+                  <small>Мій код (для друзів)</small>
+                  <b style={{ fontSize: 20, letterSpacing: 3, fontFamily: "var(--font-mono, ui-monospace, monospace)" }}>{user.player_code || user.id}</b>
+                </div>
+                <span style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="tag"
+                    style={{ cursor: "pointer", border: "none" }}
+                    onClick={handleShareCode}
+                  >
+                    Поділитися
+                  </button>
+                  <span className="tag">{codeCopied ? "✓ Скопійовано" : "Копіювати"}</span>
+                </span>
               </div>
               <div className="tile"><div className="ti">{TileMail}</div><div className="tb"><small>Email</small><b>{user.email}</b></div>{user.is_email_verified && <span className="tag">✓</span>}</div>
               <div className="tile g"><div className="ti">{TileLogin}</div><div className="tb"><small>Метод входу</small><b>{PROVIDER_LABEL[user.auth_provider]}</b></div></div>
