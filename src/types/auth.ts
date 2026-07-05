@@ -7,6 +7,9 @@ export type EquippedSkin = {
 
 export type User = {
   id: string;
+  // Short, human-friendly friend code (8 chars, e.g. "K7QX9MRP" — no 0/O/1/I/L).
+  // Shareable identifier used to add friends / send PvP challenges.
+  player_code: string;
   email: string;
   nickname: string | null;
   auth_provider: "email" | "google" | "phone";

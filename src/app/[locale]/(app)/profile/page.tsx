@@ -185,7 +185,7 @@ const IconGift = (
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, fetchMe, restoreStreak, logout } = useAuthStore();
+  const { user, isAuthenticated, fetchMe, restoreStreak, logout } = useAuthStore();
   const [isRestoring, setIsRestoring] = useState(false);
   const [streakError, setStreakError] = useState("");
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -203,11 +203,13 @@ export default function ProfilePage() {
 
   // The profile is entirely the signed-in user's own data, so it can't degrade
   // to a public view. Send unauthenticated visitors to login instead of
-  // rendering a blank page. (Persist rehydrates synchronously, so a signed-in
-  // user already has `user` on first client render and is never redirected.)
+  // rendering a blank page. Key off `isAuthenticated`, not `user`: after a
+  // persist migration the session flag survives while `user` is briefly null
+  // until `fetchMe()` resolves — redirecting on `!user` would bounce a
+  // signed-in user to login during that window.
   useEffect(() => {
-    if (!user) router.replace("/login");
-  }, [user, router]);
+    if (!isAuthenticated) router.replace("/login");
+  }, [isAuthenticated, router]);
 
   async function handleLogout() {
     await logout();

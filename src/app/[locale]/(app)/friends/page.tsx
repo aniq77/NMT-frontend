@@ -85,7 +85,8 @@ export default function FriendsPage() {
   };
 
   const handleAdd = async () => {
-    const value = addId.trim();
+    // Backend already upper()/strip()s, but normalise here too for clean UX.
+    const value = addId.trim().toUpperCase();
     if (!value) return;
     setAdding(true);
     setAddError(null);
@@ -96,11 +97,18 @@ export default function FriendsPage() {
       toast.success("Запит надіслано");
       fetchData();
     } catch (err) {
-      setAddError(
-        err instanceof ApiError && err.status === 400
-          ? "Неможливо надіслати запит цьому користувачу"
-          : "Не вдалося надіслати запит",
-      );
+      if (err instanceof ApiError && err.status === 400) {
+        // Unknown code → { "detail": "User not found." }; anything else is a
+        // policy error (already friends, request pending, self, …).
+        const detail = typeof err.data?.detail === "string" ? err.data.detail : "";
+        setAddError(
+          detail === "User not found."
+            ? "Гравець з таким кодом не знайдений"
+            : "Неможливо надіслати запит цьому користувачу",
+        );
+      } else {
+        setAddError("Не вдалося надіслати запит");
+      }
     } finally {
       setAdding(false);
     }
@@ -172,7 +180,7 @@ export default function FriendsPage() {
             {filteredFriends.length === 0 ? (
               <div className="league-empty">
                 {friendsCount === 0
-                  ? "У вас ще немає друзів. Додайте друга за його ID."
+                  ? "У вас ще немає друзів. Додайте друга за його кодом."
                   : "Нікого не знайдено."}
               </div>
             ) : (
@@ -277,13 +285,17 @@ export default function FriendsPage() {
       >
         <div className="space-y-4">
           <p className="font-body text-sm text-text-secondary">
-            Введіть ID користувача, щоб надіслати запит у друзі.
+            Введіть код гравця (8 символів), щоб надіслати запит у друзі. Код можна знайти у профілі.
           </p>
           <Input
-            placeholder="ID користувача"
+            placeholder="Код гравця (напр. K7QX9MRP)"
             value={addId}
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
             onChange={(e) => {
-              setAddId(e.target.value);
+              // Uppercase + drop whitespace so the field always shows a clean code.
+              setAddId(e.target.value.toUpperCase().replace(/\s+/g, ""));
               setAddSuccess(false);
               setAddError(null);
             }}
