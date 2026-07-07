@@ -1,5 +1,6 @@
 import { NightSky } from "@/components/layout/NightSky";
 import "../journey/game-mockup.css";
+import "../journey/game-app-light.css";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
