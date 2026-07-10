@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { MathText } from "@/components/ui/MathText";
 import { Modal } from "@/components/ui/Modal";
 import { ApiError } from "@/lib/api/client";
-import { lessonsApi, type Question } from "@/lib/api/lessons";
+import type { AnswerPayload, Question } from "@/lib/api/lessons";
 import { pvpApi, type BattleDetail, type BattleResult } from "@/lib/api/pvp";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -33,14 +33,13 @@ export default function BattlePage() {
   const [checkedId, setCheckedId] = useState<string | null>(null);
   const [correctIds, setCorrectIds] = useState<string[]>([]);
   const [checking, setChecking] = useState(false);
-  const [correctCount, setCorrectCount] = useState(0);
   const [combo, setCombo] = useState(0);
-  const [maxCombo, setMaxCombo] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [result, setResult] = useState<BattleResult | null>(null);
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
 
   const submittedRef = useRef(false);
+  const answersRef = useRef<AnswerPayload[]>([]);
 
   // ── Load battle ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -62,15 +61,13 @@ export default function BattlePage() {
   }, [battleId]);
 
   // ── Submit ──────────────────────────────────────────────────────────────────
-  const submitScore = useCallback(
-    async (finalCorrect: number, finalMaxCombo: number) => {
+  const submitAnswers = useCallback(
+    async (finalAnswers: AnswerPayload[]) => {
       if (submittedRef.current) return;
       submittedRef.current = true;
       setPhase("submitting");
-      const total = questions.length || 1;
-      const score = Math.round((finalCorrect / total) * 100);
       try {
-        const res = await pvpApi.submit(battleId, { score, max_combo: finalMaxCombo });
+        const res = await pvpApi.submit(battleId, { answers: finalAnswers });
         setResult(res);
         setPhase("result");
         fetchMe().catch(() => {});
@@ -79,7 +76,7 @@ export default function BattlePage() {
         setPhase("finished");
       }
     },
-    [battleId, questions.length, fetchMe],
+    [battleId, fetchMe],
   );
 
   // ── Countdown ─────────────────────────────────────────────────────────────────
@@ -90,36 +87,27 @@ export default function BattlePage() {
     const id = setTimeout(() => {
       if (secondsLeft <= 1) {
         setSecondsLeft(0);
-        submitScore(correctCount, maxCombo);
+        submitAnswers(answersRef.current);
       } else {
         setSecondsLeft(secondsLeft - 1);
       }
     }, 1000);
     return () => clearTimeout(id);
-  }, [phase, secondsLeft, correctCount, maxCombo, submitScore]);
+  }, [phase, secondsLeft, submitAnswers]);
 
   const current = questions[currentIdx];
 
   const handleCheck = async () => {
     if (!selectedId || !battle?.lesson || checking) return;
     setChecking(true);
+    const payload: AnswerPayload = {
+      question_id: current.id,
+      selected_option_ids: [selectedId],
+    };
     try {
-      const res = await lessonsApi.answer(battle.lesson.id, {
-        question_id: current.id,
-        selected_option_ids: [selectedId],
-      });
       setCheckedId(selectedId);
-      setCorrectIds(res.correct_option_ids);
-      if (res.is_correct) {
-        setCorrectCount((c) => c + 1);
-        setCombo((c) => {
-          const next = c + 1;
-          setMaxCombo((m) => Math.max(m, next));
-          return next;
-        });
-      } else {
-        setCombo(0);
-      }
+      answersRef.current = [...answersRef.current, payload];
+      setCombo(0);
     } catch {
       // network hiccup — let the user retry the check
     } finally {
@@ -130,7 +118,7 @@ export default function BattlePage() {
   const handleNext = () => {
     const isLast = currentIdx >= questions.length - 1;
     if (isLast) {
-      submitScore(correctCount, maxCombo);
+      submitAnswers(answersRef.current);
       return;
     }
     setCurrentIdx((i) => i + 1);
@@ -374,7 +362,7 @@ export default function BattlePage() {
               let optState: "default" | "selected" | "correct" | "wrong" = "default";
               if (answered) {
                 if (correctIds.includes(opt.id)) optState = "correct";
-                else if (opt.id === checkedId) optState = "wrong";
+                else if (opt.id === checkedId) optState = "selected";
               } else if (opt.id === selectedId) {
                 optState = "selected";
               }
@@ -406,7 +394,7 @@ export default function BattlePage() {
                 loading={checking}
                 onClick={handleCheck}
               >
-                Перевірити
+                Підтвердити
               </Button>
             )}
           </div>

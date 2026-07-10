@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { Question } from "./lessons";
+import type { AnswerPayload, Question } from "./lessons";
 import type { PvPDifficulty } from "./friends";
 
 export type BattleStatus = "waiting" | "active" | "finished" | "cancelled";
@@ -65,9 +65,8 @@ export type BattleResult = {
   rewards: Record<string, number> | null;
 };
 
-export type SubmitScorePayload = {
-  score: number;
-  max_combo: number;
+export type SubmitBattleAnswersPayload = {
+  answers: AnswerPayload[];
 };
 
 export const pvpApi = {
@@ -82,7 +81,7 @@ export const pvpApi = {
   getBattle: (battleId: string) =>
     api.get<BattleDetail>(`/api/v1/pvp/battles/${battleId}/`),
 
-  submit: (battleId: string, payload: SubmitScorePayload) =>
+  submit: (battleId: string, payload: SubmitBattleAnswersPayload) =>
     api.post<BattleResult>(`/api/v1/pvp/battles/${battleId}/submit/`, payload),
 
   forfeit: (battleId: string) =>
