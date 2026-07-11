@@ -1,12 +1,12 @@
 "use client";
 import { useAuthStore } from "@/store/auth.store";
 
-/** Top HUD (crest + streak/gems/xp) in the mockup's night style, real user data. */
+/** Top HUD (crest + streak/gems/energy) in the mockup's night style, real user data. */
 export function AppHud() {
   const user = useAuthStore((s) => s.user);
   const streak = user?.streak_days ?? 0;
   const gems = user?.gems ?? 0;
-  const xp = user?.exp ?? 0;
+  const energy = user?.energy ?? 0;
 
   return (
     <header className="hud">
@@ -28,7 +28,7 @@ export function AppHud() {
         </div>
         <div className="pill xp">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7z" /></svg>
-          <span>{xp}</span>
+          <span>{energy}</span>
         </div>
       </div>
     </header>
