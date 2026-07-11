@@ -238,8 +238,10 @@
 .game-app .tile .tb b {font-family:var(--fu);font-weight:700;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .game-app .tile .tag {font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;background:rgba(84,224,160,.18);color:#7cf0bb;flex:0 0 auto}
 
-.game-app .tiles.grid2 .tile {justify-content:flex-start}
+.game-app .tiles.grid2 .tile {justify-content:flex-start;gap:10px;padding:12px 12px}
 .game-app .tiles.grid2 .tile .tb {flex:1;min-width:0;text-align:left}
+.game-app .tiles.grid2 .tile .tb small {font-size:10px}
+.game-app .tiles.grid2 .tile .tb b {font-size:12.5px;line-height:1.2}
 
 @media(max-width:760px){
   .game-app .pbanner {grid-template-columns:auto 1fr;gap:18px}
