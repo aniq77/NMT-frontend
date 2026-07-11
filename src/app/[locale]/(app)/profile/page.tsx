@@ -257,7 +257,13 @@ export default function ProfilePage() {
   // Redirecting to /login (see effect above); render nothing this frame.
   if (!user) return null;
 
-  const expPercent = Math.round((user.exp / Math.max(user.exp_to_next_level, 1)) * 100);
+  const levelExp = user.exp_in_current_level ?? Math.max(0, user.exp - user.exp_to_next_level);
+  const levelExpRequired =
+    user.exp_required_for_next_level ?? levelExp + user.exp_to_next_level;
+  const expPercent = Math.min(
+    100,
+    Math.round((levelExp / Math.max(levelExpRequired, 1)) * 100),
+  );
   const canRestoreStreak = user.lost_streak_days > 0 && user.gems >= 50;
   const initial = (user.nickname ?? user.email).charAt(0).toUpperCase();
   const skin = user.equipped_skin;
@@ -282,7 +288,7 @@ export default function ProfilePage() {
             <div className="pxp">
               <div className="row">
                 <span>XP до рівня {user.level + 1}</span>
-                <span>{user.exp.toLocaleString("uk")} / {user.exp_to_next_level.toLocaleString("uk")}</span>
+                <span>{levelExp.toLocaleString("uk")} / {levelExpRequired.toLocaleString("uk")}</span>
               </div>
               <div className="track"><div className="fill" style={{ width: `${expPercent}%` }} /></div>
             </div>

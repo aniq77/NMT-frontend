@@ -17,6 +17,8 @@ export type User = {
   equipped_skin: EquippedSkin | null;
   energy: number;
   exp: number;
+  exp_in_current_level: number;
+  exp_required_for_next_level: number;
   exp_to_next_level: number;
   level: number;
   gems: number;
