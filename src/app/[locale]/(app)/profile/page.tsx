@@ -227,21 +227,6 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleShareCode() {
-    if (!user) return;
-    const code = user.player_code || user.id;
-    // Native share sheet where available (mobile PWA), otherwise fall back to copy.
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ text: `Додай мене в NMT Game за кодом ${code}` });
-      } catch {
-        // User dismissed the share sheet, or share failed — nothing to do.
-      }
-      return;
-    }
-    await handleCopyCode();
-  }
-
   async function handleRestoreStreak() {
     setIsRestoring(true);
     setStreakError("");
@@ -389,11 +374,10 @@ export default function ProfilePage() {
                     type="button"
                     className="tag"
                     style={{ cursor: "pointer", border: "none" }}
-                    onClick={handleShareCode}
+                    onClick={handleCopyCode}
                   >
-                    Поділитися
+                    {codeCopied ? "✓ Скопійовано" : "Копіювати"}
                   </button>
-                  <span className="tag">{codeCopied ? "✓ Скопійовано" : "Копіювати"}</span>
                 </span>
               </div>
               <div className="tile"><div className="ti">{TileMail}</div><div className="tb"><small>Email</small><b>{user.email}</b></div>{user.is_email_verified && <span className="tag">✓</span>}</div>
