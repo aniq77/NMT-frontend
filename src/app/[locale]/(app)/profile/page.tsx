@@ -7,20 +7,12 @@ import { SkinIcon, hasSkinIcon } from "@/components/ui/SkinIcon";
 import { AchievementIcon } from "@/components/achievements/AchievementIcon";
 import { achievementsApi } from "@/lib/api/achievements";
 import type { User } from "@/types/auth";
-import type { Achievement, AchievementTier } from "@/types/achievements";
+import type { Achievement } from "@/types/achievements";
 
 const PROVIDER_LABEL: Record<User["auth_provider"], string> = {
   email: "Пошта",
   google: "Google",
   phone: "Телефон",
-};
-
-// Map the backend achievement tier onto the game-app medallion rarity styles.
-const TIER_RARITY: Record<AchievementTier, string> = {
-  bronze: "r-common",
-  silver: "r-rare",
-  gold: "r-epic",
-  platinum: "r-legend",
 };
 
 function formatDate(iso: string): string {
@@ -195,6 +187,7 @@ export default function ProfilePage() {
   const canRestoreStreak = user.lost_streak_days > 0 && user.gems >= 50;
   const initial = (user.nickname ?? user.email).charAt(0).toUpperCase();
   const skin = user.equipped_skin;
+  const profileAchievements = achievements.slice(0, 8);
   const unlockedCount = achievements.filter((a) => a.is_unlocked || a.unlocked).length;
 
   return (
@@ -227,7 +220,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ACHIEVEMENTS — real data from the API, rendered in game-app medal style */}
+        {/* ACHIEVEMENTS — real data from the API */}
         <div className="glass block">
           <div className="bt-row">
             <div className="bt">Досягнення</div>
@@ -244,7 +237,7 @@ export default function ProfilePage() {
             <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Ще немає досягнень</p>
           ) : (
             <div className="ach-grid">
-              {achievements.map((ach) => {
+              {profileAchievements.map((ach) => {
                 const progress =
                   ach.condition_value > 0
                     ? Math.min(100, Math.round((ach.user_progress / ach.condition_value) * 100))
@@ -253,10 +246,10 @@ export default function ProfilePage() {
                 return (
                   <div
                     key={ach.id}
-                    className={`medal ${TIER_RARITY[ach.tier]}${isUnlocked ? "" : " locked"}`}
+                    className={`profile-achievement${isUnlocked ? "" : " locked"}`}
                     title={`${ach.name}: ${ach.description}. ${ach.progress_label}`}
                   >
-                    <div className="disc">
+                    <div className="profile-achievement-art">
                       <AchievementIcon icon={ach.icon} slug={ach.slug} code={ach.code} alt="" unlocked={isUnlocked} />
                     </div>
                     <div className="mname">{ach.name}</div>

@@ -414,22 +414,12 @@
 [data-theme="light"] .game-app .profile-wrap .block .bt{color:var(--teal)}
 [data-theme="light"] .game-app .profile-wrap .bt-count{
   color:#a9772e;background:rgba(243,194,90,.2);border:1px solid rgba(243,194,90,.45)}
-[data-theme="light"] .game-app .profile-wrap .disc{background:radial-gradient(circle at 38% 30%,#ffffff,#e9f4f0)}
-[data-theme="light"] .game-app .profile-wrap .r-common .disc::before{background:linear-gradient(135deg,#5fe0cf,#1f9e92)}
-[data-theme="light"] .game-app .profile-wrap .r-common .disc{box-shadow:0 10px 22px -8px rgba(31,158,146,.7)}
-[data-theme="light"] .game-app .profile-wrap .r-rare .disc::before{background:linear-gradient(135deg,#9fc0ff,#5b6fd6)}
-[data-theme="light"] .game-app .profile-wrap .r-rare .disc{box-shadow:0 10px 22px -8px rgba(124,150,255,.7)}
-[data-theme="light"] .game-app .profile-wrap .r-epic .disc::before{background:linear-gradient(135deg,#c79bff,#7d6fd1)}
-[data-theme="light"] .game-app .profile-wrap .r-epic .disc{box-shadow:0 10px 24px -7px rgba(125,111,209,.8)}
-[data-theme="light"] .game-app .profile-wrap .r-legend .disc::before{background:conic-gradient(from 0deg,#f3c25a,#ef9aa8,#7d6fd1,#1f9e92,#f3c25a)}
-[data-theme="light"] .game-app .profile-wrap .r-legend .disc{box-shadow:0 10px 26px -6px rgba(243,194,90,.85)}
-[data-theme="light"] .game-app .profile-wrap .medal.locked .disc{filter:grayscale(.85);opacity:.75;box-shadow:none}
-[data-theme="light"] .game-app .profile-wrap .medal.locked .disc::before{background:#cfded9}
-[data-theme="light"] .game-app .profile-wrap .medal.locked .lockb{background:rgba(255,255,255,.45);color:var(--teal-deep)}
 [data-theme="light"] .game-app .profile-wrap .mname{color:var(--ink)}
-[data-theme="light"] .game-app .profile-wrap .medal.locked .mname{color:var(--ink-soft)}
 [data-theme="light"] .game-app .profile-wrap .mval{color:var(--ink-soft)}
 [data-theme="light"] .game-app .profile-wrap .mprog{background:rgba(15,92,84,.14)}
+[data-theme="light"] .game-app .profile-wrap .profile-achievement:hover{background:rgba(255,255,255,.58)}
+[data-theme="light"] .game-app .profile-wrap .profile-achievement .achievement-icon-image{filter:drop-shadow(0 10px 16px rgba(31,158,146,.16))}
+[data-theme="light"] .game-app .profile-wrap .profile-achievement.locked .achievement-icon-image{filter:grayscale(1) opacity(.5)}
 [data-theme="light"] .game-app .profile-wrap .tile{background:rgba(255,255,255,.5);border:1.5px solid rgba(15,92,84,.08)}
 [data-theme="light"] .game-app .profile-wrap .tile:hover{background:rgba(255,255,255,.8)}
 [data-theme="light"] .game-app .profile-wrap .tile .ti{background:rgba(31,158,146,.12)}
