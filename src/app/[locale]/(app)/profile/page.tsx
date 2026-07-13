@@ -257,7 +257,7 @@ export default function ProfilePage() {
                     title={`${ach.name}: ${ach.description}. ${ach.progress_label}`}
                   >
                     <div className="disc">
-                      <AchievementIcon icon={ach.icon} unlocked={isUnlocked} />
+                      <AchievementIcon icon={ach.icon} slug={ach.slug} code={ach.code} alt="" unlocked={isUnlocked} />
                     </div>
                     <div className="mname">{ach.name}</div>
                     {isUnlocked ? (
