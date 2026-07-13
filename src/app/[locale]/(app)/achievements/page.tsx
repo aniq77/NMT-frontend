@@ -1,196 +1,182 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "@/lib/navigation";
-import {
-  BookOpen,
-  Check,
-  ChevronLeft,
-  Flame,
-  Gem,
-  GraduationCap,
-  Lock,
-  Star,
-  Trophy,
-  Zap,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, Trophy } from "lucide-react";
+import { AchievementIcon } from "@/components/achievements/AchievementIcon";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { achievementsApi } from "@/lib/api/achievements";
-import type { Achievement, AchievementConditionType, AchievementTier } from "@/types/achievements";
+import { useRouter } from "@/lib/navigation";
+import type { Achievement, AchievementCategory, AchievementStats } from "@/types/achievements";
 
-// ─── lookup tables ───────────────────────────────────────────────────────────
+const CATEGORIES: Array<{ id: "all" | AchievementCategory; label: string }> = [
+  { id: "all", label: "Усі" },
+  { id: "learning", label: "Навчання" },
+  { id: "mastery", label: "Майстерність" },
+  { id: "bosses", label: "Боси" },
+  { id: "pvp", label: "PvP" },
+  { id: "friends", label: "Друзі" },
+  { id: "levels", label: "Рівні" },
+  { id: "shop", label: "Магазин" },
+  { id: "quests", label: "Завдання" },
+];
 
-const TIER_ORDER: AchievementTier[] = ["platinum", "gold", "silver", "bronze"];
-
-const TIER_LABELS: Record<AchievementTier, string> = {
-  platinum: "Платина",
-  gold:     "Золото",
-  silver:   "Срібло",
-  bronze:   "Бронза",
+const RARITY_CLASS: Record<Achievement["rarity"], string> = {
+  common: "border-primary/20 bg-primary-light/45",
+  rare: "border-water/25 bg-water/10",
+  epic: "border-violet/25 bg-violet/10",
+  legendary: "border-reward/35 bg-reward-light/35",
 };
 
-const TIER_STYLES: Record<AchievementTier, { text: string; iconBg: string; iconText: string; dot: string }> = {
-  platinum: { text: "text-violet-500", iconBg: "bg-violet-500/15", iconText: "text-violet-500", dot: "bg-violet-500" },
-  gold:     { text: "text-reward",     iconBg: "bg-reward/15",     iconText: "text-reward",     dot: "bg-reward" },
-  silver:   { text: "text-slate-400",  iconBg: "bg-slate-400/15",  iconText: "text-slate-400",  dot: "bg-slate-400" },
-  bronze:   { text: "text-orange-500", iconBg: "bg-orange-500/15", iconText: "text-orange-500", dot: "bg-orange-500" },
-};
-
-const CONDITION_ICONS: Record<AchievementConditionType, LucideIcon> = {
-  lessons_completed: BookOpen,
-  courses_completed: GraduationCap,
-  streak_days:       Flame,
-  exp_earned:        Zap,
-  level_reached:     Star,
-};
-
-// ─── components ──────────────────────────────────────────────────────────────
-
-function AchievementRow({ achievement }: { achievement: Achievement }) {
-  const Icon  = CONDITION_ICONS[achievement.condition_type];
-  const style = TIER_STYLES[achievement.tier];
-
-  return (
-    <div className={`flex items-start gap-3 px-4 py-3.5 transition-opacity ${achievement.unlocked ? "opacity-100" : "opacity-55"}`}>
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${style.iconBg}`}>
-        {achievement.unlocked
-          ? <Icon className={`h-5 w-5 ${style.iconText}`} />
-          : <Lock className="h-4 w-4 text-text-secondary" />
-        }
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="font-display text-sm font-700 text-text-primary leading-tight">{achievement.title}</p>
-          {achievement.unlocked
-            ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-correct" />
-            : <span className="font-display text-xs font-600 text-text-secondary shrink-0 tabular-nums">
-                {achievement.user_progress}/{achievement.condition_value}
-              </span>
-          }
-        </div>
-
-        <p className="mt-0.5 font-body text-xs text-text-secondary line-clamp-2">{achievement.description}</p>
-
-        {!achievement.unlocked && achievement.user_progress > 0 && (
-          <div className="mt-2">
-            <ProgressBar value={achievement.user_progress} max={achievement.condition_value} size="xs" color="primary" />
-          </div>
-        )}
-
-        {(achievement.exp_reward > 0 || achievement.gems_reward > 0) && (
-          <div className="mt-1.5 flex items-center gap-3">
-            {achievement.exp_reward > 0 && (
-              <span className="flex items-center gap-1 font-display text-xs font-600 text-reward">
-                <Zap className="h-3 w-3" />+{achievement.exp_reward} XP
-              </span>
-            )}
-            {achievement.gems_reward > 0 && (
-              <span className="flex items-center gap-1 font-display text-xs font-600 text-primary-dark">
-                <Gem className="h-3 w-3" />+{achievement.gems_reward}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function formatDate(iso: string) {
+  return new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
 }
 
-// ─── page ─────────────────────────────────────────────────────────────────────
+function shouldShowProgress(achievement: Achievement) {
+  return !achievement.is_unlocked && achievement.target_value > 1 && achievement.progress > 0;
+}
+
+function AchievementCard({ achievement }: { achievement: Achievement }) {
+  const unlocked = achievement.is_unlocked || achievement.unlocked;
+  const progress = Math.min(achievement.progress, achievement.target_value);
+
+  return (
+    <article
+      className={`rounded-lg border p-4 shadow-sm transition ${RARITY_CLASS[achievement.rarity]} ${
+        unlocked ? "opacity-100" : "opacity-70 grayscale-[.35]"
+      }`}
+      title={`${achievement.name}: ${achievement.description}. ${achievement.progress_label}`}
+    >
+      <div className="flex items-start gap-3">
+        <AchievementIcon icon={achievement.icon} unlocked={unlocked} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="font-display text-base font-800 leading-tight text-text-primary">{achievement.name}</h2>
+            <span className={`shrink-0 rounded-full px-2 py-1 font-display text-[10px] font-800 uppercase tracking-wide ${
+              unlocked ? "bg-correct-light text-correct-dark" : "bg-surface-alt text-text-secondary"
+            }`}>
+              {unlocked ? "Отримано" : "Закрито"}
+            </span>
+          </div>
+          <p className="mt-1 font-body text-sm leading-snug text-text-secondary">{achievement.description}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center justify-between gap-3 font-display text-xs font-700 text-text-secondary">
+          <span>{achievement.progress_label}</span>
+          {unlocked && achievement.unlocked_at && <span>{formatDate(achievement.unlocked_at)}</span>}
+        </div>
+        {shouldShowProgress(achievement) && (
+          <ProgressBar value={progress} max={achievement.target_value} size="xs" color="primary" />
+        )}
+      </div>
+    </article>
+  );
+}
 
 export default function AchievementsPage() {
   const router = useRouter();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [stats, setStats] = useState<AchievementStats | null>(null);
+  const [activeCategory, setActiveCategory] = useState<"all" | AchievementCategory>("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    achievementsApi.list()
-      .then(setAchievements)
-      .catch(() => {})
+    Promise.all([achievementsApi.list(), achievementsApi.stats()])
+      .then(([list, nextStats]) => {
+        setAchievements(list);
+        setStats(nextStats);
+      })
+      .catch(() => setError("Не вдалося завантажити досягнення."))
       .finally(() => setLoading(false));
   }, []);
 
-  const unlockedCount = achievements.filter((a) => a.unlocked).length;
-
-  const grouped = TIER_ORDER.reduce<Record<AchievementTier, Achievement[]>>(
-    (acc, tier) => { acc[tier] = achievements.filter((a) => a.tier === tier); return acc; },
-    { platinum: [] as Achievement[], gold: [] as Achievement[], silver: [] as Achievement[], bronze: [] as Achievement[] },
+  const filtered = useMemo(
+    () =>
+      achievements.filter((achievement) =>
+        activeCategory === "all" ? true : achievement.category === activeCategory,
+      ),
+    [achievements, activeCategory],
   );
 
   return (
     <div className="min-h-screen bg-canvas">
-      {/* Header */}
       <header className="glass-soft sticky top-0 z-40 border-x-0 border-t-0">
         <div className="mx-auto flex max-w-app items-center gap-3 px-4 py-3">
           <button
+            type="button"
             onClick={() => router.back()}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-secondary hover:text-text-primary"
+            aria-label="Назад"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className="flex-1 font-display text-base font-800 text-primary-dark">Досягнення</h1>
-          {!loading && (
-            <span className="font-display text-sm font-600 text-text-secondary tabular-nums">
-              {unlockedCount}/{achievements.length}
-            </span>
-          )}
+          <h1 className="flex-1 font-display text-lg font-800 text-primary-dark">Досягнення</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-app px-4 py-6 space-y-4">
+      <main className="mx-auto max-w-app px-4 py-6">
+        <section className="glass rounded-lg p-4">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <div className="font-display text-2xl font-800 text-text-primary">{stats?.unlocked ?? 0}</div>
+              <div className="font-body text-xs text-text-secondary">відкрито</div>
+            </div>
+            <div>
+              <div className="font-display text-2xl font-800 text-text-primary">{stats?.total ?? achievements.length}</div>
+              <div className="font-body text-xs text-text-secondary">усього</div>
+            </div>
+            <div>
+              <div className="font-display text-2xl font-800 text-text-primary">{stats?.percentage ?? 0}%</div>
+              <div className="font-body text-xs text-text-secondary">прогрес</div>
+            </div>
+          </div>
+        </section>
 
-        {/* Loading */}
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+          {CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setActiveCategory(category.id)}
+              className={`shrink-0 rounded-full px-4 py-2 font-display text-xs font-800 transition ${
+                activeCategory === category.id
+                  ? "bg-primary text-white"
+                  : "bg-surface-alt text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
+
         {loading && (
-          <div className="glass overflow-hidden rounded-2xl divide-y divide-border">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-start gap-3 px-4 py-3.5">
-                <div className="h-10 w-10 animate-pulse rounded-xl bg-border" />
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3 w-2/3 animate-pulse rounded bg-border" />
-                  <div className="h-2.5 w-full animate-pulse rounded bg-border" />
-                </div>
-              </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="glass h-36 animate-pulse rounded-lg" />
             ))}
           </div>
         )}
 
-        {/* Empty */}
-        {!loading && achievements.length === 0 && (
-          <div className="glass flex flex-col items-center gap-3 rounded-2xl py-12 text-center">
-            <Trophy className="h-10 w-10 text-text-secondary/40" />
-            <p className="font-body text-sm text-text-secondary">Досягнень поки немає</p>
+        {!loading && error && (
+          <div className="glass mt-4 rounded-lg p-6 text-center font-body text-sm text-wrong-dark">{error}</div>
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <div className="glass mt-4 flex flex-col items-center gap-3 rounded-lg py-12 text-center">
+            <Trophy className="h-10 w-10 text-text-secondary/50" />
+            <p className="font-body text-sm text-text-secondary">Досягнень у цій категорії поки немає.</p>
           </div>
         )}
 
-        {/* Grouped by tier */}
-        {!loading && TIER_ORDER.map((tier) => {
-          const list = grouped[tier];
-          if (!list.length) return null;
-          const style = TIER_STYLES[tier];
-          const unlockedInTier = list.filter((a) => a.unlocked).length;
-
-          return (
-            <div key={tier} className="glass overflow-hidden rounded-2xl">
-              {/* Tier header */}
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} />
-                  <span className={`font-display text-sm font-700 uppercase tracking-wider ${style.text}`}>
-                    {TIER_LABELS[tier]}
-                  </span>
-                </div>
-                <span className="font-display text-xs font-600 text-text-secondary tabular-nums">
-                  {unlockedInTier}/{list.length}
-                </span>
-              </div>
-
-              <div className="divide-y divide-border">
-                {list.map((ach) => <AchievementRow key={ach.id} achievement={ach} />)}
-              </div>
-            </div>
-          );
-        })}
+        {!loading && !error && filtered.length > 0 && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {filtered.map((achievement) => (
+              <AchievementCard key={achievement.id} achievement={achievement} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

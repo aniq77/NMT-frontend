@@ -4,9 +4,10 @@ import { useRouter } from "@/lib/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { TempThemeToggle } from "@/components/ui/TempThemeToggle";
 import { SkinIcon, hasSkinIcon } from "@/components/ui/SkinIcon";
+import { AchievementIcon } from "@/components/achievements/AchievementIcon";
 import { achievementsApi } from "@/lib/api/achievements";
 import type { User } from "@/types/auth";
-import type { Achievement, AchievementTier, AchievementConditionType } from "@/types/achievements";
+import type { Achievement, AchievementTier } from "@/types/achievements";
 
 const PROVIDER_LABEL: Record<User["auth_provider"], string> = {
   email: "Пошта",
@@ -35,64 +36,6 @@ const IconEnergy = (
     <path d="M15 3 L6 15 L12 15 L11 25 L22 12 L15 12 Z" fill="#ffd23c" stroke="#e8ab30" strokeWidth=".8" strokeLinejoin="round" />
   </svg>
 );
-
-const IconLock = (
-  <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
-    <rect x="5" y="11" width="14" height="10" rx="2.5" fill="#b0b8c9" stroke="#8090a8" strokeWidth="1" />
-    <path d="M8 11 L8 8 C8 5.2 16 5.2 16 8 L16 11" stroke="#8090a8" strokeWidth="1.5" fill="none" />
-    <circle cx="12" cy="16" r="2" fill="#8090a8" />
-  </svg>
-);
-
-// medal disc icons — keyed by the backend achievement condition type
-const MEDAL_STAR = (
-  <svg viewBox="0 0 48 48" fill="none" width="100%" height="100%">
-    <path d="M24 6 L28 18 L41 18 L31 26 L35 38 L24 30 L13 38 L17 26 L7 18 L20 18 Z" fill="#f3c25a" stroke="#c9952a" strokeWidth="1.2" strokeLinejoin="round" />
-    <path d="M24 10 L27 19 L24 17 Z" fill="#fff" opacity=".4" />
-  </svg>
-);
-const MEDAL_FLAME = (
-  <svg viewBox="0 0 48 48" fill="none" width="100%" height="100%">
-    <path d="M24 6 C24 6 12 14 12 26 C12 33 17 39 24 39 C31 39 36 33 36 26 C36 22 34 18 34 18 C34 23 29 25 29 19 C29 11 24 6 24 6Z" fill="#ff8a4c" stroke="#e8602c" strokeWidth="1" strokeLinejoin="round" />
-    <path d="M24 18 C24 18 19 24 19 30 C19 33.5 21 36 24 36 C27 36 29 33.5 29 30 C29 27 27 25 27 25 C27 27.5 24 28.5 24 26 C24 23 24 18 24 18Z" fill="#ffd23c" />
-  </svg>
-);
-const MEDAL_BOOKS = (
-  <svg viewBox="0 0 48 48" fill="none" width="100%" height="100%">
-    <rect x="10" y="14" width="10" height="22" rx="2" fill="#6fa8dc" />
-    <rect x="22" y="10" width="10" height="26" rx="2" fill="#4a7fc1" />
-    <rect x="34" y="16" width="8" height="20" rx="2" fill="#89c4e8" />
-    <line x1="24" y1="16" x2="24" y2="32" stroke="#fff" strokeWidth="1" opacity=".4" />
-    <line x1="36" y1="20" x2="36" y2="30" stroke="#fff" strokeWidth="1" opacity=".4" />
-  </svg>
-);
-const MEDAL_COMPASS = (
-  <svg viewBox="0 0 48 48" fill="none" width="100%" height="100%">
-    <circle cx="24" cy="24" r="18" stroke="#4a7fc1" strokeWidth="2" fill="#d0e8f8" />
-    <path d="M24 12 L27 22 L24 20 L21 22 Z" fill="#e8794a" />
-    <path d="M24 36 L21 26 L24 28 L27 26 Z" fill="#4a7fc1" />
-    <circle cx="24" cy="24" r="2.5" fill="#fff" stroke="#4a7fc1" strokeWidth="1" />
-    <line x1="12" y1="24" x2="16" y2="24" stroke="#4a7fc1" strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="32" y1="24" x2="36" y2="24" stroke="#4a7fc1" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-const MEDAL_BOLT = (
-  <svg viewBox="0 0 48 48" fill="none" width="100%" height="100%">
-    <path d="M28 6 L14 26 L22 26 L18 44 L36 20 L27 20 Z" fill="#ffe08a" stroke="#f3c25a" strokeWidth="1.5" strokeLinejoin="round" />
-    <circle cx="34" cy="12" r="5" fill="#fff9d0" opacity=".5" />
-  </svg>
-);
-
-function medalIcon(type: AchievementConditionType): React.ReactNode {
-  switch (type) {
-    case "streak_days":       return MEDAL_FLAME;
-    case "lessons_completed": return MEDAL_BOOKS;
-    case "courses_completed": return MEDAL_COMPASS;
-    case "level_reached":     return MEDAL_BOLT;
-    case "exp_earned":        return MEDAL_STAR;
-    default:                  return MEDAL_STAR;
-  }
-}
 
 // statistics / account tile icons (fill the 36px .ti box, like the mockup)
 const TileTrophy = (
@@ -195,7 +138,7 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchMe().catch(() => {});
     achievementsApi
-      .list()
+      .profile()
       .then(setAchievements)
       .catch(() => {})
       .finally(() => setAchievementsLoading(false));
@@ -252,8 +195,7 @@ export default function ProfilePage() {
   const canRestoreStreak = user.lost_streak_days > 0 && user.gems >= 50;
   const initial = (user.nickname ?? user.email).charAt(0).toUpperCase();
   const skin = user.equipped_skin;
-  const unlockedCount = achievements.filter((a) => a.unlocked).length;
-  const sortedAchievements = [...achievements].sort((a, b) => Number(b.unlocked) - Number(a.unlocked));
+  const unlockedCount = achievements.filter((a) => a.is_unlocked || a.unlocked).length;
 
   return (
     <section className="view active">
@@ -289,33 +231,36 @@ export default function ProfilePage() {
         <div className="glass block">
           <div className="bt-row">
             <div className="bt">Досягнення</div>
-            {!achievementsLoading && achievements.length > 0 && (
-              <div className="bt-count">{unlockedCount} / {achievements.length} зібрано</div>
-            )}
+            <button type="button" className="bt-count" onClick={() => router.push("/achievements")}>
+              Усі досягнення
+            </button>
           </div>
+          {!achievementsLoading && achievements.length > 0 && (
+            <p className="sec-sub" style={{ margin: "0 0 14px" }}>{unlockedCount} / {achievements.length} показано в профілі</p>
+          )}
           {achievementsLoading ? (
             <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Завантаження досягнень…</p>
           ) : achievements.length === 0 ? (
             <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Ще немає досягнень</p>
           ) : (
             <div className="ach-grid">
-              {sortedAchievements.map((ach) => {
+              {achievements.map((ach) => {
                 const progress =
                   ach.condition_value > 0
                     ? Math.min(100, Math.round((ach.user_progress / ach.condition_value) * 100))
                     : 0;
+                const isUnlocked = ach.is_unlocked || ach.unlocked;
                 return (
                   <div
                     key={ach.id}
-                    className={`medal ${TIER_RARITY[ach.tier]}${ach.unlocked ? "" : " locked"}`}
-                    title={ach.description}
+                    className={`medal ${TIER_RARITY[ach.tier]}${isUnlocked ? "" : " locked"}`}
+                    title={`${ach.name}: ${ach.description}. ${ach.progress_label}`}
                   >
                     <div className="disc">
-                      {medalIcon(ach.condition_type)}
-                      {!ach.unlocked && <span className="lockb">{IconLock}</span>}
+                      <AchievementIcon icon={ach.icon} unlocked={isUnlocked} />
                     </div>
-                    <div className="mname">{ach.title}</div>
-                    {ach.unlocked ? (
+                    <div className="mname">{ach.name}</div>
+                    {isUnlocked ? (
                       <div className="mval">Отримано</div>
                     ) : (
                       <div className="mprog"><i style={{ width: `${progress}%` }} /></div>

@@ -598,3 +598,10 @@ button:disabled,
 [data-theme="dark"] .c-phys .emblem{background:linear-gradient(135deg,#5cc4dd,#2f7fbd)}
 [data-theme="dark"] .c-phys .lvl-badge{background:rgba(255,255,255,.16);color:#fff}
 [data-theme="dark"] .c-phys .prog .fill{background:linear-gradient(90deg,#3aa6c4,#7fe0ec)}
+
+.achievement-icon{position:relative;display:inline-grid;place-items:center;width:64px;height:64px;color:#0f8a68;clip-path:polygon(25% 6%,75% 6%,100% 50%,75% 94%,25% 94%,0 50%);background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.88),transparent 28%),linear-gradient(145deg,rgba(236,255,246,.95),rgba(211,245,232,.82));border:1px solid rgba(58,181,151,.32);box-shadow:0 12px 24px -16px rgba(14,116,91,.55),inset 0 0 0 1px rgba(33,167,133,.18)}
+[data-theme="dark"] .achievement-icon,.game-app .achievement-icon{color:#79f0c7;background:radial-gradient(circle at 35% 28%,rgba(142,255,214,.22),transparent 30%),linear-gradient(145deg,rgba(9,64,64,.94),rgba(6,42,48,.86));border-color:rgba(95,240,219,.35);box-shadow:0 16px 32px -18px rgba(51,214,194,.8),inset 0 0 0 1px rgba(95,240,219,.2)}
+.achievement-icon svg{width:34px;height:34px;stroke-width:2.1;filter:drop-shadow(0 4px 8px rgba(15,99,78,.2))}
+.achievement-icon.is-locked{color:#7f8f8b;filter:grayscale(.95);opacity:.66;box-shadow:none}
+.achievement-icon-lock{position:absolute;right:8px;bottom:9px;display:grid;width:18px;height:18px;place-items:center;border-radius:999px;color:#eaf7f3;background:rgba(16,38,42,.72)}
+.achievement-icon-lock svg{width:11px;height:11px}
