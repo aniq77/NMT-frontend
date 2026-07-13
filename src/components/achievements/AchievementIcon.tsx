@@ -52,11 +52,19 @@ export function AchievementIcon({ icon, slug, code, alt = "", unlocked = true, c
   return (
     <span className={`achievement-icon ${unlocked ? "" : "is-locked"} ${className}`}>
       <Image
-        src={`/achievements/${iconSlug}.webp`}
+        src={`/achievements/${iconSlug}-light.png`}
         alt={alt}
         width={192}
         height={192}
-        className="achievement-icon-image"
+        className="achievement-icon-image achievement-icon-image-light"
+        loading="lazy"
+      />
+      <Image
+        src={`/achievements/${iconSlug}-dark.png`}
+        alt={alt}
+        width={192}
+        height={192}
+        className="achievement-icon-image achievement-icon-image-dark"
         loading="lazy"
       />
       {!unlocked && (
