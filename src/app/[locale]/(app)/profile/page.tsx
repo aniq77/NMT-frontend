@@ -6,6 +6,7 @@ import { TempThemeToggle } from "@/components/ui/TempThemeToggle";
 import { SkinIcon, hasSkinIcon } from "@/components/ui/SkinIcon";
 import { AchievementIcon } from "@/components/achievements/AchievementIcon";
 import { achievementsApi } from "@/lib/api/achievements";
+import { PAYMENTS_ENABLED } from "@/lib/features";
 import type { User } from "@/types/auth";
 import type { Achievement } from "@/types/achievements";
 import "./profile-redesign.css";
@@ -389,7 +390,11 @@ export default function ProfilePage() {
             </div>
             <div className="pf-rfoot">
               <div className="pf-price"><span className="now">99 ₴<small>/міс</small></span><span className="old">165 ₴</span></div>
-              <button className="pf-rgo" onClick={() => router.push("/subscription")}>Спробувати →</button>
+              {PAYMENTS_ENABLED ? (
+                <button className="pf-rgo" onClick={() => router.push("/subscription")}>Спробувати →</button>
+              ) : (
+                <button className="pf-rgo" disabled style={{ opacity: 0.6, cursor: "not-allowed" }}>Скоро</button>
+              )}
             </div>
             <div className="pf-rnote"><b>7 днів безкоштовно</b> · скасуй будь-коли</div>
           </div>

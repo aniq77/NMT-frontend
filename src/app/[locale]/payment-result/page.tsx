@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { paymentApi } from "@/lib/api/payment";
 import { ApiError } from "@/lib/api/client";
+import { PAYMENTS_ENABLED } from "@/lib/features";
 
 type PaymentStatus =
   | "loading"
@@ -74,6 +75,7 @@ export default function PaymentResultPage() {
   const [pollCount, setPollCount] = useState(0);
 
   useEffect(() => {
+    if (!PAYMENTS_ENABLED) return;
     const invoiceId = sessionStorage.getItem("payment_invoice_id");
     if (!invoiceId) return;
 
@@ -122,11 +124,31 @@ export default function PaymentResultPage() {
 
   // Re-poll every 3s
   useEffect(() => {
+    if (!PAYMENTS_ENABLED) return;
     if (status !== "loading" && status !== "processing") return;
 
     const id = setTimeout(() => setPollCount((p) => p + 1), 3000);
     return () => clearTimeout(id);
   }, [status, pollCount]);
+
+  if (!PAYMENTS_ENABLED) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+        <div className="mx-auto w-full max-w-app text-center">
+          <div className="mb-6 flex justify-center">
+            <Clock className="h-20 w-20 text-text-secondary" />
+          </div>
+          <h1 className="font-display text-2xl font-800 text-text-primary">Оплата ще не запущена</h1>
+          <p className="mt-2 font-body text-base text-text-secondary">
+            Ця сторінка запрацює разом із підпискою.
+          </p>
+          <Button size="lg" className="mt-8 w-full" onClick={() => router.push("/home")}>
+            На головну
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (status === "loading") {
     return (
