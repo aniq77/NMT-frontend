@@ -8,12 +8,29 @@ import { AchievementIcon } from "@/components/achievements/AchievementIcon";
 import { achievementsApi } from "@/lib/api/achievements";
 import type { User } from "@/types/auth";
 import type { Achievement } from "@/types/achievements";
+import "./profile-redesign.css";
 
 const PROVIDER_LABEL: Record<User["auth_provider"], string> = {
   email: "Пошта",
   google: "Google",
   phone: "Телефон",
 };
+
+const RARITY_TAG: Record<string, string> = {
+  common: "Common",
+  rare: "Rare",
+  epic: "Epic",
+  legendary: "Legend",
+};
+
+const PREMIUM_FEATURES = [
+  "Безліміт сердець",
+  "×2 XP за урок",
+  "Усі регіони",
+  "+500 кристалів / міс",
+  "Без реклами",
+  "AI-розбір помилок",
+];
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
@@ -23,13 +40,31 @@ function formatDate(iso: string): string {
 // Inline SVG icons (ported 1:1 from the nmt-app-fixed mockup — no emoji)
 // ---------------------------------------------------------------------------
 
+const IconRankStar = (
+  <svg className="em" viewBox="0 0 24 24" fill="none" width="22" height="22">
+    <path d="M12 3l2.5 5 5.5.6-4 3.8 1.1 5.5L12 20.5 6.9 21l1.1-5.5-4-3.8L9.5 8 12 3z" fill="#ffd27a" stroke="#c9952a" strokeWidth="1" strokeLinejoin="round" />
+  </svg>
+);
+const StatFire = (
+  <svg viewBox="0 0 32 32" fill="none" width="18" height="18">
+    <path d="M16 3 C16 3 9 9 9 17 C9 22 12 26 16 26 C20 26 23 22 23 17 C23 15 22 13 22 13 C22 16 19 17 19 14 C19 9 16 3 16 3Z" fill="#ff8a4c" stroke="#e8602c" strokeWidth=".8" strokeLinejoin="round" />
+    <path d="M16 12 C16 12 13 16 13 20 C13 22.5 14.5 24 16 24 C17.5 24 19 22.5 19 20 C19 18 17.5 17 17.5 17 C17.5 18.5 16 19 16 17.5 C16 16 16 12 16 12Z" fill="#ffd23c" />
+  </svg>
+);
+const StatGem = (
+  <svg viewBox="0 0 28 28" fill="none" width="18" height="18">
+    <path d="M8 6 L20 6 L24 11 L14 23 L4 11 Z" fill="#4cc4d6" stroke="#1f8fa6" strokeWidth="1" />
+    <path d="M4 11 L24 11" stroke="#1f8fa6" strokeWidth=".8" />
+    <path d="M8 6 L11 11 M20 6 L17 11 M14 23 L14 11" stroke="#fff" strokeWidth=".8" opacity=".5" />
+  </svg>
+);
 const IconEnergy = (
-  <svg viewBox="0 0 28 28" fill="none" width="20" height="20">
+  <svg viewBox="0 0 28 28" fill="none" width="18" height="18">
     <path d="M15 3 L6 15 L12 15 L11 25 L22 12 L15 12 Z" fill="#ffd23c" stroke="#e8ab30" strokeWidth=".8" strokeLinejoin="round" />
   </svg>
 );
 
-// statistics / account tile icons (fill the 36px .ti box, like the mockup)
+// statistics / account tile icons (fill the 36px .ti box)
 const TileTrophy = (
   <svg viewBox="0 0 24 24" fill="none" width="100%" height="100%">
     <path d="M7 5 L17 5 L17 14 C17 17 14.5 19 12 19 C9.5 19 7 17 7 14Z" fill="#f3c25a" />
@@ -58,9 +93,7 @@ const TileCalendar = (
 const TileActivity = (
   <svg viewBox="0 0 24 24" fill="none" width="100%" height="100%">
     <circle cx="12" cy="12" r="9" stroke="#4a7fc1" strokeWidth="1.2" fill="#d0e8f8" />
-    <path d="M12 6 L13.5 11 L12 10 L10.5 11 Z" fill="#e8794a" />
-    <path d="M12 18 L10.5 13 L12 14 L13.5 13 Z" fill="#4a7fc1" />
-    <circle cx="12" cy="12" r="1.5" fill="#fff" stroke="#4a7fc1" strokeWidth=".8" />
+    <path d="M12 7 L12 12 L15 14" stroke="#4a7fc1" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
   </svg>
 );
 const TileMail = (
@@ -73,7 +106,6 @@ const TileLogin = (
   <svg viewBox="0 0 24 24" fill="none" width="100%" height="100%">
     <circle cx="9" cy="11" r="5" stroke="#f3c25a" strokeWidth="1.5" fill="#fff9d0" />
     <path d="M13 13 L20 20" stroke="#f3c25a" strokeWidth="2" strokeLinecap="round" />
-    <path d="M17 18 L19 16 M15 20 L17 18" stroke="#f3c25a" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
 const TileGlobe = (
@@ -99,22 +131,30 @@ const TileId = (
     <line x1="14" y1="13.5" x2="18" y2="13.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
-
-// royal-pass sticker icons
-const StHeart = <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 16 C10 16 3 11.5 3 6.5 C3 4 5 2.5 7.5 2.5 C8.8 2.5 9.5 3.2 10 4 C10.5 3.2 11.2 2.5 12.5 2.5 C15 2.5 17 4 17 6.5 C17 11.5 10 16 10 16Z" fill="#e35d72" /></svg>;
-const StXp = <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 2 L11.5 7 L17 7 L12.5 10 L14 15.5 L10 12.5 L6 15.5 L7.5 10 L3 7 L8.5 7 Z" fill="#f3c25a" /></svg>;
-const StMap = <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M3 4 L7 2 L13 5 L17 3 L17 16 L13 18 L7 15 L3 17 Z" fill="#4fbf83" stroke="#2d8f5e" strokeWidth=".8" strokeLinejoin="round" /><line x1="7" y1="2" x2="7" y2="15" stroke="#2d8f5e" strokeWidth=".8" /><line x1="13" y1="5" x2="13" y2="18" stroke="#2d8f5e" strokeWidth=".8" /></svg>;
-const StGem = <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 4 L15 4 L18 8 L10 17 L2 8 Z" fill="#4cc4d6" stroke="#1f8fa6" strokeWidth=".8" /><line x1="2" y1="8" x2="18" y2="8" stroke="#1f8fa6" strokeWidth=".6" /></svg>;
-const StNoAds = <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="7.5" stroke="#e35d72" strokeWidth="1.5" fill="none" /><line x1="4.5" y1="4.5" x2="15.5" y2="15.5" stroke="#e35d72" strokeWidth="1.5" strokeLinecap="round" /></svg>;
-const StAi = <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="6" fill="#7d6fd1" opacity=".2" stroke="#7d6fd1" strokeWidth="1" /><circle cx="10" cy="7" r="1.5" fill="#7d6fd1" /><path d="M7 12.5 C7 10.5 13 10.5 13 12.5" stroke="#7d6fd1" strokeWidth="1.2" strokeLinecap="round" fill="none" /><path d="M6 10 C4 8 3 5 5 4" stroke="#7d6fd1" strokeWidth=".8" strokeLinecap="round" fill="none" /><path d="M14 10 C16 8 17 5 15 4" stroke="#7d6fd1" strokeWidth=".8" strokeLinecap="round" fill="none" /></svg>;
-
-const IconGift = (
-  <svg viewBox="0 0 20 20" fill="none" width="16" height="16" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
-    <rect x="2" y="8" width="16" height="10" rx="2" fill="#ef9aa8" />
-    <rect x="2" y="8" width="16" height="4" rx="1" fill="#e35d72" />
-    <rect x="9" y="8" width="2" height="10" fill="#e35d72" />
-    <path d="M10 8 C10 8 7 6 7 4 C7 3 8 2 9 3 C9.5 4 10 6 10 8Z" fill="#ef9aa8" />
-    <path d="M10 8 C10 8 13 6 13 4 C13 3 12 2 11 3 C10.5 4 10 6 10 8Z" fill="#ef9aa8" />
+const RoyalCrown = (
+  <svg viewBox="0 0 56 44" fill="none" width="100%" height="100%">
+    <path d="M6 36 L8 16 L18 26 L28 8 L38 26 L48 16 L50 36 Z" fill="#ffd879" stroke="#c9952a" strokeWidth="1.5" strokeLinejoin="round" />
+    <rect x="6" y="36" width="44" height="7" rx="3.5" fill="#e8ab30" />
+    <circle cx="8" cy="16" r="3.5" fill="#fff9d0" />
+    <circle cx="28" cy="8" r="3.5" fill="#fff9d0" />
+    <circle cx="48" cy="16" r="3.5" fill="#fff9d0" />
+  </svg>
+);
+const IconCheck = (
+  <svg viewBox="0 0 24 24" fill="none" width="11" height="11">
+    <path d="M5 12l4 4 10-10" stroke="#3a2400" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconCopy = (
+  <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+    <rect x="9" y="9" width="11" height="11" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M6 15H5a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v1" stroke="currentColor" strokeWidth="1.8" />
+  </svg>
+);
+const IconExit = (
+  <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+    <path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M10 8l-4 4 4 4M6 12h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -178,189 +218,184 @@ export default function ProfilePage() {
   if (!user) return null;
 
   const levelExp = user.exp_in_current_level ?? Math.max(0, user.exp - user.exp_to_next_level);
-  const levelExpRequired =
-    user.exp_required_for_next_level ?? levelExp + user.exp_to_next_level;
-  const expPercent = Math.min(
-    100,
-    Math.round((levelExp / Math.max(levelExpRequired, 1)) * 100),
-  );
+  const levelExpRequired = user.exp_required_for_next_level ?? levelExp + user.exp_to_next_level;
+  const expPercent = Math.min(100, Math.round((levelExp / Math.max(levelExpRequired, 1)) * 100));
+  const expRemaining = Math.max(0, levelExpRequired - levelExp);
   const canRestoreStreak = user.lost_streak_days > 0 && user.gems >= 50;
   const initial = (user.nickname ?? user.email).charAt(0).toUpperCase();
   const skin = user.equipped_skin;
+  const rarityTag = skin && skin.rarity !== "default" ? RARITY_TAG[skin.rarity] : null;
+  const displayName = user.nickname ?? user.email;
+  const handle = user.nickname ? user.email : null;
   const profileAchievements = achievements.slice(0, 8);
+  const totalAchievements = achievements.length;
   const unlockedCount = achievements.filter((a) => a.is_unlocked || a.unlocked).length;
+  const achPercent = totalAchievements > 0 ? Math.round((unlockedCount / totalAchievements) * 100) : 0;
 
   return (
     <section className="view active">
-      <div className="profile-wrap">
-        {/* IDENTITY BANNER */}
-        <div className="glass pbanner">
-          {/* TEMP: tiny theme switch reusing main's next-themes system */}
+      <div className="profile-v2">
+        {/* ═══ HERO PLAYER CARD ═══ */}
+        <div className="pf-hero pf-glass">
+          <div className="pf-bg">
+            <div className="pf-band" />
+            <div className="pf-aur1" />
+            <div className="pf-aur2" />
+            <div className="pf-aur3" />
+            <div className="pf-stars" />
+          </div>
+          {/* TEMP: moon/sun switch reusing main's next-themes system */}
           <TempThemeToggle />
-          <div className="pav" style={skin?.gradient ? { background: skin.gradient } : undefined}>
-            {skin && hasSkinIcon(skin.code) ? <SkinIcon code={skin.code} className="h-14 w-14" /> : initial}
-            <span className="lv">{user.level}</span>
+          <div className="pf-hero-top">
+            <span className="pf-rank">{IconRankStar}Рівень {user.level} · Шукач</span>
           </div>
-          <div className="pb-mid">
-            <h2>@{user.nickname ?? user.email}</h2>
-            <div className="mail">{user.email}</div>
-            <div className="lvl-chip">✦ Рівень {user.level} · Шукач</div>
-            <div className="pxp">
-              <div className="row">
-                <span>XP до рівня {user.level + 1}</span>
-                <span>{levelExp.toLocaleString("uk")} / {levelExpRequired.toLocaleString("uk")}</span>
+          <div className="pf-hero-body">
+            <div className="pf-avf">
+              <div className="pf-ring" />
+              {rarityTag && <span className="pf-rtag">{rarityTag}</span>}
+              <div className="pf-av" style={skin?.gradient ? { background: skin.gradient } : undefined}>
+                {skin && hasSkinIcon(skin.code) ? <SkinIcon code={skin.code} className="h-16 w-16" /> : initial}
+                <span className="pf-lv">{user.level}</span>
               </div>
-              <div className="track"><div className="fill" style={{ width: `${expPercent}%` }} /></div>
             </div>
-          </div>
-          <div className="pb-stats">
-            <div className="qstat s-fire"><div className="qi"><svg viewBox="0 0 32 32" fill="none" width="20" height="20"><path d="M16 3 C16 3 9 9 9 17 C9 22 12 26 16 26 C20 26 23 22 23 17 C23 15 22 13 22 13 C22 16 19 17 19 14 C19 9 16 3 16 3Z" fill="#ff8a4c" stroke="#e8602c" strokeWidth=".8" strokeLinejoin="round" /><path d="M16 12 C16 12 13 16 13 20 C13 22.5 14.5 24 16 24 C17.5 24 19 22.5 19 20 C19 18 17.5 17 17.5 17 C17.5 18.5 16 19 16 17.5 C16 16 16 12 16 12Z" fill="#ffd23c" /></svg></div><div className="qt"><b>{user.streak_days}</b><span>днів поспіль</span></div></div>
-            <div className="qstat s-gem"><div className="qi"><svg viewBox="0 0 28 28" fill="none" width="20" height="20"><path d="M8 6 L20 6 L24 11 L14 23 L4 11 Z" fill="#4cc4d6" stroke="#1f8fa6" strokeWidth="1" /><path d="M4 11 L24 11" stroke="#1f8fa6" strokeWidth=".8" /><path d="M8 6 L11 11 M20 6 L17 11 M14 23 L14 11" stroke="#fff" strokeWidth=".8" opacity=".5" /></svg></div><div className="qt"><b>{user.gems}</b><span>Кристали</span></div></div>
-            <div className="qstat s-energy"><div className="qi">{IconEnergy}</div><div className="qt"><b>{user.energy}</b><span>Енергія</span></div></div>
+            <div className="pf-name">{displayName}</div>
+            {handle && <div className="pf-handle">{handle}</div>}
+
+            <div className="pf-xp">
+              <div className="lab">
+                <span className="l">До рівня {user.level + 1}</span>
+                <span className="r">{levelExp.toLocaleString("uk")} / {levelExpRequired.toLocaleString("uk")} XP</span>
+              </div>
+              <div className="pf-track"><div className="pf-fill" style={{ width: `${expPercent}%` }} /></div>
+              <div className="pf-lvls">
+                <span>Рівень {user.level}</span>
+                <span>лишилось {expRemaining.toLocaleString("uk")} XP</span>
+                <span>Рівень {user.level + 1}</span>
+              </div>
+            </div>
+
+            <div className="pf-mini">
+              <div className="pf-ministat s-fire"><span className="mi">{StatFire}</span><span className="mt"><b>{user.streak_days}</b><span>днів</span></span></div>
+              <div className="pf-ministat s-gem"><span className="mi">{StatGem}</span><span className="mt"><b>{user.gems}</b><span>кристали</span></span></div>
+              <div className="pf-ministat s-energy"><span className="mi">{IconEnergy}</span><span className="mt"><b>{user.energy}</b><span>енергія</span></span></div>
+            </div>
           </div>
         </div>
 
-        {/* ACHIEVEMENTS — real data from the API */}
-        <div className="glass block">
-          <div className="bt-row">
-            <div className="bt">Досягнення</div>
-            <button type="button" className="bt-count" onClick={() => router.push("/achievements")}>
-              Усі досягнення
+        {/* ═══ ACHIEVEMENTS — real data from the API ═══ */}
+        <div className="pf-glass pf-block">
+          <div className="pf-sech">
+            <span className="t">Досягнення</span>
+            <span className="rule" />
+            <button type="button" className="c" onClick={() => router.push("/achievements")}>
+              <b>{unlockedCount}</b> / {totalAchievements} зібрано →
             </button>
           </div>
-          {!achievementsLoading && achievements.length > 0 && (
-            <p className="sec-sub" style={{ margin: "0 0 14px" }}>{unlockedCount} / {achievements.length} показано в профілі</p>
-          )}
           {achievementsLoading ? (
-            <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Завантаження досягнень…</p>
-          ) : achievements.length === 0 ? (
-            <p className="sec-sub" style={{ textAlign: "center", margin: 0 }}>Ще немає досягнень</p>
+            <p className="pf-handle" style={{ textAlign: "center" }}>Завантаження досягнень…</p>
+          ) : totalAchievements === 0 ? (
+            <p className="pf-handle" style={{ textAlign: "center" }}>Ще немає досягнень</p>
           ) : (
-            <div className="ach-grid">
-              {profileAchievements.map((ach) => {
-                const progress =
-                  ach.condition_value > 0
-                    ? Math.min(100, Math.round((ach.user_progress / ach.condition_value) * 100))
-                    : 0;
-                const isUnlocked = ach.is_unlocked || ach.unlocked;
-                return (
-                  <div
-                    key={ach.id}
-                    className={`profile-achievement${isUnlocked ? "" : " locked"}`}
-                    title={`${ach.name}: ${ach.description}. ${ach.progress_label}`}
-                  >
-                    <div className="profile-achievement-art">
-                      <AchievementIcon icon={ach.icon} slug={ach.slug} code={ach.code} alt="" unlocked={isUnlocked} />
+            <>
+              <div className="pf-achbar"><i style={{ width: `${achPercent}%` }} /></div>
+              <div className="pf-grid">
+                {profileAchievements.map((ach) => {
+                  const progress =
+                    ach.condition_value > 0
+                      ? Math.min(100, Math.round((ach.user_progress / ach.condition_value) * 100))
+                      : 0;
+                  const isUnlocked = ach.is_unlocked || ach.unlocked;
+                  return (
+                    <div
+                      key={ach.id}
+                      className={`pf-medal r-${ach.rarity}${isUnlocked ? "" : " locked"}`}
+                      title={`${ach.name}: ${ach.description}. ${ach.progress_label}`}
+                    >
+                      <div className="pf-disc">
+                        <AchievementIcon icon={ach.icon} slug={ach.slug} code={ach.code} alt="" unlocked={isUnlocked} />
+                      </div>
+                      <div className="mn">{ach.name}</div>
+                      {isUnlocked ? (
+                        <div className="mv">Отримано</div>
+                      ) : (
+                        <div className="pf-mprog"><i style={{ width: `${progress}%` }} /></div>
+                      )}
                     </div>
-                    <div className="mname">{ach.name}</div>
-                    {isUnlocked ? (
-                      <div className="mval">Отримано</div>
-                    ) : (
-                      <div className="mprog"><i style={{ width: `${progress}%` }} /></div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
 
-        {/* RESTORE STREAK */}
+        {/* ═══ RESTORE STREAK ═══ */}
         {canRestoreStreak && (
-          <div className="glass block">
-            <div className="bt-row"><div className="bt">Відновити серію {user.lost_streak_days} днів?</div></div>
-            <p className="sec-sub" style={{ margin: "0 0 12px" }}>Коштує 50 кристалів. У тебе {user.gems}.</p>
-            {streakError && <p style={{ color: "#ff9ab0", fontSize: 12, marginBottom: 10 }}>{streakError}</p>}
-            <button className="q-claim" style={{ width: "100%" }} disabled={isRestoring} onClick={handleRestoreStreak}>
+          <div className="pf-glass pf-block pf-restore">
+            <div className="rt">Відновити серію {user.lost_streak_days} днів?</div>
+            <p className="rs">Коштує 50 кристалів. У тебе {user.gems}.</p>
+            {streakError && <p className="rerr">{streakError}</p>}
+            <button className="pf-restore-btn" disabled={isRestoring} onClick={handleRestoreStreak}>
               {isRestoring ? "Відновлення…" : "Відновити за 50 кристалів"}
             </button>
           </div>
         )}
 
-        {/* STATS + ACCOUNT */}
-        <div className="two">
-          <div className="glass block">
-            <div className="bt-row"><div className="bt">Статистика</div></div>
-            <div className="tiles grid2">
-              <div className="tile g"><div className="ti">{TileTrophy}</div><div className="tb"><small>Макс. серія</small><b>{user.best_streak_days} дн.</b></div></div>
-              <div className="tile"><div className="ti">{TileStar}</div><div className="tb"><small>Всього XP</small><b>{user.exp.toLocaleString("uk")} XP</b></div></div>
-              <div className="tile v"><div className="ti">{TileCalendar}</div><div className="tb"><small>З нами з</small><b>{formatDate(user.date_joined)}</b></div></div>
-              {user.last_activity_date && (
-                <div className="tile"><div className="ti">{TileActivity}</div><div className="tb"><small>Активність</small><b>{formatDate(user.last_activity_date)}</b></div></div>
-              )}
-            </div>
-          </div>
-          <div className="glass block">
-            <div className="bt-row"><div className="bt">Акаунт</div></div>
-            <div className="tiles">
-              <div
-                className="tile"
-                onClick={handleCopyCode}
-                style={{ cursor: "pointer" }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyCode(); } }}
-                title="Натисніть, щоб скопіювати"
-              >
-                <div className="ti">{TileId}</div>
-                <div className="tb">
-                  <small>Мій код (для друзів)</small>
-                  <b style={{ fontSize: 20, letterSpacing: 3, fontFamily: "var(--font-mono, ui-monospace, monospace)" }}>{user.player_code || user.id}</b>
-                </div>
-                <span style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    className="tag"
-                    style={{ cursor: "pointer", border: "none" }}
-                    onClick={handleCopyCode}
-                  >
-                    {codeCopied ? "✓ Скопійовано" : "Копіювати"}
-                  </button>
-                </span>
-              </div>
-              <div className="tile"><div className="ti">{TileMail}</div><div className="tb"><small>Email</small><b>{user.email}</b></div>{user.is_email_verified && <span className="tag">✓</span>}</div>
-              <div className="tile g"><div className="ti">{TileLogin}</div><div className="tb"><small>Метод входу</small><b>{PROVIDER_LABEL[user.auth_provider]}</b></div></div>
-              <div className="tile v"><div className="ti">{TileGlobe}</div><div className="tb"><small>Мова інтерфейсу</small><b>Українська</b></div></div>
-              <div className="tile r"><div className="ti">{TileBell}</div><div className="tb"><small>Сповіщення</small><b>Увімкнено</b></div></div>
-            </div>
+        {/* ═══ STATISTICS ═══ */}
+        <div className="pf-glass pf-block">
+          <div className="pf-sech"><span className="t">Статистика</span><span className="rule" /></div>
+          <div className="pf-tiles">
+            <div className="pf-tile g"><div className="ti">{TileTrophy}</div><div className="tb"><small>Макс. серія</small><b>{user.best_streak_days} дн.</b></div></div>
+            <div className="pf-tile g"><div className="ti">{TileStar}</div><div className="tb"><small>Всього XP</small><b>{user.exp.toLocaleString("uk")} XP</b></div></div>
+            <div className="pf-tile v"><div className="ti">{TileCalendar}</div><div className="tb"><small>З нами з</small><b>{formatDate(user.date_joined)}</b></div></div>
+            {user.last_activity_date && (
+              <div className="pf-tile b"><div className="ti">{TileActivity}</div><div className="tb"><small>Активність</small><b>{formatDate(user.last_activity_date)}</b></div></div>
+            )}
           </div>
         </div>
 
-        {/* PREMIUM */}
-        <div className="royal">
-          <div className="rinner">
-            <span className="r-ribbon">АКЦІЯ −40%</span>
-            <div className="r-sheen" />
-            <span className="r-spark" style={{ width: 5, height: 5, top: 22, left: "74%" }} />
-            <span className="r-spark" style={{ width: 4, height: 4, top: 118, left: "30%", animationDelay: "2s" }} />
-            <span className="r-spark" style={{ width: 3, height: 3, top: 176, left: "66%", animationDelay: "1s" }} />
-            <div className="r-head">
-              <div className="r-crown" style={{ width: 48, height: 38 }}>
-                <svg viewBox="0 0 56 44" fill="none" width="100%" height="100%"><path d="M6 36 L8 16 L18 26 L28 8 L38 26 L48 16 L50 36 Z" fill="#f3c25a" stroke="#c9952a" strokeWidth="1.5" strokeLinejoin="round" /><rect x="6" y="36" width="44" height="7" rx="3.5" fill="#e8ab30" /><circle cx="8" cy="16" r="3.5" fill="#fff9d0" /><circle cx="28" cy="8" r="3.5" fill="#fff9d0" /><circle cx="48" cy="16" r="3.5" fill="#fff9d0" /></svg>
-              </div>
-              <div><div className="r-eye">NMT Premium</div><h3>Royal Pass</h3></div>
+        {/* ═══ ACCOUNT ═══ */}
+        <div className="pf-glass pf-block">
+          <div className="pf-sech"><span className="t">Акаунт</span><span className="rule" /></div>
+          <div className="pf-tiles col">
+            <div className="pf-acc-code">
+              <div className="ti">{TileId}</div>
+              <div className="tb"><small>Мій код (для друзів)</small><b>{user.player_code || user.id}</b></div>
+              <button type="button" className={`pf-copybtn${codeCopied ? " ok" : ""}`} onClick={handleCopyCode}>
+                {IconCopy}<span>{codeCopied ? "Скопійовано ✓" : "Копіювати"}</span>
+              </button>
             </div>
-            <div className="stickers">
-              <span className="st"><span className="ic">{StHeart}</span> Безліміт сердець</span>
-              <span className="st"><span className="ic">{StXp}</span> ×2 XP</span>
-              <span className="st"><span className="ic">{StMap}</span> Усі 5 регіонів</span>
-              <span className="st"><span className="ic">{StGem}</span> +500 / міс</span>
-              <span className="st"><span className="ic">{StNoAds}</span> Без реклами</span>
-              <span className="st"><span className="ic">{StAi}</span> AI-розбір</span>
-            </div>
-            <div className="r-footer">
-              <div className="pricebox">
-                <span className="now">99 ₴<small>/міс</small></span>
-                <span className="old">165 ₴</span>
-                <span className="save">−40%</span>
-              </div>
-              <button className="r-go" onClick={() => router.push("/subscription")}><span className="gs" /> Розблокувати →</button>
-            </div>
-            <div className="r-note">{IconGift}<b>7 днів безкоштовно</b> · скасуй будь-коли</div>
+            <div className="pf-tile b pf-acc-email"><div className="ti">{TileMail}</div><div className="tb"><small>Email</small><b title={user.email}>{user.email}</b></div>{user.is_email_verified && <span className="tag">✓ Verified</span>}</div>
+            <div className="pf-tile g"><div className="ti">{TileLogin}</div><div className="tb"><small>Метод входу</small><b>{PROVIDER_LABEL[user.auth_provider]}</b></div></div>
+            <div className="pf-tile v"><div className="ti">{TileGlobe}</div><div className="tb"><small>Мова інтерфейсу</small><b>Українська</b></div></div>
+            <div className="pf-tile r"><div className="ti">{TileBell}</div><div className="tb"><small>Сповіщення</small><b>Увімкнено</b></div></div>
           </div>
         </div>
 
-        <button className="logout" onClick={handleLogout}>Вийти з акаунту</button>
+        {/* ═══ ROYAL PASS ═══ */}
+        <div className="pf-royal">
+          <div className="pf-rinner">
+            <span className="pf-spark" style={{ width: 5, height: 5, top: 24, left: "72%" }} />
+            <span className="pf-spark" style={{ width: 4, height: 4, top: 120, left: "26%", animationDelay: "1.2s" }} />
+            <span className="pf-spark" style={{ width: 3, height: 3, top: 70, left: "52%", animationDelay: "2s" }} />
+            <span className="pf-rrib">−40%</span>
+            <div className="pf-rhead">
+              <div className="pf-rcrown">{RoyalCrown}</div>
+              <div><div className="pf-reye">NMT Premium</div><h3>Royal Pass</h3></div>
+            </div>
+            <div className="pf-feats">
+              {PREMIUM_FEATURES.map((f) => (
+                <div className="pf-feat" key={f}><span className="ck">{IconCheck}</span> {f}</div>
+              ))}
+            </div>
+            <div className="pf-rfoot">
+              <div className="pf-price"><span className="now">99 ₴<small>/міс</small></span><span className="old">165 ₴</span></div>
+              <button className="pf-rgo" onClick={() => router.push("/subscription")}>Спробувати →</button>
+            </div>
+            <div className="pf-rnote"><b>7 днів безкоштовно</b> · скасуй будь-коли</div>
+          </div>
+        </div>
+
+        <button className="pf-logout" onClick={handleLogout}>{IconExit} Вийти з акаунту</button>
       </div>
     </section>
   );
