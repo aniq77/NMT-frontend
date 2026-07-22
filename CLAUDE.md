@@ -4,7 +4,8 @@ Gamified Ukrainian NMT (НМТ) exam-prep PWA (Duolingo-style). Next.js App Rout
 
 > **Source of truth = `origin/main`** → auto-deployed to **Vercel**. Local checkouts drift
 > (feature branches lag behind) — diff against `origin/main`, not local HEAD.
-> Backend repo: `yarutiun/NMT-backend` (Django, manual deploy to GCP Cloud Run).
+> Backend repo: `aniq77/NMT-backend` (Django, manual deploy to GCP Cloud Run).
+> Mobile client: `aniq77/NMT-APP` (Expo) — same API, developed in parallel.
 
 ## Stack
 
@@ -63,9 +64,22 @@ Error handling on the lesson quiz must distinguish: **403** → "lesson still lo
 
 ## Design system
 
-See `DESIGN_SYSTEM.md`. Tokens: Primary `#5C3FE8` (Cosmic Violet), Correct `#23A86A`,
-Wrong `#FF5B4C`, Reward `#FFB800`, Canvas `#F7F5FF`. Fonts: Nunito (display/UI), Inter (body),
-JetBrains Mono. Mobile-first, max width 480px, fixed 60px bottom nav.
+> ⚠️ **`DESIGN_SYSTEM.md` is stale — do not build from it.** It documents a violet
+> Nunito-based system that was replaced and never shipped in that form. The live tokens
+> are in `src/app/globals.css`; the game shell lives in
+> `src/app/[locale]/journey/game-mockup.css` (dark base) and `game-app-light.css` (light).
+
+Palette is **teal**, not violet — `--color-primary: #1f9e92`, correct `#3fae73`,
+wrong `#e8794a`, reward `#efb43d`. `--color-canvas` is `transparent` (the night
+background renders behind), and surfaces are translucent white.
+
+Fonts: **Prata** (display/headings, single weight 400, full Cyrillic) + **Inter** (body,
+400/500/600) + JetBrains Mono. Loaded via `next/font/google` in `src/lib/fonts.ts`.
+Nunito is not used anywhere. The standalone HTML mockups use different fonts — the
+live app is the source of truth, not them.
+
+Mobile-first, `--container-app: 480px`. Bottom nav is a floating pill dock
+(`.game-app .dock`: `position: fixed; bottom: 18px`), not a full-width fixed bar.
 
 ## Conventions
 
