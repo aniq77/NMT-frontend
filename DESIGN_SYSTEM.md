@@ -1,3 +1,14 @@
+> ⚠️ **SUPERSEDED — historical brief, not the shipped design.**
+> This was the original brief; the app moved to a different direction and this file
+> was never updated. Nothing below matches production: the palette is teal
+> (`--color-primary: #1f9e92`), not Cosmic Violet `#5C3FE8`; the canvas is
+> `transparent`, not `#F7F5FF`; and the display face is **Prata**, not Nunito —
+> Nunito is not loaded anywhere in the app.
+>
+> **Live source of truth:** `src/app/globals.css` for tokens, `src/lib/fonts.ts` for
+> fonts, and `src/app/[locale]/journey/game-mockup.css` + `game-app-light.css` for the
+> game shell. Kept for the tone/UX intent in the prose, which still holds.
+
 NMT Prep App — Design System Brief for Claude Code
 
 Project overview

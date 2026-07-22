@@ -15,15 +15,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yarutiun/NMT-frontend.git"
+    "url": "git+https://github.com/aniq77/NMT-frontend.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/yarutiun/NMT-frontend/issues"
+    "url": "https://github.com/aniq77/NMT-frontend/issues"
   },
-  "homepage": "https://github.com/yarutiun/NMT-frontend#readme",
+  "homepage": "https://github.com/aniq77/NMT-frontend#readme",
   "private": true,
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
