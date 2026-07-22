@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/store/auth.store";
 import { paymentApi, type Pricing, type Subscription } from "@/lib/api/payment";
 import { ApiError } from "@/lib/api/client";
+import { PAYMENTS_ENABLED } from "@/lib/features";
 
 const FEATURES = [
   { icon: <BookOpen className="h-5 w-5 text-primary" />, text: "Необмежений доступ до всіх курсів" },
@@ -42,6 +43,7 @@ export default function SubscriptionPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!PAYMENTS_ENABLED) return;
     paymentApi.getPricing().then(setPricing).catch(() => {});
     paymentApi.getSubscription()
       .then(setSubscription)
@@ -89,6 +91,31 @@ export default function SubscriptionPage() {
 
   const priceUah = pricing?.price_uah ?? 199;
   const isActive = subscription?.is_active === true;
+
+  if (!PAYMENTS_ENABLED) {
+    return (
+      <div className="min-h-screen bg-canvas">
+        <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-app items-center px-4 py-3">
+            <h1 className="font-display text-base font-700 text-text-primary">Підписка</h1>
+          </div>
+        </header>
+
+        <main className="mx-auto flex max-w-app flex-col items-center gap-3 px-4 py-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark shadow-button">
+            <Crown className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="mt-2 font-display text-2xl font-800 text-text-primary">Premium скоро</h2>
+          <p className="max-w-xs font-body text-base text-text-secondary">
+            Оплата ще не запущена. Ми повідомимо, щойно підписку можна буде оформити.
+          </p>
+          <Button className="mt-4" onClick={() => router.push("/profile")}>
+            Повернутися до профілю
+          </Button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas">
