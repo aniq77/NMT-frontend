@@ -12,7 +12,7 @@ export type User = {
   player_code: string;
   email: string;
   nickname: string | null;
-  auth_provider: "email" | "google" | "phone";
+  auth_provider: "email" | "google";
   active_avatar_type: "custom" | "character";
   equipped_skin: EquippedSkin | null;
   energy: number;
@@ -28,7 +28,6 @@ export type User = {
   lost_streak_days: number;
   last_activity_date: string | null;
   is_email_verified: boolean;
-  is_phone_verified: boolean;
   is_onboarded: boolean;
   daily_goal_minutes: number | null;
   unlocked_achievement_count: number;
@@ -51,15 +50,6 @@ export type RegisterPayload = {
 
 export type GooglePayload = {
   id_token: string;
-};
-
-export type OtpSendPayload = {
-  phone: string;
-};
-
-export type OtpVerifyPayload = {
-  phone: string;
-  code: string;
 };
 
 // Django REST Framework field error shape

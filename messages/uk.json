@@ -28,7 +28,6 @@
       "title": "Вхід",
       "submit": "Увійти",
       "tabEmail": "Email",
-      "tabPhone": "Телефон",
       "noAccount": "Немає акаунту?",
       "registerLink": "Зареєструватися"
     },
@@ -42,15 +41,6 @@
       "checkEmail": "Перевірте пошту",
       "verifyHint": "Ми надіслали лист для підтвердження. Перейдіть за посиланням у листі.",
       "backToLogin": "Повернутися до входу"
-    },
-    "otp": {
-      "phoneLabel": "Номер телефону",
-      "phoneHint": "Формат: +380XXXXXXXXX",
-      "sendCode": "Надіслати код",
-      "codeSentTo": "Код надіслано на",
-      "codeLabel": "Код з SMS",
-      "verify": "Підтвердити",
-      "changePhone": "Змінити номер"
     },
     "verifyEmail": {
       "verifying": "Підтверджуємо email...",

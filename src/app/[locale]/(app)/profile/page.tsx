@@ -14,7 +14,6 @@ import "./profile-redesign.css";
 const PROVIDER_LABEL: Record<User["auth_provider"], string> = {
   email: "Пошта",
   google: "Google",
-  phone: "Телефон",
 };
 
 const RARITY_TAG: Record<string, string> = {

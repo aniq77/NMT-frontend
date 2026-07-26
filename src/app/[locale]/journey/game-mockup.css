@@ -469,16 +469,12 @@
 .game-app .auth-logo svg {width:40px;height:40px}
 .game-app .auth-title {font-family:var(--fd);font-size:24px;font-weight:700;color:var(--teal-bright);margin-bottom:4px}
 .game-app .auth-sub {font-size:14px;color:var(--ink-soft);margin-bottom:24px}
-.game-app .auth-tabs {display:flex;border-radius:14px;overflow:hidden;border:1.5px solid var(--glass-line);margin-bottom:22px}
-.game-app .auth-tab {flex:1;padding:10px;font-weight:700;font-size:14px;cursor:pointer;background:transparent;color:var(--ink-soft);transition:.2s;border:none;font-family:var(--fu)}
-.game-app .auth-tab.active {background:rgba(51,214,194,.15);color:var(--teal-bright)}
 .game-app .auth-field {text-align:left;margin-bottom:16px}
 .game-app .auth-field label {display:block;font-size:11px;font-weight:700;color:var(--teal-bright);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .game-app .auth-field input {width:100%;padding:14px 16px;border-radius:14px;font-size:15px;
   background:rgba(255,255,255,.08);border:1.5px solid var(--glass-line);color:var(--ink);font-family:var(--fu);transition:border-color .2s;outline:none;box-sizing:border-box}
 .game-app .auth-field input:focus {border-color:var(--teal);background:rgba(255,255,255,.12)}
 .game-app .auth-field input::placeholder {color:rgba(166,200,194,.3)}
-.game-app .auth-phone-field {display:none}
 .game-app .auth-btn {width:100%;padding:16px;border-radius:46px;font-weight:700;font-size:16px;color:#06221f;border:none;cursor:pointer;font-family:var(--fu);
   background:linear-gradient(135deg,var(--teal-bright),var(--teal));box-shadow:0 0 24px -6px rgba(51,214,194,.7);transition:transform .2s;margin-top:8px}
 .game-app .auth-btn:hover {transform:translateY(-2px)}

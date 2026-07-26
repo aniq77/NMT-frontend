@@ -328,9 +328,6 @@
 }
 [data-theme="light"] .game-app .auth-title { color:var(--teal-deep) }
 [data-theme="light"] .game-app .auth-sub { color:var(--ink-soft) }
-[data-theme="light"] .game-app .auth-tabs { border:1.5px solid rgba(15,92,84,.12) }
-[data-theme="light"] .game-app .auth-tab { color:var(--ink-soft) }
-[data-theme="light"] .game-app .auth-tab.active { background:rgba(31,174,154,.18); color:#14887c }
 [data-theme="light"] .game-app .auth-field label { color:var(--teal-deep) }
 [data-theme="light"] .game-app .auth-field input {
   background:rgba(255,255,255,.8); border:1.5px solid rgba(15,92,84,.15); color:var(--ink);

@@ -28,7 +28,6 @@
       "title": "Sign in",
       "submit": "Sign in",
       "tabEmail": "Email",
-      "tabPhone": "Phone",
       "noAccount": "No account?",
       "registerLink": "Register"
     },
@@ -42,15 +41,6 @@
       "checkEmail": "Check your email",
       "verifyHint": "We sent a verification link. Click it to activate your account.",
       "backToLogin": "Back to sign in"
-    },
-    "otp": {
-      "phoneLabel": "Phone number",
-      "phoneHint": "Format: +380XXXXXXXXX",
-      "sendCode": "Send code",
-      "codeSentTo": "Code sent to",
-      "codeLabel": "SMS code",
-      "verify": "Verify",
-      "changePhone": "Change number"
     },
     "verifyEmail": {
       "verifying": "Verifying your email...",
