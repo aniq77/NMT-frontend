@@ -48,7 +48,7 @@ export default function FriendsPage() {
 
   // Add-friend modal
   const [addOpen, setAddOpen] = useState(false);
-  const [addId, setAddId] = useState("");
+  const [addNickname, setAddNickname] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [addSuccess, setAddSuccess] = useState(false);
@@ -85,25 +85,27 @@ export default function FriendsPage() {
   };
 
   const handleAdd = async () => {
-    // Backend already upper()/strip()s, but normalise here too for clean UX.
-    const value = addId.trim().toUpperCase();
+    // Trimmed but not case-folded: the backend matches the exact nickname first
+    // and only then falls back to a case-insensitive lookup, so forcing a case
+    // here would throw away what separates two similarly-spelled handles.
+    const value = addNickname.trim();
     if (!value) return;
     setAdding(true);
     setAddError(null);
     try {
       await friendsApi.sendRequest(value);
       setAddSuccess(true);
-      setAddId("");
+      setAddNickname("");
       toast.success("Запит надіслано");
       fetchData();
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
-        // Unknown code → { "detail": "User not found." }; anything else is a
-        // policy error (already friends, request pending, self, …).
+        // Unknown nickname → { "detail": "User not found." }; anything else is
+        // a policy error (already friends, request pending, self, …).
         const detail = typeof err.data?.detail === "string" ? err.data.detail : "";
         setAddError(
           detail === "User not found."
-            ? "Гравець з таким кодом не знайдений"
+            ? "Гравця з таким нікнеймом не знайдено"
             : "Неможливо надіслати запит цьому користувачу",
         );
       } else {
@@ -180,7 +182,7 @@ export default function FriendsPage() {
             {filteredFriends.length === 0 ? (
               <div className="league-empty">
                 {friendsCount === 0
-                  ? "У вас ще немає друзів. Додайте друга за його кодом."
+                  ? "У вас ще немає друзів. Додайте друга за його нікнеймом."
                   : "Нікого не знайдено."}
               </div>
             ) : (
@@ -285,24 +287,31 @@ export default function FriendsPage() {
       >
         <div className="space-y-4">
           <p className="font-body text-sm text-text-secondary">
-            Введіть код гравця (8 символів), щоб надіслати запит у друзі. Код можна знайти у профілі.
+            Введіть нікнейм гравця, щоб надіслати запит у друзі. Нікнейм має збігатися точно — його
+            видно у профілі гравця.
           </p>
           <Input
-            placeholder="Код гравця (напр. K7QX9MRP)"
-            value={addId}
-            autoCapitalize="characters"
+            placeholder="Напр. Player123"
+            value={addNickname}
+            autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
             onChange={(e) => {
-              // Uppercase + drop whitespace so the field always shows a clean code.
-              setAddId(e.target.value.toUpperCase().replace(/\s+/g, ""));
+              // Whitespace dropped only — nicknames have no spaces, and the case
+              // the user typed is meaningful (see `handleAdd`).
+              setAddNickname(e.target.value.replace(/\s+/g, ""));
               setAddSuccess(false);
               setAddError(null);
             }}
           />
           {addError && <p className="font-body text-sm text-wrong-dark">{addError}</p>}
           {addSuccess && <p className="font-body text-sm text-correct-dark">Запит надіслано!</p>}
-          <Button className="w-full" loading={adding} disabled={!addId.trim()} onClick={handleAdd}>
+          <Button
+            className="w-full"
+            loading={adding}
+            disabled={!addNickname.trim()}
+            onClick={handleAdd}
+          >
             Надіслати запит
           </Button>
         </div>

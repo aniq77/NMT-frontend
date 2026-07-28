@@ -186,6 +186,14 @@ export default function ProfilePage() {
     if (!isAuthenticated) router.replace("/login");
   }, [isAuthenticated, router]);
 
+  // What friends type into the add-friend sheet is a nickname, so that is what
+  // this tile hands out. The player_code stays as the fallback for accounts
+  // that never set a nickname (Google sign-up that skipped onboarding) — the
+  // API resolves either one.
+  const nickname = user?.nickname?.trim();
+  const friendHandle = nickname || user?.player_code || user?.id || "";
+  const friendHandleLabel = nickname ? "Мій нікнейм (для друзів)" : "Мій код (для друзів)";
+
   async function handleLogout() {
     await logout();
     router.push("/login");
@@ -194,7 +202,7 @@ export default function ProfilePage() {
   async function handleCopyCode() {
     if (!user) return;
     try {
-      await navigator.clipboard.writeText(user.player_code || user.id);
+      await navigator.clipboard.writeText(friendHandle);
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2000);
     } catch {
@@ -359,7 +367,7 @@ export default function ProfilePage() {
           <div className="pf-tiles col">
             <div className="pf-acc-code">
               <div className="ti">{TileId}</div>
-              <div className="tb"><small>Мій код (для друзів)</small><b>{user.player_code || user.id}</b></div>
+              <div className="tb"><small>{friendHandleLabel}</small><b>{friendHandle}</b></div>
               <button type="button" className={`pf-copybtn${codeCopied ? " ok" : ""}`} onClick={handleCopyCode}>
                 {IconCopy}<span>{codeCopied ? "Скопійовано ✓" : "Копіювати"}</span>
               </button>
