@@ -26,6 +26,26 @@ function makeResponse(
   } as unknown as Response;
 }
 
+/**
+ * Await a request that is expected to fail and hand back the `ApiError` it
+ * rejected with.
+ *
+ * `request.catch((e) => e)` would widen the result to `unknown` — the requests
+ * under test are deliberately untyped — and every `err.status` read after it
+ * then fails to compile. Narrowing here keeps the assertions readable and
+ * turns "it resolved after all" into a clear failure instead of a confusing
+ * `toBeInstanceOf` mismatch.
+ */
+async function captureApiError(request: Promise<unknown>): Promise<ApiError> {
+  try {
+    await request;
+  } catch (err) {
+    if (err instanceof ApiError) return err;
+    throw err;
+  }
+  throw new Error("Expected the request to reject with an ApiError, but it resolved.");
+}
+
 const fetchMock = vi.fn();
 
 beforeEach(() => {
@@ -84,7 +104,7 @@ describe("api client — error mapping", () => {
       makeResponse(400, { json: { email: ["already taken"] } }),
     );
 
-    const err = await api.post("/api/v1/auth/register/", {}).catch((e) => e);
+    const err = await captureApiError(api.post("/api/v1/auth/register/", {}));
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(400);
@@ -94,7 +114,7 @@ describe("api client — error mapping", () => {
   it("falls back to empty data object when the error body is not JSON", async () => {
     fetchMock.mockResolvedValueOnce(makeResponse(500, { text: "<html>oops" }));
 
-    const err = await api.get("/api/v1/boom/").catch((e) => e);
+    const err = await captureApiError(api.get("/api/v1/boom/"));
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(500);
@@ -122,7 +142,7 @@ describe("api client — 401 refresh & retry", () => {
       .mockResolvedValueOnce(makeResponse(200)) // refresh ok
       .mockResolvedValueOnce(makeResponse(401)); // retry still 401
 
-    const err = await api.get("/api/v1/users/me/").catch((e) => e);
+    const err = await captureApiError(api.get("/api/v1/users/me/"));
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(401);
@@ -134,7 +154,7 @@ describe("api client — 401 refresh & retry", () => {
       .mockResolvedValueOnce(makeResponse(401)) // original
       .mockResolvedValueOnce(makeResponse(401)); // refresh fails
 
-    const err = await api.get("/api/v1/users/me/").catch((e) => e);
+    const err = await captureApiError(api.get("/api/v1/users/me/"));
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(401);
@@ -145,9 +165,7 @@ describe("api client — 401 refresh & retry", () => {
   it("never tries to refresh when the failing call IS the refresh endpoint", async () => {
     fetchMock.mockResolvedValueOnce(makeResponse(401));
 
-    const err = await api
-      .post("/api/v1/auth/token/refresh/")
-      .catch((e) => e);
+    const err = await captureApiError(api.post("/api/v1/auth/token/refresh/"));
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(401);
